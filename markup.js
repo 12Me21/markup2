@@ -30,9 +30,11 @@ function parse(code, start, blocktype) {
 		scan()
 	}
 	
-	function finish(ok, thing) {
+	function finish(ok, type) {
 		flush_text()
-		return [ok, i, thing]
+		if (type)
+			tree = {type: type, contents: tree}
+		return [ok, i, tree]
 	}
 	
 	restore(start)
@@ -41,7 +43,7 @@ function parse(code, start, blocktype) {
 		if (c=="/") {
 			if (blocktype=='italic') {
 				scan()
-				return finish(true, {type: blocktype, contents: tree})
+				return finish(true, blocktype)
 			} else {
 				let [ok, next, res] = parse(code, i+1, 'italic')
 				if (!ok) {
@@ -58,5 +60,5 @@ function parse(code, start, blocktype) {
 			scan()
 		}
 	}
-	return finish(blocktype==null, tree)
+	return finish(blocktype==null, null)
 }

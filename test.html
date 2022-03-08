@@ -11,6 +11,8 @@
 
 <script>
 	$input.oninput = ()=>{
-		//$output.replaceChildren(markup($input.value))
+		let t = $input.value
+		let p = parse(t, 0, null)
+		$output.replaceChildren(render(p[2]))
 	}
 </script>
