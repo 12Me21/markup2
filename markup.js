@@ -14,7 +14,7 @@ function parse(code, start, blocktype) {
 	function insert(x) {
 		flush_text()
 		if (x instanceof Array)
-			tree.concat(x) // array
+			tree.push(...x) // array
 		else
 			tree.push(x) // object or text
 	}
@@ -47,6 +47,7 @@ function parse(code, start, blocktype) {
 			} else {
 				let [ok, next, res] = parse(code, i+1, 'italic')
 				if (!ok) {
+					console.log("not ok", res)
 					add_text(c)
 					scan()
 				} else {

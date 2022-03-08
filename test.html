@@ -13,6 +13,7 @@
 	$input.oninput = ()=>{
 		let t = $input.value
 		let p = parse(t, 0, null)
+		console.log(p)
 		$output.replaceChildren(render(p[2]))
 	}
 </script>
