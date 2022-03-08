@@ -1,3 +1,14 @@
+function render2(lines) {
+	let d = document.createDocumentFragment()
+	for (let line of lines) {
+		p = document.createElement('p')
+		p.append(render(line))
+		d.append(p)
+		p.append(document.createElement('br'))
+	}
+	return d
+}
+
 function render(tree) {
 	let d = document.createDocumentFragment()
 	for (let x of tree) {

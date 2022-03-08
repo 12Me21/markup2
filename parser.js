@@ -1,3 +1,16 @@
+function parse2(code) {
+	let i = 0
+	let lines = []
+	while (1) {
+		let [ok, next, res] = parse(code, i, null)
+		lines.push(res)
+		if (ok >= 3)
+			break
+		i = next
+	}
+	return lines
+}
+
 function parse(code, start, blocktype) {
 	let tree = []
 	let text_buffer = ""
@@ -43,23 +56,33 @@ function parse(code, start, blocktype) {
 		if (c=="/") {
 			if (blocktype=='italic') {
 				scan()
-				return finish(true, blocktype)
+				return finish(0, blocktype)
 			} else {
 				let [ok, next, res] = parse(code, i+1, 'italic')
-				if (!ok) {
-					console.log("not ok", res)
-					add_text(c)
+				if (ok==0) {
 					scan()
 				} else {
+					add_text(c)
 					scan()
 				}
 				insert(res)
 				restore(next)
+				if (ok >= 2)
+					return finish(ok, null)
 			}
+		} else if (c=='\n') {
+			scan()
+			return finish(2, null)
 		} else {
 			add_text(c)
 			scan()
 		}
 	}
-	return finish(blocktype==null, null)
+	return finish(3, null)
 }
+
+// statuses
+// 1: ok
+// 2: fail
+// 3: eol
+// 4: eof

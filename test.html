@@ -2,9 +2,18 @@
 <html lang=en-QC-2sbs>
 <meta charset="utf-8">
 
-<script src=markup.js></script>
+<script src=parser.js></script>
 <script src=render.js></script>
 <link rel=stylesheet href=markup.css>
+<style>
+	.markup {
+		white-space: pre-wrap;
+	}
+	p {
+		border: 1px solid red;
+		margin: 0;
+	}
+</style>
 
 <textarea id=$input></textarea>
 <div id=$output class='markup'></div>
@@ -12,8 +21,8 @@
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
-		let p = parse(t, 0, null)
+		let p = parse2(t)
 		console.log(p)
-		$output.replaceChildren(render(p[2]))
+		$output.replaceChildren(render2(p))
 	}
 </script>
