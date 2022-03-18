@@ -4,7 +4,6 @@ function render2(lines) {
 		p = document.createElement('p')
 		p.append(render(line))
 		d.append(p)
-		p.append(document.createElement('br'))
 	}
 	return d
 }
@@ -17,8 +16,13 @@ function render(tree) {
 		} else if (x instanceof Array) {
 			d.append(render(x))
 		} else {
-			//let t = x.type
-			let e = document.createElement('i')
+			let e
+			if (x.type == 'italic')
+				e = document.createElement('i')
+			else if (x.type == 'bold')
+				e = document.createElement('b')
+			else
+				e = document.createElement('u')
 			e.append(render(x.contents))
 			d.append(e)
 		}

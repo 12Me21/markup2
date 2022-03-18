@@ -12,11 +12,15 @@ function parse2(code) {
 }
 
 function parse(code, start, blocktype) {
+	console.log("parse called: ", start, blocktype)
+	
 	let tree = []
+	// todo: maybe store text as a range until
 	let text_buffer = ""
 	function add_text(text) {
 		text_buffer += text
 	}
+	
 	function flush_text() {
 		if (text_buffer) {
 			tree.push(text_buffer)
@@ -53,7 +57,22 @@ function parse(code, start, blocktype) {
 	restore(start)
 	
 	while (c) {
-		if (c=="/") {
+		if (c=="*") {
+			if (blocktype=='bold') {
+				scan()
+				return finish(0, blocktype)
+			} else {
+				let [ok, next, res] = parse(code, i+1, 'bold')
+				if (ok==0) {
+					scan()
+				} else {
+					add_text(c)
+					scan()
+				}
+				insert(res)
+				restore(next)
+			}
+		} else if (c=="/") {
 			if (blocktype=='italic') {
 				scan()
 				return finish(0, blocktype)
@@ -67,17 +86,18 @@ function parse(code, start, blocktype) {
 				}
 				insert(res)
 				restore(next)
-				if (ok >= 2)
-					return finish(ok, null)
 			}
-		} else if (c=='\n') {
+	/*	} else if (c=='\n') {
+			add_text(c)
 			scan()
-			return finish(2, null)
+			if (blocktype!='bold')
+				return finish(2, null)*/
 		} else {
 			add_text(c)
 			scan()
 		}
 	}
+	console.log("reached end", blocktype)
 	return finish(3, null)
 }
 
