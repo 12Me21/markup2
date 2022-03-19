@@ -8,7 +8,7 @@ let types = []
 	/^#{1,3} /, 'heading',
 	/^---+$/, 'line',
 	
-	/(?:[*][*]|__|~~|[/])(?!\W()|\w)/, 'style', 'style_end',
+	/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end', 
 	
 	/[\\](?:{|\w+(?:\[.*?\])?{?)/, 'env',
 	/}/, 'env_end',
@@ -137,6 +137,7 @@ function prune(tokens) {
 				else
 					break
 			}
+			push_tag(type)
 		} else if (type=='line' || type=='icode' || type=='code' || type=='link') {
 			push_tag(type)
 		} else if (type=='style') {
@@ -195,7 +196,7 @@ function prune(tokens) {
 					complete() // cell
 					complete() // row
 					newlevel(['table_row', ""]) // row
-					newlevel(['table_cell', text]) // cell
+					newlevel(['table_cell', text.split("\n")[1]]) // cell
 					break
 				} else {
 					push_text(text)

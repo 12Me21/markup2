@@ -8,14 +8,17 @@
 	.markup {
 		white-space: pre-wrap;
 	}
-	p {
-		border: 1px solid red;
-		margin: 0;
+	.markup table, .markup td, .markup th {
+		border: 1px solid black;
+		border-collapse: collapse;
 	}
 </style>
 
 <textarea id=$input></textarea>
-<div id=$output class='markup'></div>
+<fieldset>
+	<div id=$output class='markup'></div>
+</fieldset>
+<hr>
 <div id=$output2 class='markup'></div>
 
 <script>
