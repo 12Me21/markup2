@@ -32,10 +32,11 @@ function parse(text) {
 	let spl = String.prototype.split.call(text, r)
 	spl = filter_tags(spl)
 	console.log(performance.now() - x)
-	for (let i=0; i<spl.length; i+=3) {
+	return spl
+	/*for (let i=0; i<spl.length; i+=3) {
 		console.log(spl[i])
 		console.log(spl[i+1], spl[i+2])
-	}
+	}*/
 }
 
 // heck *asfasfasf ... whatever
