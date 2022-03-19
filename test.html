@@ -24,18 +24,12 @@
 		let spl = lex(t)
 		//		console.log(p)
 		$output.textContent = ""
-		let i;
-		for (i=0; i<spl.length-1; i+=3) {
-			let text = spl[i]
-			let type = spl[i+2]
-			let tag = spl[i+1]
-			if (text!="")
-				$output.append('text: "',text, '"\n')
-			$output.append(type, ' "', tag.replace("\n","<newline>"), '"\n')
+		for (let [type,text] of spl) {
+			$output.append(type||'text', ' "', text.replace("\n","<newline>"), '"\n')
 		}
-		let text = spl[i]
-		if (text!="")
-			$output.append('text: "',text, '"\n')
+		let tree = prune(spl)
+		window.tree = tree
+//		console.log(tree)
 		//$output.replaceChildren(render2(p))
 	}
 </script>
