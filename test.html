@@ -24,13 +24,13 @@
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
-		let spl = lex(t)
+		let tree = parse(t)
 		//		console.log(p)
-		$output2.textContent = ""
+		/*$output2.textContent = ""
 		for (let [type,text] of spl) {
 			$output2.append(type||'text', ' "', text.replace("\n","<newline>"), '"\n')
 		}
-		let tree = make_tree(spl)
+		let tree = make_tree(spl)*/
 		window.tree = tree
 		let e = render(tree)
 //		console.log(tree)
