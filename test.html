@@ -3,7 +3,6 @@
 <meta charset="utf-8">
 
 <script src=parser.js></script>
-<script src=render.js></script>
 <link rel=stylesheet href=markup.css>
 <style>
 	.markup {
@@ -17,19 +16,21 @@
 
 <textarea id=$input></textarea>
 <div id=$output class='markup'></div>
+<div id=$output2 class='markup'></div>
 
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
 		let spl = lex(t)
 		//		console.log(p)
-		$output.textContent = ""
+		$output2.textContent = ""
 		for (let [type,text] of spl) {
-			$output.append(type||'text', ' "', text.replace("\n","<newline>"), '"\n')
+			$output2.append(type||'text', ' "', text.replace("\n","<newline>"), '"\n')
 		}
 		let tree = prune(spl)
 		window.tree = tree
+		let e = render(tree)
 //		console.log(tree)
-		//$output.replaceChildren(render2(p))
+		$output.replaceChildren(e)
 	}
 </script>

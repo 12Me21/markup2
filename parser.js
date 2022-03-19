@@ -8,11 +8,11 @@ let types = []
 	/^#{1,3} /, 'heading',
 	/^---+$/, 'line',
 	
-	/(?:[*][*]|__|~~|[/])(?!\W()|\w)/, 'style_start', 'style_end',
+	/(?:[*][*]|__|~~|[/])(?!\W()|\w)/, 'style', 'style_end',
 	
-	/[\\](?:{|\w+(?:\[.*?\])?{?)/, 'env_start',
+	/[\\](?:{|\w+(?:\[.*?\])?{?)/, 'env',
 	/}/, 'env_end',
-	/^>(?:\[.*?\])?[{ ]/, 'quote_start',
+	/^>(?:\[.*?\])?[{ ]/, 'quote',
 	/[\\][^]/, 'escape',
 	
 	/`.*?`/, 'icode',
@@ -21,7 +21,7 @@ let types = []
 	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?/, 'link',
 	
 	/ *[|] *$(?!\n[|])/, 'table_end',
-	/ *(?:[|] *\n()|^()|)[|](?:\[.*?\])? */, 'table_row', 'table_start', 'table_cell',
+	/ *(?:[|] *\n()|^()|)[|](?:\[.*?\])? */, 'table_row', 'table', 'table_cell',
 	
 	///^ *- /, 'list',
 ].forEach(item=>{
@@ -69,14 +69,14 @@ function lex(text) {
 // text <i> more text </i>
 
 let open = {
-	heading: true, style_start: true, env_start: true,
-	quote_start: true,
-	table_start: true,
+	heading: true, style: true, env: true,
+	quote: true,
+	table: true,
 	
 }
 
 function prune(tokens) {
-	let tree = {type:null,tag:"",content:[]}
+	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
 	
 	// start a new block
@@ -132,18 +132,18 @@ function prune(tokens) {
 			while (1) {
 				if (current.type=='heading')
 					complete()
-				else if (current.type=='style_start')
+				else if (current.type=='style')
 					cancel()
 				else
 					break
 			}
 		} else if (type=='line' || type=='icode' || type=='code' || type=='link') {
 			push_tag(type)
-		} else if (type=='style_start') {
+		} else if (type=='style') {
 			newlevel(token)
 		} else if (type=='style_end') {
 			while (1) {
-				if (current.type=='style_start') {
+				if (current.type=='style') {
 					if (current.tag == text) {
 						complete()
 						break
@@ -154,11 +154,11 @@ function prune(tokens) {
 					break
 				}
 			}
-		} else if (type=='env_start') {
+		} else if (type=='env') {
 			newlevel(token)
 		} else if (type=='env_end') {
 			while (1) {
-				if (current.type=='env_start') {
+				if (current.type=='env') {
 					complete()
 					break
 				} else if (!current.type) { // todo: we need to CHECK if an env is open before starting this loop
@@ -170,13 +170,13 @@ function prune(tokens) {
 			}
 		} else if (type=='escape') {
 			push_text(text.substr(1))
-		} else if (type=='table_start') {
+		} else if (type=='table') {
 			newlevel(['table', ""]) // table
 			newlevel(['table_row', ""]) // row
 			newlevel(['table_cell', text]) // cell
 		} else if (type=='table_cell') {
 			while (1) {
-				if (current.type=='style_start') {
+				if (current.type=='style') {
 					cancel()
 				} else if (current.type=='table_cell') {
 					complete()
@@ -189,7 +189,7 @@ function prune(tokens) {
 			}
 		} else if (type=='table_row') {
 			while (1) {
-				if (current.type=='style_start') {
+				if (current.type=='style') {
 					cancel()
 				} else if (current.type=='table_cell') {
 					complete() // cell
@@ -204,7 +204,7 @@ function prune(tokens) {
 			}
 		} else if (type=='table_end') {
 			while (1) {
-				if (current.type=='style_start') {
+				if (current.type=='style') {
 					cancel()
 				} else if (current.type=='table_cell') {
 					complete() // cell
@@ -219,13 +219,44 @@ function prune(tokens) {
 		}
 	}
 	while (1) {
-		if (current.type)
+		if (current.type!='ROOT')
 			cancel()
 		else
 			break
 	}
 	
 	return tree
+}
+
+let elems = {
+	newline: 'br',
+	heading: 'h1',
+	line: 'hr',
+	style: 'i',
+	env: 'b', //todo
+	quote: 'blockquote',
+	icode: 'code',
+	code: 'pre',
+	link: 'a',
+	table: 'table',
+	table_row: 'tr',
+	table_cell: 'td'
+}
+
+function render(tree) {
+	let elem
+	if (!tree.type) {
+		elem = document.createTextNode(tree.content)
+	} else {
+		if (tree.type=='ROOT')
+			elem = document.createDocumentFragment()
+		else
+			elem = document.createElement(elems[tree.type])	
+		if (tree.content)
+			for (let i of tree.content)
+				elem.append(render(i))
+	}
+	return elem
 }
 
 ///(?<![^\s({'"])[/](?![\s,'"])/
