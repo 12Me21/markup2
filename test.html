@@ -30,7 +30,7 @@
 		for (let [type,text] of spl) {
 			$output2.append(type||'text', ' "', text.replace("\n","<newline>"), '"\n')
 		}
-		let tree = prune(spl)
+		let tree = make_tree(spl)
 		window.tree = tree
 		let e = render(tree)
 //		console.log(tree)

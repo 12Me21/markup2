@@ -52,8 +52,8 @@ function lex(text) {
 		if (type!=null) {
 			bac += text
 			if (bac)
-				list.push([null,bac])
-			list.push([type,tag_text])
+				list.push([null, bac])
+			list.push([type, tag_text])
 			bac = ""
 		} else {
 			bac += text+tag_text
@@ -66,18 +66,11 @@ function lex(text) {
 	return list
 }
 
-// text <i> more text </i>
-
-let open = {
-	heading: true, style: true, env: true,
-	quote: true,
-	table: true,
-	
-}
-
-function prune(tokens) {
+function make_tree(tokens) {
 	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
+	
+	let envs = 0 // number of open envs
 	
 	// start a new block
 	function newlevel(token) {
@@ -92,7 +85,8 @@ function prune(tokens) {
 	function up() {
 		let o = current
 		current = current.parent
-		delete o.parent
+		if (o.type=='env')
+			envs--
 		return o
 	}
 	// add an item to the current level
@@ -109,7 +103,7 @@ function prune(tokens) {
 	function cancel() {
 		let o = up()
 		// push the start tag (as text)
-		push_text(o.tag)
+		push_text(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
 		push(...o.content)
 	}
@@ -121,110 +115,96 @@ function prune(tokens) {
 	function push_tag(type) {
 		push({type: type, content: null})
 	}
+	function kill_styles(){
+		while (current.type=='style')
+			cancel()
+	}
 	
 	for (let token of tokens) {
 		let [type,text] = token
-		if (type==null) {
+		switch (type) {
+			case null:
 			push_text(text)
-		} else if (type=='heading') {
-			newlevel(token)
-		} else if (type=='newline') {
-			while (1) {
+		break;case 'newline':
+			while (1)
 				if (current.type=='heading')
 					complete()
 				else if (current.type=='style')
 					cancel()
 				else
 					break
-			}
 			push_tag(type)
-		} else if (type=='line' || type=='icode' || type=='code' || type=='link') {
-			push_tag(type)
-		} else if (type=='style') {
+		break;case 'heading':
 			newlevel(token)
-		} else if (type=='style_end') {
+		break;case 'line': case 'icode': case 'code': case 'link':
+			push_tag(type)
+		break;case 'style':
+			newlevel(token)
+		break;case 'style_end':
 			while (1) {
 				if (current.type=='style') {
-					if (current.tag == text) {
+					if (current.tag == text) { // found opening
 						complete()
 						break
-					} else
+					} else { // different style (kill)
 						cancel()
-				} else {
+					}
+				} else { // another block
 					push_text(text)
 					break
 				}
 			}
-		} else if (type=='env') {
-			newlevel(token)
-		} else if (type=='env_end') {
-			while (1) {
-				if (current.type=='env') {
-					complete()
-					break
-				} else if (!current.type) { // todo: we need to CHECK if an env is open before starting this loop
-					complete()
-					break
-				} else {
+		break;case 'env':
+			if (text.endsWith('{')) {
+				envs++
+				newlevel(token)
+			} else
+				push_tag('env1')
+		break;case 'env_end':
+			if (envs<=0)
+				push_text(text)
+			else {
+				while (current.type!='env')
 					cancel()
-				}
+				complete()
 			}
-		} else if (type=='escape') {
+		break;case 'escape':
 			push_text(text.substr(1))
-		} else if (type=='table') {
+		break;case 'table':
 			newlevel(['table', ""]) // table
 			newlevel(['table_row', ""]) // row
 			newlevel(['table_cell', text]) // cell
-		} else if (type=='table_cell') {
-			while (1) {
-				if (current.type=='style') {
-					cancel()
-				} else if (current.type=='table_cell') {
-					complete()
-					newlevel(token) // cell
-					break
-				} else {
-					push_text(text)
-					break
-				}
-			}
-		} else if (type=='table_row') {
-			while (1) {
-				if (current.type=='style') {
-					cancel()
-				} else if (current.type=='table_cell') {
-					complete() // cell
-					complete() // row
-					newlevel(['table_row', ""]) // row
-					newlevel(['table_cell', text.split("\n")[1]]) // cell
-					break
-				} else {
-					push_text(text)
-					break
-				}
-			}
-		} else if (type=='table_end') {
-			while (1) {
-				if (current.type=='style') {
-					cancel()
-				} else if (current.type=='table_cell') {
-					complete() // cell
-					complete() // row
-					complete() // table
-					break
-				} else {
-					push_text(text)
-					break
-				}
-			}
+		break;case 'table_cell':
+			kill_styles()
+			if (current.type=='table_cell') {
+				complete() // cell
+				newlevel(token) // cell
+			} else
+				push_text(text)
+		break;case 'table_row':
+			kill_styles()
+			if (current.type=='table_cell') {
+				complete() // cell
+				complete() // row
+				newlevel(['table_row', ""]) // row
+				newlevel(['table_cell', text.split("\n")[1]]) // cell
+			} else
+				push_text(text)
+		break;case 'table_end':
+			kill_styles()
+			if (current.type=='table_cell') {
+				complete() // cell
+				complete() // row
+				complete() // table
+			} else
+				push_text(text)
 		}
 	}
-	while (1) {
+	while (1)
 		if (current.type!='ROOT')
 			cancel()
 		else
 			break
-	}
 	
 	return tree
 }
@@ -235,6 +215,7 @@ let elems = {
 	line: 'hr',
 	style: 'i',
 	env: 'b', //todo
+	env1: 'input',
 	quote: 'blockquote',
 	icode: 'code',
 	code: 'pre',
