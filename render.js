@@ -1,3 +1,5 @@
+"use strict"
+
 let elems = {
 	newline: 'br',
 	heading: 'h1',
@@ -22,6 +24,7 @@ function render(tree) {
 	if (!tree.content)
 		return document.createElement(elems[tree.type])
 	// element with children
+	let elem
 	if (tree.type=='ROOT')
 		elem = document.createDocumentFragment()
 	else
