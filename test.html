@@ -21,7 +21,7 @@
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
-		let spl = parse(t)
+		let spl = lex(t)
 		//		console.log(p)
 		$output.textContent = ""
 		let i;

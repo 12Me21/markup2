@@ -1,83 +1,69 @@
 let tags = [
-	/\n/, // newline
+	/\n/, 'newline',
 	
-	/#{1,3} /, // heading
-	/^---+$/, //hr
+	/^#{1,3} /, 'heading',
+	/^---+$/, 'line',
 	
-	/[*][*]/, // bold
-	/[/]/, // italic
-	/__/, // underline
-	/~~/, // strikethrough
+	/(?:[*][*]|__|~~|[/])(?!\W()|\w)/, 'style_start', 'style_end',
 	
-	/[\\](?:[{]|\w+(?:\[.*?\])?[{]?)/, // env
-	/[}]/, // env end
-	/[\\][^]/, // escaped char
+	/[\\](?:{|\w+(?:\[.*?\])?{?)/, 'env_start',
+	/}/, 'env_end',
+	/[\\][^]/, 'escape',
 	
-	/`.*?`/, // icode
-	/^```[^]*?^```/, // code
+	/`.*?`/, 'icode',
+	/^```[^]*?^```/, 'code',
 	
-	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!]*(?:[-\w/%&=#+~@$*';]|[(][-\w./%?&=#+~@:$*',;!]*[)](?:[-\w./%?&=#+~@:$*',;!]*[-\w/%&=#+~@$*';])?)(?:\[.*?\])?[{]?/, // url - UE | U(U) | U(U)UE
+	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?{?/, 'link',
 	
-	/ *(?:[|]\n)?[|](?:\[.*?\])? */, // table start, table next row, table next cell
-	/ *[|] *$/, // table end
+	/ *[|] *$(?!\n[|])/, 'table_end',
+	/ *(?:[|] *\n()|^()|)[|](?:\[.*?\])? */, 'table_row', 'table_start', 'table_cell',
 	
-	/^ *- /, //list
+	/^ *- /, 'list',
 ]
 //[-\w/%&=#+~@$*';]
 //[-\w./%?&=#+~@:$*',;!]
-let r = new RegExp("("+tags.map(tag=>tag.source+"()").join("|")+")", 'm')
-
-function parse(text) {
-	x=performance.now()
-	let spl = String.prototype.split.call(text, r)
-	spl = filter_tags(spl)
-	console.log(performance.now() - x)
-	return spl
-	/*for (let i=0; i<spl.length; i+=3) {
-		console.log(spl[i])
-		console.log(spl[i+1], spl[i+2])
-	}*/
+//[-\w./%?&=#+~@:$*',;!]*(?:[-\w/%&=#+~@$*';]|[(][-\w./%?&=#+~@:$*',;!]*[)](?:[-\w./%?&=#+~@:$*',;!]*[-\w/%&=#+~@$*';])?)
+let regi = []
+let types = []
+for (let item of tags) {
+	if (item instanceof RegExp)
+		regi.push(item.source+"()")
+	else
+		types.push(item)
 }
-
-// heck *asfasfasf ... whatever
+let r = new RegExp("("+regi.join("|")+")", 'm')
+let step = types.length+2
 
 function check_tag(text, tag, type) {
-	return ['newline', 'heading', 'line', 'bold', 'italic', 'underline', 'strikethrough', 'env', 'env_end', 'escape', 'icode', 'code', 'link', 'table', 'table_end', 'list'][type]
-	switch (type) {
-	case 0:
-		if (/\w$/.test(text))
-			return 'italic_end'
-		return 'italic_start'
-	case 1:
-		if (/\w$/.test(text))
-			return 'bold_end'
-		return 'bold_start'
-	case 2:
-		return 'tag_start'
-	case 3:
-		return 'icode'
-	}
-	return true
+	return types[type]
 }
 
-function filter_tags(spl) {
+function lex(text) {
+	// main lexing step
+	let spl = String.prototype.split.call(text, r)
+	// filter tags
 	let list = []
 	let bac = ""
 	let i;
-	for (i=0; i<spl.length-1; i+=tags.length+2) {
+	for (i=0; i<spl.length-1; i+=step) {
 		let text = spl[i]
 		let tag = spl[i+1]
 		let type = spl.indexOf("", i+2) - (i+2)
 		type = check_tag(text, tag, type)
 		if (type!=null) {
-			list.push(bac+text, tag, type)
+			list.push(bac ? bac+text : text, tag, type)
 			bac = ""
 		} else {
-			bac += text + tag
+			bac += text+tag
 		}
 	}
 	list.push(bac+spl[i])
+	
 	return list
+}
+
+function prune(list) {
+	let stack = []
 }
 
 ///(?<![^\s({'"])[/](?![\s,'"])/
