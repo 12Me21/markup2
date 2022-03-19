@@ -76,45 +76,56 @@ let open = {
 }
 
 function prune(tokens) {
-	let tree = []
+	let tree = {type:null,tag:"",content:[]}
 	let current = tree
-	tree.type = null
-	tree.tag = ""
 	
 	// start a new block
 	function newlevel(token) {
-		let n = []
-		n.parent = current
-		n.type = token[0]
-		n.tag = token[1]
-		current = n
+		current = {
+			type:token[0],
+			tag:token[1],
+			content:[],
+			parent:current,
+		}
+	}
+	// move up
+	function up() {
+		let o = current
+		current = current.parent
+		delete o.parent
+		return o
+	}
+	// add an item to the current level
+	function push(...x) {
+		current.content.push(...x)
 	}
 	// complete current block
 	function complete() {
-		let p = current.parent
-		delete current.parent
-		p.push([current.type, current])
-		current = p
+		// push the block + move up
+		let o = up()
+		push(o)
 	}
 	// cancel current block (flatten)
 	function cancel() {
-		let p = current.parent
-		p.push([null,current.tag]) // insert the start tag as text
-		p.push(...current) // insert the contents of the failed block
-		current = p // move up
+		let o = up()
+		// push the start tag (as text)
+		push_text(o.tag)
+		// push the contents of the block
+		push(...o.content)
 	}
-	// push a tag
-	function push(token) {
-		current.push([token[0], null])
-	}
+	// push text
 	function push_text(text) {
-		current.push([null, text])
+		push({type: null, content: text})
+	}
+	// push empty tag
+	function push_tag(type) {
+		push({type: type, content: null})
 	}
 	
 	for (let token of tokens) {
 		let [type,text] = token
 		if (type==null) {
-			push_text(token)
+			push_text(text)
 		} else if (type=='heading') {
 			newlevel(token)
 		} else if (type=='newline') {
@@ -127,7 +138,7 @@ function prune(tokens) {
 					break
 			}
 		} else if (type=='line' || type=='icode' || type=='code' || type=='link') {
-			push(token)
+			push_tag(type)
 		} else if (type=='style_start') {
 			newlevel(token)
 		} else if (type=='style_end') {
