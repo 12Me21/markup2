@@ -33,11 +33,6 @@ let types = []
 let r = new RegExp("("+regi.join("|")+")", 'm')
 let step = types.length+2
 
-// later we'll leave these as numbers
-function check_tag(text, tag, type) {
-	return types[type]
-}
-
 function parse(text) {
 	let tokens = "*glass shattering noises*".split.call(text, r)
 	
@@ -45,23 +40,14 @@ function parse(text) {
 	let current = tree
 	let envs = 0 // number of open envs
 	
-	// filter tags
-	let bac = ""
+	// for each match:
 	let i;
 	for (i=0; i<tokens.length-1; i+=step) {
-		let text = tokens[i], tag_text = tokens[i+1]
-		let type = tokens.indexOf("", i+2) - (i+2)
-		type = check_tag(text, tag_text, type)
-		if (type==null) {
-			bac += text+tag_text
-		} else {
-			push_text(bac+text)
-			bac = ""
-			process(type, tag_text)
-		}
+		let group = tokens.indexOf("", i+2) - (i+2)
+		push_text(tokens[i])
+		process(types[group], tokens[i+1])
 	}
-	// last piece of text
-	push_text(bac+tokens[i])
+	push_text(tokens[i])
 	
 	// finalize tree
 	while (current.type!='ROOT')
@@ -72,10 +58,10 @@ function parse(text) {
 	// start a new block
 	function newlevel(type, text) {
 		current = {
-			type:type,
-			tag:text,
-			content:[],
-			parent:current,
+			type: type,
+			tag: text,
+			content: [],
+			parent: current,
 		}
 	}
 	// move up
@@ -103,11 +89,11 @@ function parse(text) {
 	// push text
 	function push_text(text) {
 		if (text)
-			current.content.push({type: null, content: text})
+			current.content.push(text)
 	}
 	// push empty tag
 	function push_tag(type) {
-		current.content.push({type: type, content: null})
+		current.content.push({type: type})
 	}
 	
 	function kill_styles() {
@@ -117,6 +103,8 @@ function parse(text) {
 	
 	function process(type, text) {
 		switch (type) {
+		default:
+			push_text(text)
 		case 'newline':
 			while (1)
 				if (current.type=='heading')
@@ -194,40 +182,6 @@ function parse(text) {
 	}
 }
 
-let elems = {
-	newline: 'br',
-	heading: 'h1',
-	line: 'hr',
-	style: 'i',
-	env: 'b', //todo
-	env1: 'input',
-	quote: 'blockquote',
-	icode: 'code',
-	code: 'pre',
-	link: 'a',
-	table: 'table',
-	table_row: 'tr',
-	table_cell: 'td'
-}
-
-function render(tree) {
-	let elem
-	if (!tree.type) {
-		elem = document.createTextNode(tree.content)
-	} else {
-		if (tree.type=='ROOT')
-			elem = document.createDocumentFragment()
-		else
-			elem = document.createElement(elems[tree.type])	
-		if (tree.content)
-			for (let i of tree.content)
-				elem.append(render(i))
-	}
-	return elem
-}
-
 ///(?<![^\s({'"])[/](?![\s,'"])/
 
 //tODO: kill newlines around things
-
-// hey we can stream parse now?
