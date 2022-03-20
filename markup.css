@@ -34,8 +34,15 @@
  ** Suggested **
  ***************/
 
+/* prevent things from overflowing the markup element */
+/* (this isn't supported by all browsers yet, but it can't hurt) */
+/* (optional; overflow probably won't happen anyway) */
+.MARKUP {
+	contain: layout paint style;
+}
+
 /* Image size limit */
-.markup-root img {
+.MARKUP img {
 	max-width: 100%;
 	max-height: 10vh;
 }
@@ -75,11 +82,14 @@
 	background: var(--background);
 }
 
-/* Table borders */
+/* Table borders, padding */
 .MARKUP table,
 .MARKUP td, .MARKUP th {
 	border: 1px solid var(--color);
 	border-collapse: collapse;
+}
+.MARKUP td, .MARKUP th {
+	padding: 0.2em 0.3em;
 }
 
 /* Background colors */
