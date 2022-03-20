@@ -171,7 +171,12 @@ function parse(text) {
 				push_text(text)
 			else {
 				while (current.type!='env')
-					cancel()
+					cancel() //todo: we need to close heading tags here.
+				// really,what we should do is, have:
+				// - 'weak' tags (styles) which get cancelled by everything
+				// - 'strong' tags (other things) which can block other tags
+				// - 'auto-closing' tags (headings, etc) like weak tags but which get closed instead of cancelled
+				
 				let tag = current.tag
 				// null tag: merge directly into tree
 				if (tag=="\\{") {

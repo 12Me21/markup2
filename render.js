@@ -87,40 +87,7 @@ let blocks = {
 let no_args = []
 no_args.k = {}
 
-function render_contents(element, item) {
-	let last
-	for (let x of item.content) {
-		if (typeof x == 'string') {
-			element.append(x)
-			last = 'text'
-		} else if (x.type=='newline') {
-			if (!db[last]) {
-				element.append(elem('br'))
-				last = 'newline'
-			}
-		} else {
-			if (last=='newline' && db[x.type])
-				element.append(elem('br'))
-			// create node
-			let e = blocks[x.type](x.args||no_args, x.tag)
-			let branch
-			if (e instanceof Array)
-				([e, branch] = e)
-			else
-				branch = e
-			// insert contents
-			if (x.content)
-				render_contents(branch, x)
-			// add
-			element.append(e)
-			last = x.type
-		}
-	}
-	if (last=='newline' && dbi[item.type])
-		element.append(elem('br'))
-}
-
-/*function render_branch(tree) {
+function render_branch(tree) {
 	// text
 	if (typeof tree == 'string')
 		return document.createTextNode(tree)
@@ -138,12 +105,15 @@ function render_contents(element, item) {
 			branch.append(render_branch(i))
 	}
 	return elem
-}*/
+}
 
 // todo: .normalize to combine text nodes? or is it better if we do that ourselves... normalize also kills empty nodes which is.. idk
 function render(tree) {
-	let f = frag()
-	render_contents(f, tree)
-	//f.normalize()
+	let f = render_branch(tree)
+	f.normalize()
 	return f
 }
+
+
+//TODO : ENOUGH OF_THIS!
+// we just need to strip the newlines after block elements to match the symmetery
