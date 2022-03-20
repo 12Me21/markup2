@@ -9,14 +9,19 @@
 </style>
 
 <textarea id=$input></textarea>
+<br>
+a
 <div id=$output class='MARKUP'></div>
+b
 <hr>
 <div id=$output2></div>
 
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
+		let x = performance.now()
 		let tree = parse(t)
+		console.log(x - performance.now())
 		//		console.log(p)
 		/*$output2.textContent = ""
 		for (let [type,text] of spl) {

@@ -4,9 +4,17 @@ function creator(type) {
 	return document.createElement.bind(document, type)
 }
 let elem = document.createElement.bind(document)
+let frag = document.createDocumentFragment.bind(document)
+
+let db = {
+	ROOT:1,line:1,quote:1,table:1,code:1
+}
+let dbi = {
+	ROOT:1,line:1,quote:1,table_cell:1,code:1
+}
 
 let blocks = {
-	ROOT: document.createDocumentFragment.bind(document),
+	ROOT: frag,
 	newline: creator('br'),
 	line: creator('hr'),
 	italic: creator('i'),
@@ -79,7 +87,40 @@ let blocks = {
 let no_args = []
 no_args.k = {}
 
-function render_branch(tree) {
+function render_contents(element, item) {
+	let last
+	for (let x of item.content) {
+		if (typeof x == 'string') {
+			element.append(x)
+			last = 'text'
+		} else if (x.type=='newline') {
+			if (!db[last]) {
+				element.append(elem('br'))
+				last = 'newline'
+			}
+		} else {
+			if (last=='newline' && db[x.type])
+				element.append(elem('br'))
+			// create node
+			let e = blocks[x.type](x.args||no_args, x.tag)
+			let branch
+			if (e instanceof Array)
+				([e, branch] = e)
+			else
+				branch = e
+			// insert contents
+			if (x.content)
+				render_contents(branch, x)
+			// add
+			element.append(e)
+			last = x.type
+		}
+	}
+	if (last=='newline' && dbi[item.type])
+		element.append(elem('br'))
+}
+
+/*function render_branch(tree) {
 	// text
 	if (typeof tree == 'string')
 		return document.createTextNode(tree)
@@ -97,8 +138,12 @@ function render_branch(tree) {
 			branch.append(render_branch(i))
 	}
 	return elem
-}
+}*/
 
+// todo: .normalize to combine text nodes? or is it better if we do that ourselves... normalize also kills empty nodes which is.. idk
 function render(tree) {
-	return render_branch(tree)
+	let f = frag()
+	render_contents(f, tree)
+	//f.normalize()
+	return f
 }

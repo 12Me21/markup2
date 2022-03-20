@@ -30,7 +30,7 @@ let types = []
 	else
 		types.push(item)
 })
-let r = new RegExp("("+regi.join("|")+")", 'mg')
+let r = new RegExp(regi.join("|"), 'mg')
 let step = types.length+2
 
 let envs = {
@@ -133,7 +133,7 @@ function parse(text) {
 					cancel()
 				else
 					break
-			push_text("\n")
+			push_tag('newline')
 		break;case 'heading':
 			newlevel(type, text)
 		break;case 'line': case 'icode': case 'code': case 'link':
@@ -185,7 +185,11 @@ function parse(text) {
 				}
 			}
 		break;case 'escape':
-			push_text(text.substr(1))
+			let c = text.substr(1)
+			if (c=='\n')
+				push_tag('newline')
+			else
+				push_text(text.substr(1))
 		break;case 'table':
 			newlevel('table', "") // table
 			newlevel('table_row', "") // row
