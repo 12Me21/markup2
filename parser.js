@@ -30,7 +30,7 @@ let types = []
 	else
 		types.push(item)
 })
-let r = new RegExp("("+regi.join("|")+")", 'm')
+let r = new RegExp("("+regi.join("|")+")", 'mg')
 let step = types.length+2
 
 let envs = {
@@ -38,20 +38,19 @@ let envs = {
 }
 
 function parse(text) {
-	let tokens = "*glass shattering noises*".split.call(text, r)
+	//let tokens = "*glass shattering noises*".split.call(text, r)
 	
 	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
 	let envs = 0 // number of open envs
 	
-	// for each match:
-	let i;
-	for (i=0; i<tokens.length-1; i+=step) {
-		let group = tokens.indexOf("", i+2) - (i+2)
-		push_text(tokens[i])
-		process(types[group], tokens[i+1])
+	let last = r.lastIndex = 0
+	for (let match; match=r.exec(text); last=r.lastIndex) {
+		let group = match.indexOf("", 1) - 1
+		push_text(text.substring(last, match.index))
+		process(types[group], match[0])
 	}
-	push_text(tokens[i])
+	push_text(text.substring(last))
 	
 	// finalize tree
 	while (current.type!='ROOT')
