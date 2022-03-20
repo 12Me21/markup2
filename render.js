@@ -61,7 +61,7 @@ let blocks = {
 	},
 	icode(args, contents) {
 		let x = elem('code')
-		x.textContent = contents
+		x.textContent = contents.replace(/ /g, " ")
 		return x
 	},
 	link(args, contents) {

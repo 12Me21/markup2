@@ -95,3 +95,8 @@
 .MARKUP [data-bgcolor="blue"]   { background: var(--bgblue); }
 .MARKUP [data-bgcolor="purple"] { background: var(--bgpurple); }
 .MARKUP [data-bgcolor="gray"]   { background: var(--bggray); }
+
+.MARKUP pre, .MARKUP code {
+	-moz-tab-size: 4;
+	tab-size: 4;
+}

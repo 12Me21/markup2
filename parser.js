@@ -93,10 +93,10 @@ function parse(text) {
 		let o = up()
 		// if we just cancelled a table cell, we don't want to insert text into the table row/body
 		// so instead we complete the table first.
-		if (current.type=='table_row')
+		if (o.type=='table_cell') {
 			complete()
-		if (current.type=='table')
 			complete()
+		}
 		// push the start tag (as text)
 		push_text(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
@@ -149,8 +149,12 @@ function parse(text) {
 			push_tag('newline')
 		break;case 'heading':
 			newlevel(type, text)
-		break;case 'line': case 'icode': case 'code': case 'link':
+		break;case 'line': case 'link':
 			push_tag(type, text)
+		break;case 'icode':
+			push_tag(type, text.slice(1,-1))
+		break;case 'code':
+			push_tag(type, text.slice(3,-3))
 		break;case 'style':
 			newlevel(type, text)
 		break;case 'style_end':
