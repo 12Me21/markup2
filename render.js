@@ -18,7 +18,7 @@ let blocks = {
 		let x = elem('blockquote')
 		return x
 	},
-	table() {
+	table(args) {
 		let x = elem('table')
 		let y = elem('tbody')
 		x.append(y)

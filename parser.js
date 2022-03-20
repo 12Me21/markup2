@@ -20,8 +20,9 @@ let types = []
 	
 	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, 'link',
 	
-	/ *(?:[|] *\n()|^()|)[|]@@@? *(?!$)/, 'table_row', 'table', 'table_cell',
-	/ *[|]@@@? *$/, 'table_end',
+	/ *[|]@@@? *$(?!\n[|])/, 'table_end',
+	/ *(?:[|] *\n()|^()|)[|]@@@? */, 'table_row', 'table', 'table_cell',
+	
 	
 	///^ *- /, 'list',
 ].forEach(item=>{
@@ -47,15 +48,16 @@ function parse(text) {
 	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
 	let envs = 0 // number of open envs
-	
+	let list = []
 	let last = r.lastIndex = 0
 	for (let match; match=r.exec(text); last=r.lastIndex) {
 		let group = match.indexOf("", 1) - 1
+		list.push(types[group])
 		push_text(text.substring(last, match.index))
 		process(types[group], match[0])
 	}
 	push_text(text.substring(last))
-	
+	window.l=list
 	// finalize tree
 	while (current.type!='ROOT') {
 		cancel()
@@ -213,17 +215,17 @@ function parse(text) {
 		break;case 'table_cell':
 			kill_styles()
 			if (current.type=='table_cell') {
-				let m = /[|]\[(.*?)\] *$/.exec(current.tag)
+				let m = /\[(.*?)\] *$/.exec(current.tag)
 				if (m)
 					current.args = parse_args(m[1])
 				complete() // cell
-				newlevel(type, "") // cell // tag text is discarded
+				newlevel(type, text.substr(1)) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
 			} else
 				push_text(text)
 		break;case 'table_row':
 			kill_styles()
 			if (current.type=='table_cell') {
-				let m = /[|]\[(.*?)\] *$/.exec(current.tag)
+				let m = /\[(.*?)\] *$/.exec(current.tag)
 				if (m)
 					current.args = parse_args(m[1])
 				complete() // cell
@@ -235,7 +237,7 @@ function parse(text) {
 		break;case 'table_end':
 			kill_styles()
 			if (current.type=='table_cell') {
-				let m = /[|]\[(.*?)\] *$/.exec(current.tag)
+				let m = /\[(.*?)\] *$/.exec(current.tag)
 				if (m)
 					current.args = parse_args(m[1])
 				complete() // cell
