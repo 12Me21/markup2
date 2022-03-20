@@ -6,29 +6,12 @@
 <script src=render.js></script>
 <link rel=stylesheet href=markup.css>
 <style>
-	html {
-		word-break: break-word;
-	}
-	* {
-		word-break: inherit;
-		contain: content;
-	}
-	
-	.markup {
-		white-space: pre-wrap;
-	}
-	.markup table, .markup td, .markup th {
-		border: 1px solid black;
-		border-collapse: collapse;
-	}
 </style>
 
 <textarea id=$input></textarea>
-<fieldset>
-	<div id=$output class='markup'></div>
-</fieldset>
+<div id=$output class='MARKUP'></div>
 <hr>
-<div id=$output2 class='markup'></div>
+<div id=$output2></div>
 
 <script>
 	$input.oninput = ()=>{

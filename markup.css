@@ -1,0 +1,92 @@
+/*******************
+ ** ⚠ REQUIRED! ⚠ **
+ *******************/
+.MARKUP {
+	word-break: break-word; /* prevent text overflow */
+	white-space: pre-wrap; /* preserve whitespace */
+}
+.MARKUP * {
+	word-break: inherit;
+	white-space: inherit;
+}
+/* this prevents a trailing linebreak from being stripped */
+/* (there might be a better solution for this) */
+.MARKUP::after {
+	content: "";
+}
+/* Block items (default, just in case) */
+.MARKUP h2, .MARKUP h3, .MARKUP h4, .MARKUP h5,
+.MARKUP pre,
+.MARKUP ol, .MARKUP ul, .MARKUP li,
+.MARKUP img, .MARKUP audio, .MARKUP video,
+.MARKUP blockquote {
+	display: block;
+}
+/* Inline items (default, just in case) */
+.MARKUP a,
+.MARKUP b, .MARKUP i, .MARKUP u, .MARKUP s,
+.markup sub, .markup sup,
+.MARKUP code {
+	display: inline;
+}
+
+/***************
+ ** Suggested **
+ ***************/
+
+/* Image size limit */
+.markup-root img {
+	max-width: 100%;
+	max-height: 10vh;
+}
+
+/* Reset vertical align just in case */
+.MARKUP, .MARKUP * {
+	vertical-align: baseline;
+}
+
+/* Styles */
+.MARKUP sub { vertical-align: sub; }
+.MARKUP sup { vertical-align: super; }
+.MARKUP b { font-weight: bold; }
+.MARKUP i { font-style: italic; }
+.MARKUP u { text-decoration: underline; }
+.MARKUP s { text-decoration-line: line-through; }
+
+/* Colors (change these based on the theme) */
+.MARKUP {
+	--color: black;
+	--background: white;
+	--bgred: #FCC;
+	--bgorange: #FEA;
+	--bgyellow: #FF8;
+	--bggreen: #CFC;
+	--bgblue: #CEF;
+	--bgpurple: #ECF;
+	--bggray: #DDD;
+}
+
+.MARKUP {
+	color: var(--color);
+}
+/* Reset background color */
+.MARKUP,
+.MARKUP table {
+	background: var(--background);
+}
+
+/* Table borders */
+.MARKUP table,
+.MARKUP td, .MARKUP th {
+	border: 1px solid var(--color);
+	border-collapse: collapse;
+}
+
+/* Background colors */
+.MARKUP [data-bgcolor="red"]    { background: var(--bgred); }
+.MARKUP [data-bgcolor="green"]  { background: var(--bggreen); }
+.MARKUP [data-bgcolor="yellow"] { background: var(--bgyellow); }
+.MARKUP [data-bgcolor="orange"] { background: var(--bgorange); }
+.MARKUP [data-bgcolor="blue"]   { background: var(--bgblue); }
+.MARKUP [data-bgcolor="purple"] { background: var(--bgpurple); }
+.MARKUP [data-bgcolor="gray"]   { background: var(--bggray); }
