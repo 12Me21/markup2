@@ -5,28 +5,28 @@ let types = []
 ;[
 	/\n/, 'newline',
 	
-	/^#{1,3} /, 'heading',
+	/^#{1,3}@@@? /, 'heading',
 	/^---+$/, 'line',
 	
 	/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end', 
 	
-	/[\\](?:{|\w+(?:\[.*?\])?{?)/, 'env',
+	/[\\](?:{|\w+@@@?{?)/, 'env',
 	/}/, 'env_end',
-	/^>(?:\[.*?\])?[{ ]/, 'quote',
+	/^>@@@?[{ ]/, 'quote',
 	/[\\][^]/, 'escape',
 	
 	/^```[^]*?^```/, 'code',
 	/`[^`\n]+`/, 'icode',
 	
-	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?/, 'link',
+	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, 'link',
 	
 	/ *[|] *$(?!\n[|])/, 'table_end',
-	/ *(?:[|] *\n()|^()|)[|](?:\[.*?\])? */, 'table_row', 'table', 'table_cell',
+	/ *(?:[|] *\n()|^()|)[|]@@@? */, 'table_row', 'table', 'table_cell',
 	
 	///^ *- /, 'list',
 ].forEach(item=>{
 	if (item instanceof RegExp)
-		regi.push(item.source+"()")
+		regi.push(item.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
 	else
 		types.push(item)
 })
@@ -107,12 +107,19 @@ function parse(text) {
 	
 	function parse_args(str) {
 		let map = {}
+		let list = []
 		if (str!=undefined)
 			for (let arg of str.split(";")) {
-				let [, name, value=true] = /^([^=]*)(?:=([^]*))?$/.exec(arg)
-				map[name] = value
+				let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+				if (name==undefined) // value
+					list.push(value)
+				else if (name!="") // name=value
+					map[name] = value
+				else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+					list.push(value)
 			}
-		return map
+		list.k = map
+		return list
 	}
 	
 	function process(type, text) {

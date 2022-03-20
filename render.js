@@ -25,23 +25,32 @@ let blocks = {
 	},
 	table_row: creator('tr'),
 	table_cell(args) {
-		let e
-		if (args['*']!=undefined)
-			e = elem('th')
-		else
-			e = elem('td')
-		let color = ['red','orange','yellow','green','blue','purple','gray'].find(col=>args[col]!=undefined)
-		if (color)
-			e.dataset.bgcolor = color
-		for (let a in args) {
-			let m = /^(\d*)x(\d*)$/.exec(a)
-			if (m) {
-				if (m[1])
-					e.colSpan = m[1]
-				if (m[2])
-					e.rowSpan = m[2]
+		let header, color, cs, rs
+		// TODO:
+		// arg processing should be a separate step, perhaps
+		// then we just pass {header,color,cs,rs} to the render function.
+		for (let a of args) {
+			if (a=="*") // should this be * or # or h ?  // perhaps # = heading applied to entire row?
+				header = true
+			else if (/^(red|orange|yellow|green|blue|purple|gray)$/.test(a))
+				color = a
+			else {
+				let m = /^(\d*)x(\d*)$/.exec(a)
+				if (m) {
+					cs = +m[1]
+					rs = +m[2]
+				} else {
+					//...
+				}
 			}
 		}
+		let e = elem(header ? 'th' : 'td')
+		if (color)
+			e.dataset.bgcolor = color
+		if (cs)
+			e.colSpan = cs
+		if (rs)
+			e.rowSpan = rs
 		return e
 	},
 	code(args, contents) {
@@ -67,13 +76,16 @@ let blocks = {
 	},
 }
 
+let no_args = []
+no_args.k = {}
+
 function render_branch(tree) {
 	// text
 	if (typeof tree == 'string')
 		return document.createTextNode(tree)
 	
 	// element
-	let elem = blocks[tree.type](tree.args||{}, tree.tag)
+	let elem = blocks[tree.type](tree.args||no_args, tree.tag)
 	let branch
 	if (elem instanceof Array)
 		([elem, branch] = elem)
