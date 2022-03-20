@@ -20,8 +20,8 @@ let types = []
 	
 	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, 'link',
 	
-	/ *[|] *$(?!\n[|])/, 'table_end',
-	/ *(?:[|] *\n()|^()|)[|]@@@? */, 'table_row', 'table', 'table_cell',
+	/ *(?:[|] *\n()|^()|)[|]@@@? *(?!$)/, 'table_row', 'table', 'table_cell',
+	/ *[|]@@@? *$/, 'table_end',
 	
 	///^ *- /, 'list',
 ].forEach(item=>{
@@ -35,6 +35,10 @@ let step = types.length+2
 
 let envs = {
 //	'key', 'anchor', 'spoiler'
+}
+
+let db = {
+	ROOT:1,line:1,quote:1,table:1,code:1
 }
 
 function parse(text) {
@@ -53,8 +57,9 @@ function parse(text) {
 	push_text(text.substring(last))
 	
 	// finalize tree
-	while (current.type!='ROOT')
+	while (current.type!='ROOT') {
 		cancel()
+	}
 	
 	return tree
 	
@@ -84,6 +89,12 @@ function parse(text) {
 	// cancel current block (flatten)
 	function cancel() {
 		let o = up()
+		// if we just cancelled a table cell, we don't want to insert text into the table row/body
+		// so instead we complete the table first.
+		if (current.type=='table_row')
+			complete()
+		if (current.type=='table')
+			complete()
 		// push the start tag (as text)
 		push_text(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
@@ -206,7 +217,7 @@ function parse(text) {
 				if (m)
 					current.args = parse_args(m[1])
 				complete() // cell
-				newlevel(type, text) // cell
+				newlevel(type, "") // cell // tag text is discarded
 			} else
 				push_text(text)
 		break;case 'table_row':

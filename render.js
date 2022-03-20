@@ -6,13 +6,6 @@ function creator(type) {
 let elem = document.createElement.bind(document)
 let frag = document.createDocumentFragment.bind(document)
 
-let db = {
-	ROOT:1,line:1,quote:1,table:1,code:1
-}
-let dbi = {
-	ROOT:1,line:1,quote:1,table_cell:1,code:1
-}
-
 let blocks = {
 	ROOT: frag,
 	newline: creator('br'),
