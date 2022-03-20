@@ -33,6 +33,10 @@ let types = []
 let r = new RegExp("("+regi.join("|")+")", 'm')
 let step = types.length+2
 
+let envs = {
+//	'key', 'anchor', 'spoiler'
+}
+
 function parse(text) {
 	let tokens = "*glass shattering noises*".split.call(text, r)
 	
@@ -92,13 +96,23 @@ function parse(text) {
 			current.content.push(text)
 	}
 	// push empty tag
-	function push_tag(type) {
-		current.content.push({type: type})
+	function push_tag(type, text) {
+		current.content.push({type: type, tag: text})
 	}
 	
 	function kill_styles() {
 		while (current.type=='style')
 			cancel()
+	}
+	
+	function parse_args(str) {
+		let map = {}
+		if (str!=undefined)
+			for (let arg of str.split(";")) {
+				let [, name, value=true] = /^([^=]*)(?:=([^]*))?$/.exec(arg)
+				map[name] = value
+			}
+		return map
 	}
 	
 	function process(type, text) {
@@ -113,17 +127,23 @@ function parse(text) {
 					cancel()
 				else
 					break
-			push_tag(type)
+			push_text("\n")
 		break;case 'heading':
 			newlevel(type, text)
 		break;case 'line': case 'icode': case 'code': case 'link':
-			push_tag(type)
+			push_tag(type, text)
 		break;case 'style':
 			newlevel(type, text)
 		break;case 'style_end':
 			while (1) {
 				if (current.type=='style') {
 					if (current.tag == text) { // found opening
+						current.type = {
+							'**': 'bold',
+							'__': 'underline',
+							'~~': 'strikethrough',
+							'/': 'italic',
+						}[current.tag]
 						complete()
 						break
 					} else { // different style (kill)
@@ -146,7 +166,17 @@ function parse(text) {
 			else {
 				while (current.type!='env')
 					cancel()
-				complete()
+				let tag = current.tag
+				// null tag: merge directly into tree
+				if (tag=="\\{") {
+					current.tag = ""
+					cancel()
+				} else {
+					// real tag: \name or \name[args]
+					let [, name, args] = /^[\\](\w+)(?:\[(.*?)\])?/.exec(tag)
+					current.envtype = name
+					current.args = parse_args(args)
+				}
 			}
 		break;case 'escape':
 			push_text(text.substr(1))
@@ -157,6 +187,9 @@ function parse(text) {
 		break;case 'table_cell':
 			kill_styles()
 			if (current.type=='table_cell') {
+				let m = /[|]\[(.*?)\] *$/.exec(current.tag)
+				if (m)
+					current.args = parse_args(m[1])
 				complete() // cell
 				newlevel(type, text) // cell
 			} else
@@ -164,6 +197,9 @@ function parse(text) {
 		break;case 'table_row':
 			kill_styles()
 			if (current.type=='table_cell') {
+				let m = /[|]\[(.*?)\] *$/.exec(current.tag)
+				if (m)
+					current.args = parse_args(m[1])
 				complete() // cell
 				complete() // row
 				newlevel('table_row', "") // row
@@ -173,6 +209,9 @@ function parse(text) {
 		break;case 'table_end':
 			kill_styles()
 			if (current.type=='table_cell') {
+				let m = /[|]\[(.*?)\] *$/.exec(current.tag)
+				if (m)
+					current.args = parse_args(m[1])
 				complete() // cell
 				complete() // row
 				complete() // table
@@ -185,3 +224,16 @@ function parse(text) {
 ///(?<![^\s({'"])[/](?![\s,'"])/
 
 //tODO: kill newlines around things
+
+// what if we parse arglists as something like:
+// just scan for [...] everywhere, and
+// then later in the tree building step, we can check like
+// if the previous thing was something which takes arguments, then we apply those args
+// otherwise just insert the block literally
+// the one issue is like, how to handle \env[...]{
+// where the { goes after...
+// perhaps we can parse for [...]{? and then uh
+// handle that later...
+// oh except...
+// this won't work, because if there's a [...] which is NOT an arg list,
+// now the parser is going to skip over it... yeah...
