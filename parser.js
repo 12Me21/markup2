@@ -34,6 +34,15 @@ let types = []
 let r = new RegExp(regi.join("|"), 'mg')
 let step = types.length+2
 
+// maybe we can parse arg lists in the main loop after a token is parsed
+// if one is found
+// the advantage: pattern for arglist can be more complex without being repeated multiple times in main pattern.
+
+// the issue here is like, 
+// when you have syntax like /^>@@@?[{ ]/
+// where it depends on what's after the arglist
+
+
 let envs = {
 //	'key', 'anchor', 'spoiler'
 }
@@ -223,7 +232,7 @@ function parse(text) {
 				if (m)
 					current.args = parse_args(m[1])
 				complete() // cell
-				newlevel(type, text.substr(1)) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
+				newlevel(type, text.replace(/^ *|/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
 			} else
 				push_text(text)
 		break;case 'table_row':
@@ -269,3 +278,17 @@ function parse(text) {
 // oh except...
 // this won't work, because if there's a [...] which is NOT an arg list,
 // now the parser is going to skip over it... yeah...
+
+// other problem: 
+
+// what if you want to write like, "{...}". well that's fine
+// BUT if you are inside a tag, the } will close it.
+// maybe closing tags should need some kind of special syntax?
+// \tag{ ... \}  >{...\} idk..
+// or match paired {}s :  
+// \tag{ ...  {heck} ... } <- closes here
+
+// terminology
+// "tag" - roughly, anything which gets parsed. ex: /italic/ <- 2 tags,
+// "environment" - these tags: \tag{
+//
