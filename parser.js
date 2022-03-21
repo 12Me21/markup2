@@ -30,9 +30,10 @@ let all_def = [
 	[/#{1,3}@@@? /y, 'heading'],
 	[/---+$/y, 'line'],
 	
-	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'],
+	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'], //todo: improve this one
 	
-	[/[\\](?:{|\w+@@@?{?)/, 'env'],
+	[/[\\](?:\w+@@@?)?{/, 'env'],
+	[/[\\]\w+@@@?/, 'env1'],
 	[/}/, 'env_end'],
 	[/[\\][^]/, 'escape'],
 	
@@ -41,7 +42,7 @@ let all_def = [
 	[/```[^]*?^```/y, 'code'],
 	[/`[^`\n]+`/, 'icode'],
 	
-	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, 'link'],
+	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]@@@?/, 'link'],
 	
 	[/ *[|] *\n[|]@@@? */, 'table_row'],
 	[/ *[|]@@@? *$/, 'table_end'],
@@ -87,7 +88,7 @@ function parse(text) {
 		process(type, match[0])
 		last=mode[0].lastIndex
 		// select mode
-		if (type=='newline')
+		if (type=='newline' || type=='env')
 			mode = bol
 		else
 			mode = mid
@@ -189,7 +190,7 @@ function parse(text) {
 			push_tag('newline')
 		break;case 'heading':
 			newlevel(type, text)
-		break;case 'line': case 'link':
+		break;case 'line': case 'link': case 'env1':
 			push_tag(type, text)
 		break;case 'icode':
 			push_tag(type, text.slice(1,-1))
@@ -218,11 +219,8 @@ function parse(text) {
 				}
 			}
 		break;case 'env':
-			if (text.endsWith('{')) {
-				envs++
-				newlevel(type, text)
-			} else
-				push_tag('env1')
+			envs++
+			newlevel(type, text)
 		break;case 'env_end':
 			if (envs<=0)
 				push_text(text)
