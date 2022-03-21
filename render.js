@@ -14,6 +14,7 @@ Markup.render = (function(){
 			f.append(elem('br'), document.createTextNode(""))
 			return f
 		},
+		heading: creator('h2'),
 		line: creator('hr'),
 		italic: creator('i'),
 		bold: creator('b'),

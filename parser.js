@@ -10,25 +10,34 @@ let Markup = Object.seal({
 })
 
 let blocks = {
+	// simple tags
 	newline: {},
-	heading: {block:true},
-	line: {block:true},
-	style: {},
-	env: {},
-	quote: {block:true},
+	link: {},
 	code: {block:true},
 	icode: {},
-	link: {},
-	table_row: {},
+	line: {block:true},
+	// with contents:
+	heading: {block:true, auto_close: true},
+	style: {auto_cancel: true},
+	env: {auto_close: true},
+	quote: {block:true, auto_close: true},
+	
 	table: {block:true},
+	table_row: {},
 	table_cell: {block:true},
 }
 
-let all_def = [
+// NOTE:
+
+// /^/ - matches after a <newline> or <env> token
+// /$/ - doesn't work, use /(?=\n|$)/ instead
+// /@@@/ - matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
+
+let [regex, groups] = process_def([
 	[/\n/, 'newline'],
 	
-	[/#{1,3}@@@? /y, 'heading'],
-	[/---+$/y, 'line'],
+	[/^#{1,3}@@@? /, 'heading'],
+	[/^---+(?=\n|$)/, 'line'],
 	
 	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'], //todo: improve this one
 	
@@ -37,35 +46,31 @@ let all_def = [
 	[/}/, 'env_end'],
 	[/[\\][^]/, 'escape'],
 	
-	[/>@@@?[{ ]/y, 'quote'],
+	[/^>@@@?[{ ]/, 'quote'],
 	
-	[/```[^]*?^```/y, 'code'],
+	[/^```[^]*?\n```/, 'code'],
 	[/`[^`\n]+`/, 'icode'],
 	
 	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]@@@?/, 'link'],
 	
 	[/ *[|] *\n[|]@@@? */, 'table_row'],
-	[/ *[|]@@@? *$/, 'table_end'],
-	[/ *[|]@@@? */y, 'table'],
+	[/ *[|]@@@? *(?=\n|$)/, 'table_end'],
+	[/^ *[|]@@@? */, 'table'],
 	[/ *[|]@@@? */, 'table_cell'],
 	
-	//[/ *- /y, 'list'],
-]
+	//[/^ *- /, 'list'],
+])
 
-let bol = process_def(all_def, true)
-let mid = process_def(all_def, false)
-
-function process_def(table, sticky) {
-	if (!sticky)
-		table = table.filter(([regex]) => !regex.sticky)
-	
+function process_def(table) {
+	//([^]*)
 	let regi = []
 	let types = []
 	for (let [regex, ...groups] of table) {
-		regi.push(regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
+		let r = regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)
+		regi.push(r+"()")
 		types.push(...groups)
 	}
-	let r = new RegExp(regi.join("|"), sticky?'mgy':'mg')
+	let r = new RegExp(regi.join("|"), 'g')
 	return [r, types]
 }
 
@@ -76,23 +81,21 @@ function parse(text) {
 	
 	let list = []
 	
-	let mode = bol
-	let last = mode[0].lastIndex = 0
-	for (let match; match=mode[0].exec(text); ) {
+	let last = regex.lastIndex = 0
+	for (let match; match=regex.exec(text); last=regex.lastIndex) {
 		// process
 		let group = match.indexOf("", 1) - 1
-		let type = mode[1][group]
+		let type = groups[group]
 		// handle
 		list.push(type)
 		push_text(text.substring(last, match.index))
 		process(type, match[0])
-		last=mode[0].lastIndex
+		
 		// select mode
-		if (type=='newline' || type=='env')
-			mode = bol
-		else
-			mode = mid
-		mode[0].lastIndex = last
+		if (type=='newline' || type=='env') {
+			text = text.substring(regex.lastIndex)
+			regex.lastIndex = 0
+		}
 	}
 	push_text(text.substring(last))
 	window.l=list
@@ -125,10 +128,15 @@ function parse(text) {
 	function complete() {
 		// push the block + move up
 		let o = up()
-		current.content.push(o)
+		if (o.type=='env' && o.tag=="\\{") // special case: merge
+			current.content.push(...o.content)
+		else
+			current.content.push(o)
 	}
 	// cancel current block (flatten)
 	function cancel() {
+		if (blocks[current.type].auto_close)
+			return complete()
 		let o = up()
 		// if we just cancelled a table cell, we don't want to insert text into the table row/body
 		// so instead we complete the table first.
@@ -153,7 +161,7 @@ function parse(text) {
 	}
 	
 	function kill_styles() {
-		while (current.type=='style')
+		while (blocks[current.type].auto_cancel)
 			cancel()
 	}
 	
@@ -233,10 +241,8 @@ function parse(text) {
 				// - 'auto-closing' tags (headings, etc) like weak tags but which get closed instead of cancelled
 				
 				let tag = current.tag
-				// null tag: merge directly into tree
 				if (tag=="\\{") {
-					current.tag = ""
-					cancel()
+					complete()
 				} else {
 					// real tag: \name or \name[args]
 					let [, name, args] = /^[\\](\w+)(?:\[(.*?)\])?/.exec(tag)
