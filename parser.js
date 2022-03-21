@@ -48,7 +48,7 @@ let all_def = [
 	[/ *[|]@@@? */y, 'table'],
 	[/ *[|]@@@? */, 'table_cell'],
 	
-	///^ *- /, {name:'list'},
+	//[/ *- /y, 'list'],
 ]
 
 let bol = process_def(all_def)
@@ -261,7 +261,7 @@ function parse(text) {
 				if (m)
 					current.args = parse_args(m[1])
 				complete() // cell
-				newlevel(type, text.replace(/^ *|/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
+				newlevel(type, text.replace(/^ *[|]/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
 			} else
 				push_text(text)
 		break;case 'table_row':
