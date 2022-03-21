@@ -2,35 +2,41 @@
 
 let regi = []
 let types = []
+let block = []
 ;[
-	/\n/, 'newline',
+	[/\n/, {name:'newline'}],
 	
-	/^#{1,3}@@@? /, 'heading',
-	/^---+$/, 'line',
+	[/^#{1,3}@@@? /, {name:'heading', block:true}],
+	[/^---+$/, {name:'line', block:true}],
 	
-	/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end', 
+	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, {name:'style'}, {name:'style_end'}],
 	
-	/[\\](?:{|\w+@@@?{?)/, 'env',
-	/}/, 'env_end',
-	/^>@@@?[{ ]/, 'quote',
-	/[\\][^]/, 'escape',
+	[/[\\](?:{|\w+@@@?{?)/, {name:'env'}],
+	[/}/, {name:'env_end'}],
+	[/[\\][^]/, {name:'escape'}],
 	
-	/^```[^]*?^```/, 'code',
-	/`[^`\n]+`/, 'icode',
+	[/^>@@@?[{ ]/, {name:'quote', block:true}],
 	
-	/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, 'link',
+	[/^```[^]*?^```/, {name:'code', block:true}],
+	[/`[^`\n]+`/, {name:'icode'}],
 	
-	/ *[|]@@@? *$(?!\n[|])/, 'table_end',
-	/ *(?:[|] *\n()|^()|)[|]@@@? */, 'table_row', 'table', 'table_cell',
+	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, {name:'link'}],
 	
+	[/ *[|] *\n[|]@@@? */, {name:'table_row'}],
+	[/ *[|]@@@? *$/, {name:'table_end'}],
+	[/^ *[|]@@@? */, {name:'table', block:true}],
+	[/ *[|]@@@? */, {name:'table_cell', block:true}],
 	
-	///^ *- /, 'list',
-].forEach(item=>{
-	if (item instanceof RegExp)
-		regi.push(item.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
-	else
-		types.push(item)
+	///^ *- /, {name:'list'},
+].forEach(([regex, ...matches])=>{
+	regi.push(regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
+	for (let m of matches) {
+		types.push(m.name)
+		if (m.block)
+			block[m.name] = true
+	}
 })
+
 let r = new RegExp(regi.join("|"), 'mg')
 let step = types.length+2
 
@@ -45,10 +51,6 @@ let step = types.length+2
 
 let envs = {
 //	'key', 'anchor', 'spoiler'
-}
-
-let db = {
-	ROOT:1,line:1,quote:1,table:1,code:1
 }
 
 function parse(text) {
