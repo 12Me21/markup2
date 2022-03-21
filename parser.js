@@ -107,13 +107,14 @@ function parse(text) {
 			complete()
 		}
 		// push the start tag (as text)
-		push_text(o.tag) // todo: merge with surrounding text nodes?
+		if (o.tag)
+			push_text(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
 		current.content.push(...o.content)
 	}
 	// push text
 	function push_text(text) {
-		if (text)
+		if (text!="")
 			current.content.push(text)
 	}
 	// push empty tag
@@ -145,7 +146,8 @@ function parse(text) {
 	
 	function process(type, text) {
 		switch (type) {
-		default:
+		default: // SHOULD NEVER HAPPEN
+			console.error('unknown node', type, text)
 			push_text(text)
 		case 'newline':
 			while (1)
@@ -213,6 +215,7 @@ function parse(text) {
 					let [, name, args] = /^[\\](\w+)(?:\[(.*?)\])?/.exec(tag)
 					current.envtype = name
 					current.args = parse_args(args)
+					complete()
 				}
 			}
 		break;case 'escape':
@@ -266,18 +269,15 @@ function parse(text) {
 
 //tODO: kill newlines around things
 
-// what if we parse arglists as something like:
-// just scan for [...] everywhere, and
-// then later in the tree building step, we can check like
-// if the previous thing was something which takes arguments, then we apply those args
-// otherwise just insert the block literally
-// the one issue is like, how to handle \env[...]{
-// where the { goes after...
-// perhaps we can parse for [...]{? and then uh
-// handle that later...
-// oh except...
-// this won't work, because if there's a [...] which is NOT an arg list,
-// now the parser is going to skip over it... yeah...
+// we need to remove any newline which comes directly after a block element
+// this INCLUDES things like, potentially
+
+// <i>
+//	  <table>
+//     ..
+//   </table>
+// </i>
+// <br>
 
 // other problem: 
 
@@ -287,8 +287,3 @@ function parse(text) {
 // \tag{ ... \}  >{...\} idk..
 // or match paired {}s :  
 // \tag{ ...  {heck} ... } <- closes here
-
-// terminology
-// "tag" - roughly, anything which gets parsed. ex: /italic/ <- 2 tags,
-// "environment" - these tags: \tag{
-//

@@ -8,7 +8,11 @@ let frag = document.createDocumentFragment.bind(document)
 
 let blocks = {
 	ROOT: frag,
-	newline: creator('br'),
+	newline() {
+		let f = frag()
+		f.append(elem('br'), document.createTextNode(""))
+		return f
+	},
 	line: creator('hr'),
 	italic: creator('i'),
 	bold: creator('b'),
@@ -75,6 +79,10 @@ let blocks = {
 		
 		return x
 	},
+	env() {
+		let x = elem('input')
+		return x
+	}
 }
 
 let no_args = []
@@ -102,9 +110,7 @@ function render_branch(tree) {
 
 // todo: .normalize to combine text nodes? or is it better if we do that ourselves... normalize also kills empty nodes which is.. idk
 function render(tree) {
-	let f = render_branch(tree)
-	f.normalize()
-	return f
+	return render_branch(tree)
 }
 
 
