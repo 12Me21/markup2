@@ -51,17 +51,20 @@ let all_def = [
 	//[/ *- /y, 'list'],
 ]
 
-let bol = process_def(all_def)
-let mid = process_def(all_def.filter(([regex]) => !regex.sticky))
+let bol = process_def(all_def, true)
+let mid = process_def(all_def, false)
 
-function process_def(table) {
+function process_def(table, sticky) {
+	if (!sticky)
+		table = table.filter(([regex]) => !regex.sticky)
+	
 	let regi = []
 	let types = []
 	for (let [regex, ...groups] of table) {
 		regi.push(regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
 		types.push(...groups)
 	}
-	let r = new RegExp(regi.join("|"), 'mg')
+	let r = new RegExp(regi.join("|"), sticky?'mgy':'mg')
 	return [r, types]
 }
 
