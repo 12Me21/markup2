@@ -21,18 +21,11 @@
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
-		let x = performance.now()
-		let tree = parse(t)
-		console.log(x - performance.now())
-		//		console.log(p)
-		/*$output2.textContent = ""
-		for (let [type,text] of spl) {
-			$output2.append(type||'text', ' "', text.replace("\n","<newline>"), '"\n')
-		}
-		let tree = make_tree(spl)*/
+		
+		let tree = Markup.parse(t)
 		window.tree = tree
-		let e = render(tree)
-//		console.log(tree)
+		
+		let e = Markup.render(tree)
 		$output.replaceChildren(e)
 	}
 </script>

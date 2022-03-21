@@ -1,118 +1,115 @@
-"use strict"
-
-function creator(type) {
-	return document.createElement.bind(document, type)
-}
-let elem = document.createElement.bind(document)
-let frag = document.createDocumentFragment.bind(document)
-
-let blocks = {
-	ROOT: frag,
-	newline() {
-		let f = frag()
-		f.append(elem('br'), document.createTextNode(""))
-		return f
-	},
-	line: creator('hr'),
-	italic: creator('i'),
-	bold: creator('b'),
-	strikethrough: creator('s'),
-	underline: creator('u'),
-	quote(args) {
-		let x = elem('blockquote')
-		return x
-	},
-	table(args) {
-		let x = elem('table')
-		let y = elem('tbody')
-		x.append(y)
-		return [x, y]
-	},
-	table_row: creator('tr'),
-	table_cell(args) {
-		let header, color, cs, rs
-		// TODO:
-		// arg processing should be a separate step, perhaps
-		// then we just pass {header,color,cs,rs} to the render function.
-		for (let a of args) {
-			if (a=="*") // should this be * or # or h ?  // perhaps # = heading applied to entire row?
-				header = true
-			else if (/^(red|orange|yellow|green|blue|purple|gray)$/.test(a))
-				color = a
-			else {
-				let m = /^(\d*)x(\d*)$/.exec(a)
-				if (m) {
-					cs = +m[1]
-					rs = +m[2]
-				} else {
-					//...
+Markup.render = (function(){
+	"use strict"
+	
+	function creator(type) {
+		return document.createElement.bind(document, type)
+	}
+	let elem = document.createElement.bind(document)
+	let frag = document.createDocumentFragment.bind(document)
+	
+	let blocks = {
+		ROOT: frag,
+		newline() {
+			let f = frag()
+			f.append(elem('br'), document.createTextNode(""))
+			return f
+		},
+		line: creator('hr'),
+		italic: creator('i'),
+		bold: creator('b'),
+		strikethrough: creator('s'),
+		underline: creator('u'),
+		quote(args) {
+			let x = elem('blockquote')
+			return x
+		},
+		table(args) {
+			let x = elem('table')
+			let y = elem('tbody')
+			x.append(y)
+			return [x, y]
+		},
+		table_row: creator('tr'),
+		table_cell(args) {
+			let header, color, cs, rs
+			// TODO:
+			// arg processing should be a separate step, perhaps
+			// then we just pass {header,color,cs,rs} to the render function.
+			for (let a of args) {
+				if (a=="*") // should this be * or # or h ?  // perhaps # = heading applied to entire row?
+					header = true
+				else if (/^(red|orange|yellow|green|blue|purple|gray)$/.test(a))
+					color = a
+				else {
+					let m = /^(\d*)x(\d*)$/.exec(a)
+					if (m) {
+						cs = +m[1]
+						rs = +m[2]
+					} else {
+						//...
+					}
 				}
 			}
+			let e = elem(header ? 'th' : 'td')
+			if (color)
+				e.dataset.bgcolor = color
+			if (cs)
+				e.colSpan = cs
+			if (rs)
+				e.rowSpan = rs
+			return e
+		},
+		code(args, contents) {
+			let x = elem('pre')
+			x.textContent = contents
+			return x
+		},
+		icode(args, contents) {
+			let x = elem('code')
+			x.textContent = contents.replace(/ /g, " ")
+			return x
+		},
+		link(args, contents) {
+			let x = elem('a')
+			x.textContent = contents
+			
+			let url = contents
+			if (/^ *javascript:/i.test(url))
+				url = ""
+			x.href = url
+			
+			return x
+		},
+		env() {
+			let x = elem('input')
+			return x
 		}
-		let e = elem(header ? 'th' : 'td')
-		if (color)
-			e.dataset.bgcolor = color
-		if (cs)
-			e.colSpan = cs
-		if (rs)
-			e.rowSpan = rs
-		return e
-	},
-	code(args, contents) {
-		let x = elem('pre')
-		x.textContent = contents
-		return x
-	},
-	icode(args, contents) {
-		let x = elem('code')
-		x.textContent = contents.replace(/ /g, " ")
-		return x
-	},
-	link(args, contents) {
-		let x = elem('a')
-		x.textContent = contents
-		
-		let url = contents
-		if (/^ *javascript:/i.test(url))
-			url = ""
-		x.href = url
-		
-		return x
-	},
-	env() {
-		let x = elem('input')
-		return x
 	}
-}
-
-let no_args = []
-no_args.k = {}
-
-function render_branch(tree) {
-	// text
-	if (typeof tree == 'string')
-		return document.createTextNode(tree)
 	
-	// element
-	let elem = blocks[tree.type](tree.args||no_args, tree.tag)
-	let branch
-	if (elem instanceof Array)
-		([elem, branch] = elem)
-	else
-		branch = elem
+	const no_args = []
+	no_args.k = {}
 	
-	if (tree.content!=undefined) {
-		for (let i of tree.content)
-			branch.append(render_branch(i))
+	function render_branch(tree) {
+		// text
+		if (typeof tree == 'string')
+			return document.createTextNode(tree)
+		
+		// element
+		let elem = blocks[tree.type](tree.args||no_args, tree.tag)
+		let branch
+		if (elem instanceof Array)
+			([elem, branch] = elem)
+		else
+			branch = elem
+		
+		if (tree.content!=undefined) {
+			for (let i of tree.content)
+				branch.append(render_branch(i))
+		}
+		return elem
 	}
-	return elem
-}
-
-// todo: .normalize to combine text nodes? or is it better if we do that ourselves... normalize also kills empty nodes which is.. idk
-function render(tree) {
-	return render_branch(tree)
-}
-
-
-//TODO : ENOUGH OF_THIS!
-// we just need to strip the newlines after block elements to match the symmetery
+	
+	return function(tree) {
+		return render_branch(tree)
+	}
+}())

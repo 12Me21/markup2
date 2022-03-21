@@ -1,74 +1,98 @@
 "use strict"
 
-let regi = []
-let types = []
-let block = []
-;[
-	[/\n/, {name:'newline'}],
-	
-	[/^#{1,3}@@@? /, {name:'heading', block:true}],
-	[/^---+$/, {name:'line', block:true}],
-	
-	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, {name:'style'}, {name:'style_end'}],
-	
-	[/[\\](?:{|\w+@@@?{?)/, {name:'env'}],
-	[/}/, {name:'env_end'}],
-	[/[\\][^]/, {name:'escape'}],
-	
-	[/^>@@@?[{ ]/, {name:'quote', block:true}],
-	
-	[/^```[^]*?^```/, {name:'code', block:true}],
-	[/`[^`\n]+`/, {name:'icode'}],
-	
-	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, {name:'link'}],
-	
-	[/ *[|] *\n[|]@@@? */, {name:'table_row'}],
-	[/ *[|]@@@? *$/, {name:'table_end'}],
-	[/^ *[|]@@@? */, {name:'table', block:true}],
-	[/ *[|]@@@? */, {name:'table_cell', block:true}],
-	
-	///^ *- /, {name:'list'},
-].forEach(([regex, ...matches])=>{
-	regi.push(regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
-	for (let m of matches) {
-		types.push(m.name)
-		if (m.block)
-			block[m.name] = true
+let Markup = Object.seal({
+	parse: parse,
+	render: null,
+	convert(text) {
+		let tree = Markup.parse(text)
+		return Markup.render(tree)
 	}
 })
 
-let r = new RegExp(regi.join("|"), 'mg')
-let step = types.length+2
+let blocks = {
+	newline: {},
+	heading: {block:true},
+	line: {block:true},
+	style: {},
+	env: {},
+	quote: {block:true},
+	code: {block:true},
+	icode: {},
+	link: {},
+	table_row: {},
+	table: {block:true},
+	table_cell: {block:true},
+}
 
-// maybe we can parse arg lists in the main loop after a token is parsed
-// if one is found
-// the advantage: pattern for arglist can be more complex without being repeated multiple times in main pattern.
+let all_def = [
+	[/\n/, 'newline'],
+	
+	[/#{1,3}@@@? /y, 'heading'],
+	[/---+$/y, 'line'],
+	
+	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'],
+	
+	[/[\\](?:{|\w+@@@?{?)/, 'env'],
+	[/}/, 'env_end'],
+	[/[\\][^]/, 'escape'],
+	
+	[/>@@@?[{ ]/y, 'quote'],
+	
+	[/```[^]*?^```/y, 'code'],
+	[/`[^`\n]+`/, 'icode'],
+	
+	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(](?:\[.*?\])?@@@?/, 'link'],
+	
+	[/ *[|] *\n[|]@@@? */, 'table_row'],
+	[/ *[|]@@@? *$/, 'table_end'],
+	[/ *[|]@@@? */y, 'table'],
+	[/ *[|]@@@? */, 'table_cell'],
+	
+	///^ *- /, {name:'list'},
+]
 
-// the issue here is like, 
-// when you have syntax like /^>@@@?[{ ]/
-// where it depends on what's after the arglist
+let bol = process_def(all_def)
+let mid = process_def(all_def.filter(([regex]) => !regex.sticky))
 
-
-let envs = {
-//	'key', 'anchor', 'spoiler'
+function process_def(table) {
+	let regi = []
+	let types = []
+	for (let [regex, ...groups] of table) {
+		regi.push(regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)+"()")
+		types.push(...groups)
+	}
+	let r = new RegExp(regi.join("|"), 'mg')
+	return [r, types]
 }
 
 function parse(text) {
-	//let tokens = "*glass shattering noises*".split.call(text, r)
-	
 	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
 	let envs = 0 // number of open envs
+	
 	let list = []
-	let last = r.lastIndex = 0
-	for (let match; match=r.exec(text); last=r.lastIndex) {
+	
+	let mode = bol
+	let last = mode[0].lastIndex = 0
+	for (let match; match=mode[0].exec(text); ) {
+		// process
 		let group = match.indexOf("", 1) - 1
-		list.push(types[group])
+		let type = mode[1][group]
+		// handle
+		list.push(type)
 		push_text(text.substring(last, match.index))
-		process(types[group], match[0])
+		process(type, match[0])
+		last=mode[0].lastIndex
+		// select mode
+		if (type=='newline')
+			mode = bol
+		else
+			mode = mid
+		mode[0].lastIndex = last
 	}
 	push_text(text.substring(last))
 	window.l=list
+	
 	// finalize tree
 	while (current.type!='ROOT') {
 		cancel()
