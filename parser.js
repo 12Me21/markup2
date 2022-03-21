@@ -103,7 +103,7 @@ function parse(text) {
 		// if we just cancelled a table cell, we don't want to insert text into the table row/body
 		// so instead we complete the table first.
 		if (o.type=='table_cell') {
-			complete()
+			complete() // todo: don't complete if empty?
 			complete()
 		}
 		// push the start tag (as text)
@@ -222,10 +222,9 @@ function parse(text) {
 			else
 				push_text(text.substr(1))
 		break;case 'table':
-			let [, t, args] = /^([|])(\[[^\]\n]*\])?/.exec(text)
-			newlevel('table', t) // table
+			newlevel('table', "") // table
 			newlevel('table_row', "") // row
-			newlevel('table_cell', args) // cell
+			newlevel('table_cell', text) // cell
 		break;case 'table_cell':
 			kill_styles()
 			if (current.type=='table_cell') {
@@ -244,11 +243,8 @@ function parse(text) {
 					current.args = parse_args(m[1])
 				complete() // cell
 				complete() // row
-				let [, t, args] = / *[|] *(\n[|])(\[[^\]\n]*\])?/y.exec(text)
-				// todo: it's REALLY important that this regex is exactly correct (i.e. always matches)
-				// mayb we should just split up the merged regexes in the Main Pattern and use the same one here and there.
-				newlevel('table_row', t) // row
-				newlevel('table_cell', args) // cell
+				newlevel('table_row', "") // row
+				newlevel('table_cell', text.split("\n")[1]) // cell
 			} else
 				push_text(text)
 		break;case 'table_end':
