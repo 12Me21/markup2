@@ -59,20 +59,26 @@ function parser() {
 	}
 	
 	// start a new block
-	function newlevel(type, text) {
+	function newlevel(type, text, args, body) {
 		current = {
 			type: type,
 			tag: text,
 			content: [],
 			parent: current,
 		}
+		if (body) {
+			envs++
+			current.body = true
+		}
+		if (args)
+			current.args = args
 	}
 	// move up
 	function up() {
 		let o = current
 		current = current.parent
 		delete o.parent
-		if (o.type=='env')
+		if (o.body)
 			envs--
 		return o
 	}
@@ -80,7 +86,7 @@ function parser() {
 	function complete() {
 		// push the block + move up
 		let o = up()
-		if (o.type=='env' && o.tag=="\\{") // special case: merge
+		if (o.type=='null_env') // special case: merge
 			current.content.push(...o.content)
 		else
 			current.content.push(o)
@@ -108,8 +114,8 @@ function parser() {
 			current.content.push(text)
 	}
 	// push empty tag
-	function push_tag(type, text) {
-		current.content.push({type: type, tag: text})
+	function push_tag(type, text, args) {
+		current.content.push({type: type, tag: text, args: args})
 	}
 	
 	function kill_styles() {
@@ -117,121 +123,94 @@ function parser() {
 			cancel()
 	}
 	
-	// extract the [...] arglist from `current.tag` using `pattern`
-	// then parse the contents and store the result in `current.args`
-	function parse_args(pattern) {
-		let match = pattern.exec(current.tag)
-		if (!match)
-			return
-		let type = current.type
-		let arglist = match[1]
-		
-		let map = {}
-		let list = []
-		for (let arg of arglist.split(";")) {
-			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-			if (name==undefined) // value
-				list.push(value)
-			else if (name!="") // name=value
-				map[name] = value
-			else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
-				list.push(value)
-		}
-		current.args = blocks[type].arg_process(list, map)
-	}
-	
-	function process(type, text) {
-		switch (type) {
+	function process(token, tag, args, body) {
+		switch (token) {
 		default: // SHOULD NEVER HAPPEN
-			console.error('unknown node', type, text)
-			push_text(text)
+			console.error('unknown node', token, tag)
+			push_text(info.tag)
 		case 'newline':
 			while (blocks[current.type].end_at_eol)
 				cancel()
-			push_tag('newline')
-		break;case 'heading': newlevel(type, text)
-		break;case 'line': case 'link': case 'env1':
-			push_tag(type, text)
+			push_tag('newline', tag)
+		break;case 'heading':
+			newlevel('heading', tag, args, body)
+		break;case 'line':
+			push_tag('line', tag)
+		break; case 'link':
+			if (tag[0]=='!')
+				
 		break;case 'icode':
-			push_tag(type, text.slice(1,-1))
+			push_tag('icode', tag, tag.slice(1,-1))
 		break;case 'code':
-			push_tag(type, text.slice(3,-3))
+			push_tag('code', tag, tag.slice(3,-3))
 		break;case 'style':
-			newlevel(type, text)
+			newlevel('style', tag, tag)
 		break;case 'style_end':
 			while (1) {
 				if (current.type=='style') {
-					if (current.tag == text) { // found opening
+					if (current.args == tag) { // found opening
 						current.type = {
 							'**': 'bold',
 							'__': 'underline',
 							'~~': 'strikethrough',
 							'/': 'italic',
-						}[current.tag]
+						}[current.args]
 						complete()
 						break
 					} else { // different style (kill)
 						cancel()
 					}
 				} else { // another block
-					push_text(text)
+					push_text(tag)
 					break
 				}
 			}
+		break;case 'null_env':
+			newlevel('null_env', tag, args, body)
 		break;case 'env':
-			envs++
-			newlevel(type, text)
-		break;case 'env_end':
+			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
+			newlevel('env', tag, args, body)
+		break;case 'block_end':
 			if (envs<=0)
-				push_text(text)
+				push_text(tag)
 			else {
-				while (current.type!='env')
+				while (!current.body)
 					cancel()
-				let tag = current.tag
-				if (tag!="\\{") {
-					// real tag: \name or \name[args]
-					current.envtype = /^[\\](\w+)/.exec(tag)[1] // what if we just set .type to like, "env_<type>"
-					parse_args(/\[(.*?)\]{?$/)
-				}
 				complete()
 			}
 		break;case 'escape':
-			let c = text.substr(1)
-			if (c=='\n')
+			if (tag=='\\\n')
 				push_tag('newline')
 			else
-				push_text(text.substr(1))
+				push_text(tag.substr(1))
 		break;case 'table':
 			newlevel('table', "") // table
 			newlevel('table_row', "") // row
-			newlevel('table_cell', text) // cell
+			newlevel('table_cell', tag, args, body) // cell
 		break;case 'table_cell':
 			kill_styles()
 			if (current.type=='table_cell') {
-				parse_args(/\[(.*?)\] *$/)
 				complete() // cell
-				newlevel(type, text.replace(/^ *[|]/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
+				newlevel('table_cell', tag.replace(/^ *[|]/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
 			} else
-				push_text(text)
+				push_text(tag)
 		break;case 'table_row':
 			kill_styles()
 			if (current.type=='table_cell') {
-				parse_args(/\[(.*?)\] *$/)
 				complete() // cell
 				complete() // row
 				newlevel('table_row', "") // row
-				newlevel('table_cell', text.split("\n")[1]) // cell
+				newlevel('table_cell', tag.split("\n")[1], args, body) // cell
 			} else
-				push_text(text)
-		break;case 'table_end':
+				push_text(tag)
+			break;case 'table_end':
 			kill_styles()
 			if (current.type=='table_cell') {
-				parse_args(/\[(.*?)\] *$/)
 				complete() // cell
 				complete() // row
 				complete() // table
-			} else
-				push_text(text)
+			} else // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
+				push_text(tag)
 		}
 	}
 }

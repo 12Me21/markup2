@@ -9,37 +9,49 @@ let Markup = Object.seal({
 	}
 })
 
-// NOTE:
+let arg_regex = [
+	/(?:\[([^\]\n]*)\])?({)?/y,
+	/(?:\[([^\]\n]*)\])?(?:({)| )/y,
+	/(?:\[([^\]\n]*)\])?({)? */y,
+]
 
-// /^/ matches after a <newline> or <env> token
-// /$/ matches end of string
-//  use /(?![^\n])/ to match at end of line
-// /@@@/ - matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
+/* NOTE:
+
+ /^/ matches after a <newline> or <env> token
+ /$/ matches end of string
+ /<eol>/ matches end of line (replaced with /(?![^\n])/)
+ /<args>/ matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
+
+*/
 
 let [regex, groups] = process_def([
-	[/\n/, 'newline'],
+	[/\n/, {token:'newline'}],
 	
-	[/^#{1,3}@@@? /, 'heading'],
-	[/^---+(?![^\n])/, 'line'],
+	[/^#{1,3}/, {token:'heading',args:3}],
+	[/^---+<eol>/, {token:'line'}],
 	
-	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'], //todo: improve this one
+	//todo: improve these
+	[/(?:[*][*]|__|~~|[/])(?=\w)/, {token:'style'}], 
+	[/(?:[*][*]|__|~~|[/])/, {token:'style_end'}],
 	
-	[/[\\](?:\w+@@@?)?{/, 'env'],
-	[/[\\]\w+@@@?/, 'env1'],
-	[/}/, 'env_end'],
-	[/[\\][^]/, 'escape'],
+	// what if we just had a flag for "this has args"
 	
-	[/^>@@@?[{ ]/, 'quote'],
+	[/[\\]\w+/, {token:'env',args:1}],
+	[/}/, {token:'block_end'}],
+	[/[\\]{/, {token:'null_env'}],
+	[/[\\][^]/, {token:'escape'}], //todo: match surrogate pairs
 	
-	[/^```[^]*?\n```/, 'code'],
-	[/`[^`\n]+`/, 'icode'],
+	[/^>/, {token:'quote',args:2}],
 	
-	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]@@@?/, 'link'],
+	[/^```[^]*?\n```/, {token:'code'}],
+	[/`[^`\n]+`/, {token:'icode'}],
 	
-	[/ *[|] *\n[|]@@@? */, 'table_row'],
-	[/ *[|]@@@? *(?![^\n])/, 'table_end'],
-	[/^ *[|]@@@? */, 'table'],
-	[/ *[|]@@@? */, 'table_cell'],
+	[/!?(?:https?:[/][/]|sbs:)<url-char>*<url-final>/, {token:'link',args:1}],
+	
+	[/ *[|] *\n[|]/, {token:'table_row',args:3}],
+	[/ *[|] *<eol>/, {token:'table_end'}],
+	[/^ *[|]/, {token:'table',args:3}],
+	[/ *[|]/, {token:'table_cell',args:3}],
 	
 	//[/^ *- /, 'list'],
 ])
@@ -47,14 +59,35 @@ let [regex, groups] = process_def([
 function process_def(table) {
 	//([^]*)
 	let regi = []
-	let types = []
-	for (let [regex, ...groups] of table) {
-		let r = regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)
-		regi.push(r+"()")
-		types.push(...groups)
+	let groups = []
+	for (let [regex, ...matches] of table) {
+		let r = regex.source.replace(/<(\w+)>/g, (m,name)=>({
+			'args': /(?:\[[^\]\n]*\])/,
+			'eol': /(?![^\n])/,
+			'url-char': /[-\w./%?&=#+~@:$*',;!)(]/,
+			'url-final': /[-\w/%&=#+~@$*';)(]/,
+		}[name].source))+"()"
+		regi.push(r)
+		
+		groups.push(...matches)
 	}
 	let r = new RegExp(regi.join("|"), 'g')
-	return [r, types]
+	return [r, groups]
+}
+
+function parse_args(type, arglist) {
+	let map = {}
+	let list = []
+	for (let arg of arglist.split(";")) {
+		let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+		if (name==undefined) // value
+			list.push(value)
+		else if (name!="") // name=value
+			map[name] = value
+		else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+			list.push(value)
+	}
+	return blocks[type].arg_process(list, map)
 }
 
 function parse(text) {
@@ -62,17 +95,40 @@ function parse(text) {
 	let {push_tag, push_text, finish} = parser()
 	
 	let last = regex.lastIndex = 0
-	for (let match; match=regex.exec(text); last=regex.lastIndex) {
+	for (let match; match=regex.exec(text); ) {
+		// pre
+		push_text(text.substring(last, match.index))
+		last = regex.lastIndex
 		// process
 		let group = match.indexOf("", 1) - 1
-		let type = groups[group]
-		// handle
-		list.push(type)
-		push_text(text.substring(last, match.index))
-		push_tag(type, match[0])
-		
-		// select mode
-		if (type=='newline' || type=='env') {
+		let thing = groups[group]
+		list.push(thing.token)
+		let tag = match[0]
+		// parse args and {
+		let args, body
+		if (thing.token=='null_env')
+			body = true
+		if (thing.args) {
+			let ar = arg_regex[thing.args-1]
+			ar.lastIndex = regex.lastIndex
+			let m = ar.exec(text)
+			if (m) {
+				tag += m[0]
+				args = m[1]
+				body = m[2]
+				last = regex.lastIndex = ar.lastIndex
+			} else { // INVALID!
+				// skip 1 char
+				last = match.index
+				regex.lastIndex = match.index+1
+				// try parsing again
+				continue
+			}
+		}
+		// process
+		push_tag(thing.token, tag, args, body)
+		// start of line
+		if (thing.token=='newline' || body) {
 			text = text.substring(regex.lastIndex)
 			regex.lastIndex = 0
 		}
