@@ -48,14 +48,20 @@ Markup.render = (function(){
 			x.textContent = args.replace(/ /g, " ")
 			return x
 		},
+		simple_link({url, text}) {
+			let x = elem('a')
+			x.textContent = text
+			x.href = url
+			return x
+		},
 		link({url}) {
 			let x = elem('a')
-			x.textContent = url
-			
-			if (/^ *javascript:/i.test(url))
-				url = ""
 			x.href = url
-			
+			return x
+		},
+		embed({url}) {
+			let x = elem('img')
+			x.src = url
 			return x
 		},
 		env() {

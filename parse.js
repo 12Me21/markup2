@@ -2,20 +2,31 @@
 
 // auto_cancel - will be cancelled at the end of a block, if open
 // auto_close - if cancelled, will be completed instead
+//   any tag with a {...} body  - also counts as auto_close
 // end_at_eol - cancelled at the end of a line (or completed if auto_close is set)
 
+function filter_url(url) {
+	if (/^ *javascript:/i.test(url))
+		return ""
+	return url
+}
 let blocks = {
 	// simple tags
 	newline: {},
 	link: {
 		arg_process(list, named, url) {
-			return {url}
+			return {url: filter_url(url)}
+		}
+	},
+	simple_link: {
+		arg_process(list, named, url) {
+			return {url: filter_url(url), text: url}
 		}
 	},
 	embed: {
 		arg_process(list, named, url) {
 			// todo: we need to figure out the filetype
-			return {url}
+			return {url: filter_url(url)}
 		}
 	},
 	code: {block:true},
@@ -25,7 +36,7 @@ let blocks = {
 	ROOT: {block: true},
 	heading: {block:true, auto_close:true, end_at_eol:true},
 	style: {auto_cancel: true, end_at_eol:true},
-	env: {auto_close:true},
+	env: {},
 	quote: {block:true, auto_close:true, end_at_eol:true},
 	
 	table: {block:true},
@@ -119,7 +130,7 @@ function parser() {
 	}
 	// cancel current block (flatten)
 	function cancel() {
-		if (blocks[current.type].auto_close)
+		if (current.body || blocks[current.type].auto_close)
 			return complete()
 		let o = up()
 		// if we just cancelled a table cell, we don't want to insert text into the table row/body
@@ -166,11 +177,14 @@ function parser() {
 		break; case 'link':
 			//todo: this is a hack
 			// see note in lex.js about extra parse step...
-			args = parse_args('link', args, /^([^[{]*)/.exec(tag)[1])
-			if (body)
+			let url = /^([^[{]*)/.exec(tag)[1]
+			if (body) {
+				args = parse_args('link', args, url)
 				newlevel('link', tag, args, true)
-			else
-				push_tag('link', tag, args)
+			} else {
+				args = parse_args('simple_link', args, url)
+				push_tag('simple_link', tag, args)
+			}
 		break; case 'embed':
 			args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
 			push_tag('embed', tag, args)
