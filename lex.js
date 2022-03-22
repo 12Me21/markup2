@@ -75,21 +75,6 @@ function process_def(table) {
 	return [r, groups]
 }
 
-function parse_args(type, arglist) {
-	let map = {}
-	let list = []
-	for (let arg of arglist.split(";")) {
-		let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-		if (name==undefined) // value
-			list.push(value)
-		else if (name!="") // name=value
-			map[name] = value
-		else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
-			list.push(value)
-	}
-	return blocks[type].arg_process(list, map)
-}
-
 function parse(text) {
 	let list = []
 	let {push_tag, push_text, finish} = parser()

@@ -43,6 +43,21 @@ let blocks = {
 	},
 }
 
+function parse_args(type, arglist) {
+	let map = {}
+	let list = []
+	for (let arg of arglist.split(";")) {
+		let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+		if (name==undefined) // value
+			list.push(value)
+		else if (name!="") // name=value
+			map[name] = value
+		else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+			list.push(value)
+	}
+	return blocks[type].arg_process(list, map)
+}
+
 function parser() {
 	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
@@ -126,13 +141,14 @@ function parser() {
 	function process(token, tag, args, body) {
 		switch (token) {
 		default: // SHOULD NEVER HAPPEN
-			console.error('unknown node', token, tag)
+			console.error('unknown node', token, tag, args, body)
 			push_text(info.tag)
 		case 'newline':
 			while (blocks[current.type].end_at_eol)
 				cancel()
 			push_tag('newline', tag)
 		break;case 'heading':
+			args = parse_args('heading', args)
 			newlevel('heading', tag, args, body)
 		break;case 'line':
 			push_tag('line', tag)
@@ -166,9 +182,10 @@ function parser() {
 				}
 			}
 		break;case 'null_env':
-			newlevel('null_env', tag, args, body)
+			newlevel('null_env', tag, null, body)
 		break;case 'env':
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
+			args = parse_args('env', args)
 			newlevel('env', tag, args, body)
 		break;case 'block_end':
 			if (envs<=0)
@@ -184,6 +201,7 @@ function parser() {
 			else
 				push_text(tag.substr(1))
 		break;case 'table':
+			args = parse_args('table_cell', args)
 			newlevel('table', "") // table
 			newlevel('table_row', "") // row
 			newlevel('table_cell', tag, args, body) // cell
@@ -191,7 +209,8 @@ function parser() {
 			kill_styles()
 			if (current.type=='table_cell') {
 				complete() // cell
-				newlevel('table_cell', tag.replace(/^ *[|]/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
+				args = parse_args('table_cell', args)
+				newlevel('table_cell', tag.replace(/^ *[|]/,""), args, body) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
 			} else
 				push_text(tag)
 		break;case 'table_row':
@@ -199,6 +218,7 @@ function parser() {
 			if (current.type=='table_cell') {
 				complete() // cell
 				complete() // row
+				args = parse_args('table_cell', args)
 				newlevel('table_row', "") // row
 				newlevel('table_cell', tag.split("\n")[1], args, body) // cell
 			} else
