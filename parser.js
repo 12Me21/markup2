@@ -17,6 +17,7 @@ let blocks = {
 	icode: {},
 	line: {block:true},
 	// with contents:
+	ROOT: {block: true},
 	heading: {block:true, auto_close: true},
 	style: {auto_cancel: true},
 	env: {auto_close: true},
@@ -24,7 +25,27 @@ let blocks = {
 	
 	table: {block:true},
 	table_row: {},
-	table_cell: {block:true},
+	table_cell: {
+		block: true,
+		arg_process(list, named) {
+			let ret = {}
+			for (let a of list) {
+				if (a=="*") // should this be * or # or h ?  // perhaps # = heading applied to entire row?
+					ret.header = true
+				else if (/^(red|orange|yellow|green|blue|purple|gray)$/.test(a))
+					ret.color = a
+				else {
+					let m = /^(\d*)x(\d*)$/.exec(a)
+					if (m) {
+						if (+m[1]) ret.colspan = +m[1]
+						if (+m[2]) ret.rowspan = +m[2]
+					} else { //...
+					}
+				}
+			}
+			return ret
+		},
+	},
 }
 
 // NOTE:
@@ -166,21 +187,27 @@ function parse(text) {
 			cancel()
 	}
 	
-	function parse_args(str) {
+	// extract the [...] arglist from `current.tag` using `pattern`
+	// then parse the contents and store the result in `current.args`
+	function parse_args(pattern) {
+		let match = pattern.exec(current.tag)
+		if (!match)
+			return
+		let type = current.type
+		let arglist = match[1]
+		
 		let map = {}
 		let list = []
-		if (str!=undefined)
-			for (let arg of str.split(";")) {
-				let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-				if (name==undefined) // value
-					list.push(value)
-				else if (name!="") // name=value
-					map[name] = value
-				else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
-					list.push(value)
-			}
-		list.k = map
-		return list
+		for (let arg of arglist.split(";")) {
+			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+			if (name==undefined) // value
+				list.push(value)
+			else if (name!="") // name=value
+				map[name] = value
+			else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+				list.push(value)
+		}
+		current.args = blocks[type].arg_process(list, map)
 	}
 	
 	function process(type, text) {
@@ -246,9 +273,8 @@ function parse(text) {
 					complete()
 				} else {
 					// real tag: \name or \name[args]
-					let [, name, args] = /^[\\](\w+)(?:\[(.*?)\])?/.exec(tag)
-					current.envtype = name
-					current.args = parse_args(args)
+					current.envtype = /^[\\](\w+)/.exec(tag)[1]
+					parse_args(/\[(.*?)\]{?$/)
 					complete()
 				}
 			}
@@ -265,9 +291,7 @@ function parse(text) {
 		break;case 'table_cell':
 			kill_styles()
 			if (current.type=='table_cell') {
-				let m = /\[(.*?)\] *$/.exec(current.tag)
-				if (m)
-					current.args = parse_args(m[1])
+				parse_args(/\[(.*?)\] *$/)
 				complete() // cell
 				newlevel(type, text.replace(/^ *[|]/,"")) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
 			} else
@@ -275,9 +299,7 @@ function parse(text) {
 		break;case 'table_row':
 			kill_styles()
 			if (current.type=='table_cell') {
-				let m = /\[(.*?)\] *$/.exec(current.tag)
-				if (m)
-					current.args = parse_args(m[1])
+				parse_args(/\[(.*?)\] *$/)
 				complete() // cell
 				complete() // row
 				newlevel('table_row', "") // row
@@ -287,9 +309,7 @@ function parse(text) {
 		break;case 'table_end':
 			kill_styles()
 			if (current.type=='table_cell') {
-				let m = /\[(.*?)\] *$/.exec(current.tag)
-				if (m)
-					current.args = parse_args(m[1])
+				parse_args(/\[(.*?)\] *$/)
 				complete() // cell
 				complete() // row
 				complete() // table

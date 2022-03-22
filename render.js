@@ -31,46 +31,24 @@ Markup.render = (function(){
 			return [x, y]
 		},
 		table_row: creator('tr'),
-		table_cell(args) {
-			let header, color, cs, rs
-			// TODO:
-			// arg processing should be a separate step, perhaps
-			// then we just pass {header,color,cs,rs} to the render function.
-			for (let a of args) {
-				if (a=="*") // should this be * or # or h ?  // perhaps # = heading applied to entire row?
-					header = true
-				else if (/^(red|orange|yellow|green|blue|purple|gray)$/.test(a))
-					color = a
-				else {
-					let m = /^(\d*)x(\d*)$/.exec(a)
-					if (m) {
-						cs = +m[1]
-						rs = +m[2]
-					} else {
-						//...
-					}
-				}
-			}
+		table_cell({header, color, colspan, rowspan}) {
 			let e = elem(header ? 'th' : 'td')
-			if (color)
-				e.dataset.bgcolor = color
-			if (cs)
-				e.colSpan = cs
-			if (rs)
-				e.rowSpan = rs
+			if (color) e.dataset.bgcolor = color
+			if (colspan) e.colSpan = cs
+			if (rowspan) e.rowSpan = rs
 			return e
 		},
-		code(args, contents) {
+		code(contents, args) {
 			let x = elem('pre')
 			x.textContent = contents
 			return x
 		},
-		icode(args, contents) {
+		icode(contents, args) {
 			let x = elem('code')
 			x.textContent = contents.replace(/ /g, " ")
 			return x
 		},
-		link(args, contents) {
+		link(contents, args) {
 			let x = elem('a')
 			x.textContent = contents
 			
@@ -104,8 +82,9 @@ Markup.render = (function(){
 			branch = elem
 		
 		if (tree.content!=undefined) {
-			for (let i of tree.content)
+			for (let i of tree.content) {
 				branch.append(render_branch(i))
+			}
 		}
 		return elem
 	}
