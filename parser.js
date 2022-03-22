@@ -29,15 +29,16 @@ let blocks = {
 
 // NOTE:
 
-// /^/ - matches after a <newline> or <env> token
-// /$/ - doesn't work, use /(?=\n|$)/ instead
+// /^/ matches after a <newline> or <env> token
+// /$/ matches end of string
+//  use /(?![^\n])/ to match at end of line
 // /@@@/ - matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
 
 let [regex, groups] = process_def([
 	[/\n/, 'newline'],
 	
 	[/^#{1,3}@@@? /, 'heading'],
-	[/^---+(?=\n|$)/, 'line'],
+	[/^---+(?![^\n])/, 'line'],
 	
 	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'], //todo: improve this one
 	
@@ -54,7 +55,7 @@ let [regex, groups] = process_def([
 	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]@@@?/, 'link'],
 	
 	[/ *[|] *\n[|]@@@? */, 'table_row'],
-	[/ *[|]@@@? *(?=\n|$)/, 'table_end'],
+	[/ *[|]@@@? *(?![^\n])/, 'table_end'],
 	[/^ *[|]@@@? */, 'table'],
 	[/ *[|]@@@? */, 'table_cell'],
 	
