@@ -5,6 +5,10 @@
 //   any tag with a {...} body  - also counts as auto_close
 // end_at_eol - cancelled at the end of a line (or completed if auto_close is set)
 
+let envs = {
+	spoiler: {},
+}
+
 function filter_url(url) {
 	if (/^ *javascript:/i.test(url))
 		return ""
@@ -147,14 +151,12 @@ function parser() {
 	}
 	// push text
 	function push_text(text) {
-		if (text!="")
-			current.content.push(text)
+		if (text!="") current.content.push(text)
 	}
 	// push empty tag
 	function push_tag(type, text, args) {
 		current.content.push({type: type, tag: text, args: args})
 	}
-	
 	function kill_styles() {
 		while (blocks[current.type].auto_cancel)
 			cancel()
@@ -164,106 +166,92 @@ function parser() {
 		switch (token) {
 		default: // SHOULD NEVER HAPPEN
 			console.error('unknown node', token, tag, args, body)
-			push_text(info.tag)
+			return push_text(info.tag)
 		case 'newline':
 			while (blocks[current.type].end_at_eol)
 				cancel()
-			push_tag('newline', tag)
-		break;case 'heading':
+			return push_tag('newline', tag)
+		case 'heading':
 			args = parse_args('heading', args)
-			newlevel('heading', tag, args, body)
-		break;case 'line':
-			push_tag('line', tag)
-		break; case 'link':
+			return newlevel('heading', tag, args, body)
+		case 'line':
+			return push_tag('line', tag)
+		case 'link':
 			//todo: this is a hack
 			// see note in lex.js about extra parse step...
 			let url = /^([^[{]*)/.exec(tag)[1]
 			if (body) {
 				args = parse_args('link', args, url)
-				newlevel('link', tag, args, true)
-			} else {
-				args = parse_args('simple_link', args, url)
-				push_tag('simple_link', tag, args)
+				return newlevel('link', tag, args, true)
 			}
-		break; case 'embed':
+			args = parse_args('simple_link', args, url)
+			return push_tag('simple_link', tag, args)
+		case 'embed':
 			args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
-			push_tag('embed', tag, args)
-		break;case 'icode':
-			push_tag('icode', tag, tag.slice(1,-1))
-		break;case 'code':
-			push_tag('code', tag, tag.slice(3,-3))
-		break;case 'style':
-			newlevel('style', tag, tag)
-		break;case 'style_end':
-			while (1) {
-				if (current.type=='style') {
-					if (current.args == tag) { // found opening
-						current.type = {
-							'**': 'bold',
-							'__': 'underline',
-							'~~': 'strikethrough',
-							'/': 'italic',
-						}[current.args]
-						complete()
-						break
-					} else { // different style (kill)
-						cancel()
-					}
-				} else { // another block
-					push_text(tag)
-					break
+			return push_tag('embed', tag, args)
+		case 'icode':
+			return push_tag('icode', tag, tag.slice(1,-1))
+			case 'code':
+			return push_tag('code', tag, tag.slice(3,-3))
+		case 'style':
+			return newlevel('style', tag, tag)
+		case 'style_end':
+			while (current.type=='style') { // should be checking for WEAK here?
+				if (current.args == tag) { // found opening
+					current.type = {
+						'**': 'bold',
+						'__': 'underline',
+						'~~': 'strikethrough',
+						'/': 'italic',
+					}[current.args]
+					return complete()
 				}
+				cancel() // different style (kill)
 			}
-		break;case 'null_env':
-			newlevel('null_env', tag, null, body)
-		break;case 'env':
+			return push_text(tag)
+		case 'null_env':
+			return newlevel('null_env', tag, null, body)
+		case 'env':
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
 			args = parse_args('env', args)
-			newlevel('env', tag, args, body)
-		break;case 'block_end':
+			return newlevel('env', tag, args, body)
+		case 'block_end':
 			if (envs<=0)
-				push_text(tag)
-			else {
-				while (!current.body)
-					cancel()
-				complete()
-			}
-		break;case 'escape':
+				return push_text(tag)
+			while (!current.body)
+				cancel()
+			return complete()
+		case 'escape':
 			if (tag=='\\\n')
-				push_tag('newline')
-			else
-				push_text(tag.substr(1))
-		break;case 'table':
+				return push_tag('newline')
+			return push_text(tag.substr(1))
+		case 'table':
 			args = parse_args('table_cell', args)
 			newlevel('table', "") // table
 			newlevel('table_row', "") // row
-			newlevel('table_cell', tag, args, body) // cell
-		break;case 'table_cell':
+			return newlevel('table_cell', tag, args, body) // cell
+		case 'table_cell':
 			kill_styles()
-			if (current.type=='table_cell') {
-				complete() // cell
-				args = parse_args('table_cell', args)
-				newlevel('table_cell', tag.replace(/^ *[|]/,""), args, body) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
-			} else
-				push_text(tag)
-		break;case 'table_row':
+			if (current.type!='table_cell')
+				return push_text(tag)
+			args = parse_args('table_cell', args)
+			complete() // cell
+			return newlevel('table_cell', tag.replace(/^ *[|]/,""), args, body) // cell // remove the | because it was used to "close" the previous cell. we may need to do this in other places...
+		case 'table_row':
 			kill_styles()
-			if (current.type=='table_cell') {
-				complete() // cell
-				complete() // row
-				args = parse_args('table_cell', args)
-				newlevel('table_row', "") // row
-				newlevel('table_cell', tag.split("\n")[1], args, body) // cell
-			} else
-				push_text(tag)
-			break;case 'table_end':
+			if (current.type!='table_cell')
+				return push_text(tag)
+			args = parse_args('table_cell', args)
+			complete();complete() // cell/row
+			newlevel('table_row', "") // row
+			return newlevel('table_cell', tag.split("\n")[1], args, body) // cell
+		case 'table_end':
 			kill_styles()
-			if (current.type=='table_cell') {
-				complete() // cell
-				complete() // row
-				complete() // table
-			} else // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
-				push_text(tag)
+			if (current.type!='table_cell')
+				return push_text(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
+			complete();
+			complete();
+			return complete();
 		}
 	}
 }
