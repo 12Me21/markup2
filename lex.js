@@ -9,6 +9,11 @@ let Markup = Object.seal({
 	}
 })
 
+// auto_cancel - will be cancelled at the end of a block, if open
+// auto_close - if cancelled, will be completed instead
+//   any tag with a {...} body  - also counts as auto_close
+// end_at_eol - cancelled at the end of a line (or completed if auto_close is set)
+
 let blocks = {
 	// simple tags
 	newline: {},
@@ -415,3 +420,27 @@ function parse(text) {
 	window.l=list
 	return finish()
 }
+
+
+///(?<![^\s({'"])[/](?![\s,'"])/
+
+//tODO: kill newlines around things
+
+// we need to remove any newline which comes directly after a block element
+// this INCLUDES things like, potentially
+
+// <i>
+//	  <table>
+//     ..
+//   </table>
+// </i>
+// <br>
+
+// other problem: 
+
+// what if you want to write like, "{...}". well that's fine
+// BUT if you are inside a tag, the } will close it.
+// maybe closing tags should need some kind of special syntax?
+// \tag{ ... \}  >{...\} idk..
+// or match paired {}s :  
+// \tag{ ...  {heck} ... } <- closes here
