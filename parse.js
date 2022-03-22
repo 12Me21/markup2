@@ -1,13 +1,8 @@
 "use strict"
 
-let Markup = Object.seal({
-	parse: parse,
-	render: null,
-	convert(text) {
-		let tree = Markup.parse(text)
-		return Markup.render(tree)
-	}
-})
+// auto_cancel - will be cancelled at the end of a block, if open
+// auto_close - if cancelled, will be completed instead
+// end_at_eol - cancelled at the end of a line (or completed if auto_close is set)
 
 let blocks = {
 	// simple tags
@@ -18,10 +13,10 @@ let blocks = {
 	line: {block:true},
 	// with contents:
 	ROOT: {block: true},
-	heading: {block:true, auto_close: true},
-	style: {auto_cancel: true},
-	env: {auto_close: true},
-	quote: {block:true, auto_close: true},
+	heading: {block:true, auto_close:true, end_at_eol:true},
+	style: {auto_cancel: true, end_at_eol:true},
+	env: {auto_close:true},
+	quote: {block:true, auto_close:true, end_at_eol:true},
 	
 	table: {block:true},
 	table_row: {},
@@ -48,86 +43,20 @@ let blocks = {
 	},
 }
 
-// NOTE:
-
-// /^/ matches after a <newline> or <env> token
-// /$/ matches end of string
-//  use /(?![^\n])/ to match at end of line
-// /@@@/ - matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
-
-let [regex, groups] = process_def([
-	[/\n/, 'newline'],
-	
-	[/^#{1,3}@@@? /, 'heading'],
-	[/^---+(?![^\n])/, 'line'],
-	
-	[/(?:[*][*]|__|~~|[/])(?=\w()|\W|$)/, 'style', 'style_end'], //todo: improve this one
-	
-	[/[\\](?:\w+@@@?)?{/, 'env'],
-	[/[\\]\w+@@@?/, 'env1'],
-	[/}/, 'env_end'],
-	[/[\\][^]/, 'escape'],
-	
-	[/^>@@@?[{ ]/, 'quote'],
-	
-	[/^```[^]*?\n```/, 'code'],
-	[/`[^`\n]+`/, 'icode'],
-	
-	[/!?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]@@@?/, 'link'],
-	
-	[/ *[|] *\n[|]@@@? */, 'table_row'],
-	[/ *[|]@@@? *(?![^\n])/, 'table_end'],
-	[/^ *[|]@@@? */, 'table'],
-	[/ *[|]@@@? */, 'table_cell'],
-	
-	//[/^ *- /, 'list'],
-])
-
-function process_def(table) {
-	//([^]*)
-	let regi = []
-	let types = []
-	for (let [regex, ...groups] of table) {
-		let r = regex.source.replace(/@@@/g,/(?:\[[^\]\n]*\])/.source)
-		regi.push(r+"()")
-		types.push(...groups)
-	}
-	let r = new RegExp(regi.join("|"), 'g')
-	return [r, types]
-}
-
-function parse(text) {
+function parser() {
 	let tree = {type:'ROOT',tag:"",content:[]}
 	let current = tree
 	let envs = 0 // number of open envs
 	
-	let list = []
-	
-	let last = regex.lastIndex = 0
-	for (let match; match=regex.exec(text); last=regex.lastIndex) {
-		// process
-		let group = match.indexOf("", 1) - 1
-		let type = groups[group]
-		// handle
-		list.push(type)
-		push_text(text.substring(last, match.index))
-		process(type, match[0])
-		
-		// select mode
-		if (type=='newline' || type=='env') {
-			text = text.substring(regex.lastIndex)
-			regex.lastIndex = 0
-		}
+	return {
+		finish() {
+			while (current.type!='ROOT')
+				cancel()
+			return tree
+		},
+		push_tag: process,
+		push_text: push_text,
 	}
-	push_text(text.substring(last))
-	window.l=list
-	
-	// finalize tree
-	while (current.type!='ROOT') {
-		cancel()
-	}
-	
-	return tree
 	
 	// start a new block
 	function newlevel(type, text) {
@@ -142,6 +71,7 @@ function parse(text) {
 	function up() {
 		let o = current
 		current = current.parent
+		delete o.parent
 		if (o.type=='env')
 			envs--
 		return o
@@ -216,16 +146,10 @@ function parse(text) {
 			console.error('unknown node', type, text)
 			push_text(text)
 		case 'newline':
-			while (1)
-				if (current.type=='heading')
-					complete()
-				else if (current.type=='style')
-					cancel()
-				else
-					break
+			while (blocks[current.type].end_at_eol)
+				cancel()
 			push_tag('newline')
-		break;case 'heading':
-			newlevel(type, text)
+		break;case 'heading': newlevel(type, text)
 		break;case 'line': case 'link': case 'env1':
 			push_tag(type, text)
 		break;case 'icode':
@@ -262,21 +186,14 @@ function parse(text) {
 				push_text(text)
 			else {
 				while (current.type!='env')
-					cancel() //todo: we need to close heading tags here.
-				// really,what we should do is, have:
-				// - 'weak' tags (styles) which get cancelled by everything
-				// - 'strong' tags (other things) which can block other tags
-				// - 'auto-closing' tags (headings, etc) like weak tags but which get closed instead of cancelled
-				
+					cancel()
 				let tag = current.tag
-				if (tag=="\\{") {
-					complete()
-				} else {
+				if (tag!="\\{") {
 					// real tag: \name or \name[args]
-					current.envtype = /^[\\](\w+)/.exec(tag)[1]
+					current.envtype = /^[\\](\w+)/.exec(tag)[1] // what if we just set .type to like, "env_<type>"
 					parse_args(/\[(.*?)\]{?$/)
-					complete()
 				}
+				complete()
 			}
 		break;case 'escape':
 			let c = text.substr(1)

@@ -34,8 +34,8 @@ Markup.render = (function(){
 		table_cell({header, color, colspan, rowspan}) {
 			let e = elem(header ? 'th' : 'td')
 			if (color) e.dataset.bgcolor = color
-			if (colspan) e.colSpan = cs
-			if (rowspan) e.rowSpan = rs
+			if (colspan) e.colSpan = colspan
+			if (rowspan) e.rowSpan = rowspan
 			return e
 		},
 		code(contents, args) {
@@ -65,16 +65,13 @@ Markup.render = (function(){
 		}
 	}
 	
-	const no_args = []
-	no_args.k = {}
-	
 	function render_branch(tree) {
 		// text
 		if (typeof tree == 'string')
 			return document.createTextNode(tree)
 		
 		// element
-		let elem = blocks[tree.type](tree.args||no_args, tree.tag)
+		let elem = blocks[tree.type](tree.args, tree.tag)
 		let branch
 		if (elem instanceof Array)
 			([elem, branch] = elem)
