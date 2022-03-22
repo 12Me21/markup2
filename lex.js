@@ -13,7 +13,14 @@ let arg_regex = [
 	/(?:\[([^\]\n]*)\])?({)?/y,
 	/(?:\[([^\]\n]*)\])?(?:({)| )/y,
 	/(?:\[([^\]\n]*)\])?({)? */y,
+	/(?:\[([^\]\n]*)\])? */y,
+	/(?:\[([^\]\n]*)\])?/y,
 ]
+// maybe instead of this separate parse step, we should just do something like
+// go back to using ex: /^><args>?[{ ]/
+// have either
+// - custom post-processing regex for each token (ex /[\\](\w+)(<args>)?({)?/ )
+// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 
 /* NOTE:
 
@@ -23,7 +30,6 @@ let arg_regex = [
  /<args>/ matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
 
 */
-
 let [regex, groups] = process_def([
 	[/\n/, {token:'newline'}],
 	
@@ -37,6 +43,7 @@ let [regex, groups] = process_def([
 	// what if we just had a flag for "this has args"
 	
 	[/[\\]\w+/, {token:'env',args:1}],
+	//[/{/, {token:''}], // maybe
 	[/}/, {token:'block_end'}],
 	[/[\\]{/, {token:'null_env'}],
 	[/[\\][^]/, {token:'escape'}], //todo: match surrogate pairs
@@ -46,12 +53,15 @@ let [regex, groups] = process_def([
 	[/^```[^]*?\n```/, {token:'code'}],
 	[/`[^`\n]+`/, {token:'icode'}],
 	
-	[/!?(?:https?:[/][/]|sbs:)<url-char>*<url-final>/, {token:'link',args:1}],
+	[
+		/(?:!())?(?:https?:[/][/]|sbs:)<url_char>*<url_final>/,
+		{token:'embed',args:5}, {token:'link',args:1}
+	],
 	
-	[/ *[|] *\n[|]/, {token:'table_row',args:3}],
+	[/ *[|] *\n[|]/, {token:'table_row',args:4}],
 	[/ *[|] *<eol>/, {token:'table_end'}],
-	[/^ *[|]/, {token:'table',args:3}],
-	[/ *[|]/, {token:'table_cell',args:3}],
+	[/^ *[|]/, {token:'table',args:4}],
+	[/ *[|]/, {token:'table_cell',args:4}],
 	
 	//[/^ *- /, 'list'],
 ])
@@ -62,10 +72,10 @@ function process_def(table) {
 	let groups = []
 	for (let [regex, ...matches] of table) {
 		let r = regex.source.replace(/<(\w+)>/g, (m,name)=>({
-			'args': /(?:\[[^\]\n]*\])/,
-			'eol': /(?![^\n])/,
-			'url-char': /[-\w./%?&=#+~@:$*',;!)(]/,
-			'url-final': /[-\w/%&=#+~@$*';)(]/,
+			args: /(?:\[[^\]\n]*\])/,
+			eol: /(?![^\n])/,
+			url_char: /[-\w./%?&=#+~@:$*',;!)(]/,
+			url_final: /[-\w/%&=#+~@$*';)(]/,
 		}[name].source))+"()"
 		regi.push(r)
 		
@@ -114,8 +124,8 @@ function parse(text) {
 		push_tag(thing.token, tag, args, body)
 		// start of line
 		if (thing.token=='newline' || body) {
-			text = text.substring(regex.lastIndex)
-			regex.lastIndex = 0
+			text = text.substring(last)
+			last = regex.lastIndex = 0
 		}
 	}
 	push_text(text.substring(last))

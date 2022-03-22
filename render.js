@@ -38,21 +38,20 @@ Markup.render = (function(){
 			if (rowspan) e.rowSpan = rowspan
 			return e
 		},
-		code(contents, args) {
+		code(args) {
 			let x = elem('pre')
-			x.textContent = contents
+			x.textContent = args
 			return x
 		},
-		icode(contents, args) {
+		icode(args) {
 			let x = elem('code')
-			x.textContent = contents.replace(/ /g, " ")
+			x.textContent = args.replace(/ /g, " ")
 			return x
 		},
-		link(contents, args) {
+		link({url}) {
 			let x = elem('a')
-			x.textContent = contents
+			x.textContent = url
 			
-			let url = contents
 			if (/^ *javascript:/i.test(url))
 				url = ""
 			x.href = url

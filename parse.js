@@ -7,7 +7,17 @@
 let blocks = {
 	// simple tags
 	newline: {},
-	link: {},
+	link: {
+		arg_process(list, named, url) {
+			return {url}
+		}
+	},
+	embed: {
+		arg_process(list, named, url) {
+			// todo: we need to figure out the filetype
+			return {url}
+		}
+	},
 	code: {block:true},
 	icode: {},
 	line: {block:true},
@@ -32,8 +42,8 @@ let blocks = {
 				else {
 					let m = /^(\d*)x(\d*)$/.exec(a)
 					if (m) {
-						if (+m[1]) ret.colspan = +m[1]
-						if (+m[2]) ret.rowspan = +m[2]
+						if (+(m[1])) ret.colspan = +m[1]
+						if (+(m[2])) ret.rowspan = +m[2]
 					} else { //...
 					}
 				}
@@ -43,19 +53,20 @@ let blocks = {
 	},
 }
 
-function parse_args(type, arglist) {
+function parse_args(type, arglist, ext) {
 	let map = {}
 	let list = []
-	for (let arg of arglist.split(";")) {
-		let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-		if (name==undefined) // value
-			list.push(value)
-		else if (name!="") // name=value
-			map[name] = value
-		else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
-			list.push(value)
-	}
-	return blocks[type].arg_process(list, map)
+	if (arglist!=null)
+		for (let arg of arglist.split(";")) {
+			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+			if (name==undefined) // value
+				list.push(value)
+			else if (name!="") // name=value
+				map[name] = value
+			else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+				list.push(value)
+		}
+	return blocks[type].arg_process(list, map, ext)
 }
 
 function parser() {
@@ -153,8 +164,16 @@ function parser() {
 		break;case 'line':
 			push_tag('line', tag)
 		break; case 'link':
-			if (tag[0]=='!')
-				
+			//todo: this is a hack
+			// see note in lex.js about extra parse step...
+			args = parse_args('link', args, /^([^[{]*)/.exec(tag)[1])
+			if (body)
+				newlevel('link', tag, args, true)
+			else
+				push_tag('link', tag, args)
+		break; case 'embed':
+			args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
+			push_tag('embed', tag, args)
 		break;case 'icode':
 			push_tag('icode', tag, tag.slice(1,-1))
 		break;case 'code':
