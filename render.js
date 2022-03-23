@@ -14,11 +14,7 @@ Markup.render = (function(){
 	
 	let blocks = {
 		ROOT: frag,
-		newline() {
-			let f = frag()
-			f.append(elem('br'), document.createTextNode(""))
-			return f
-		},
+		newline: creator('br'),
 		heading: creator('h2'),
 		line: creator('hr'),
 		italic: creator('i'),
@@ -85,56 +81,41 @@ Markup.render = (function(){
 			branch = elem
 		
 		let last_block = false
-		let got_newline = false
-		
-		function do_newline() {
-			if (got_newline) {
-				if (!last_block)
-					branch.append(document.createElement('br'))
-				branch.append("")
-				got_newline = false
-				last_block = false
-			}
-		}
 		
 		if (tree.content!=undefined) {
+			let got_newline = false
 			for (let i of tree.content) {
 				if (typeof i == 'string') {
-					if (got_newline) {
-						if (!last_block)
-							branch.append(document.createElement('br'))
-						branch.append("")
-						got_newline = false
-					}
-					last_block = false
+					if (got_newline && !last_block)
+						branch.append(blocks.newline())
+					got_newline = false
 					branch.append(i)
+					last_block = false
 				} else if (i.type=='newline') {
 					if (got_newline) {
 						if (!last_block)
-							branch.append(document.createElement('br'))
-						branch.append("")
+							branch.append(blocks.newline())
 						last_block = false
 					}
 					got_newline = true
 				} else {
-					let [elem, bl] = render_branch(i)
+					let [elem, is_block] = render_branch(i)
 					if (got_newline) {
-						if (!bl)
-							branch.append(document.createElement('br'))
+						if (!is_block)
+							branch.append(blocks.newline())
 						branch.append("")
-						last_block = false
 					}
 					got_newline = false
-					if (bl)
-						last_block = true
 					branch.append(elem)
+					last_block = is_block
 				}
 			}
-		}
-		if (got_newline) {
-			if (!last_block)
-				branch.append(document.createElement('br'))
-			branch.append("")
+			if (got_newline) {
+				if (!last_block)
+					branch.append(blocks.newline())
+				branch.append("")
+				last_block = false
+			}
 		}
 		return [elem, last_block || is_block[tree.type]]
 	}
