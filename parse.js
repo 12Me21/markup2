@@ -11,7 +11,7 @@ let Markup = (function(){
 			return ""
 		return url
 	}
-	let blocks = {
+	let BLOCKS = {
 		// simple tags
 		newline: {},
 		link: {
@@ -79,186 +79,213 @@ let Markup = (function(){
 	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 	
 
+	// argtype
+	let arg_regex = [
+		null,
+		/(?:\[([^\]\n]*)\])?({)?/y, // 1: [...]?{?
+		/(?:\[([^\]\n]*)\])?(?:({)| )/y, // 2: [...]?{ or [...]?<space>
+		/(?:\[([^\]\n]*)\])?({)? */y, // 3: [...]?{?<space>*
+		/(?:\[([^\]\n]*)\])? */y, // 4: [...]?<space>*
+		/(?:\[([^\]\n]*)\])?/y, // 5: [...]?
+	]
 	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
 		/$/ matches end of string
-		/<eol>/ matches end of line (replaced with /(?![^\n])/)
-		/<args>/ matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
+		/(?![^\n])/ matches end of line
 		/()/ empty tags are used to mark token types
 	*/
 	let [regex, groups] = process_def([
 		// 💎 NEWLINE
-		[/\n/, {newline:true, do(tag) {
-			while (!current.body && blocks[current.type].end_at_eol)
-				cancel()
-			TAG('newline', tag)
-		}}],
+		[/\n/, {
+			newline:true,
+			do(tag) {
+				while (!current.body && BLOCKS[current.type].end_at_eol)
+					CANCEL()
+				return TAG('newline', tag)
+			}
+		}],
 		// 💎 HEADING
-		[/^#{1,3}/, {args:3, do(tag, args, body) {
-			args = parse_args('heading', args)
-			OPEN('heading', tag, args, body)
-		}}],
+		[/^#{1,3}/, {
+			argtype:3,
+			do(tag, args, body) {
+				args = parse_args('heading', args)
+				return OPEN('heading', tag, args, body)
+			}
+		}],
 		// 💎 DIVIDER
-		[/^---+<eol>/, {do(tag){
-			TAG('line', tag)
-		}}],
+		[/^---+(?![^\n])/, {
+			do(tag){
+				return TAG('line', tag)
+			}
+		}],
 		// 💎 STYLE / 💎 STYLE END
 		[/(?:[*][*]|__|~~|[/])(?=\w()|)/, { //todo: improve these
+			// 💎 STYLE
 			do(tag) {
-				OPEN('style', tag, tag)
+				return OPEN('style', tag, tag)
 			},
 		},{
+			// 💎 STYLE END
 			do(tag) {
 				// todo: should be checking for WEAK here?
 				while (current.type=='style') { 
 					if (current.args == tag) { // found opening
 						current.type = {
-							'**': 'bold',
-							'__': 'underline',
-							'~~': 'strikethrough',
-							'/': 'italic',
+							"**": 'bold',
+							"__": 'underline',
+							"~~": 'strikethrough',
+							"/": 'italic',
 						}[current.args]
-						CLOSE()
-						return
+						return CLOSE()
 					}
 					CANCEL() // different style (kill)
 				}
-				TEXT(tag)
+				return TEXT(tag)
 			},
 		}],
 		// 💎 ENV
-		[/[\\]\w+/, {args:1, do(tag, args, body) {
-			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
-			args = parse_args('env', args)
-			OPEN('env', tag, args, body)
-		}}],
+		[/[\\]\w+/, {
+			argtype:1,
+			do(tag, args, body) {
+				let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
+				args = parse_args('env', args)
+				return OPEN('env', tag, args, body)
+			}
+		}],
 		//[/{/, {token:''}], // maybe
 		// 💎 BLOCK END
-		[/}/, {token:'block_end', do(tag) {
-			if (envs<=0)
-				TEXT(tag)
-			else {
+		[/}/, {
+			do(tag) {
+				if (envs<=0)
+					return TEXT(tag)
 				while (!current.body)
 					CANCEL()
-				CLOSE()
+				return CLOSE()
 			}
-		}}],
+		}],
 		// 💎 ENV
-		[/[\\]{/, {body:true, do(tag) {
-			OPEN('null_env', tag, null, true)
-		}}],
+		[/[\\]{/, {
+			body:true,
+			do(tag) {
+				return OPEN('null_env', tag, null, true)
+			}
+		}],
 		// 💎 ESCAPED CHAR
-		[/[\\][^]/, {do(tag) {
-			if (tag=='\\\n')
-				TAG('newline')
-			else
-				TEXT(tag.substr(1))
-		}}], //todo: match surrogate pairs
+		[/[\\][^]/, {
+			do(tag) {
+				if (tag=="\\\n")
+					return TAG('newline')
+				return TEXT(tag.substr(1))
+			}}], //todo: match surrogate pairs
 		// 💎 QUOTE
-		[/^>/, {args:2, do(tag, args, body) {
-			args = parse_args('quote', args)
-			OPEN('quote', tag, args, body)
-		}}],
+		[/^>/, {
+			argtype:2,
+			do(tag, args, body) {
+				args = parse_args('quote', args)
+				return OPEN('quote', tag, args, body)
+			}
+		}],
 		// 💎 CODE BLOCK
-		[/^```[^]*?\n```/, {do(tag) {
-			TAG('code', tag, tag.slice(3,-3))
-		}}],
+		[/^```[^]*?\n```/, {
+			do(tag) {
+				return TAG('code', tag, tag.slice(3,-3))
+			}
+		}],
 		// 💎 INLINE CODE
-		[/`[^`\n]+`/, {do(tag) {
-			TAG('icode', tag, tag.slice(1,-1))
-		}}],
+		[/`[^`\n]+`/, {
+			do(tag) {
+				return TAG('icode', tag, tag.slice(1,-1))
+			}
+		}],
 		// 💎 EMBED / 💎 LINK
-		[/(?:!())?(?:https?:[/][/]|sbs:)<url_char>*<url_final>/, {
-			args:5, do(tag, args, body) {
+		[/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/, {
+			// 💎 EMBED
+			argtype:5,
+			do(tag, args, body) {
 				args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
-				TAG('embed', tag, args)
+				return TAG('embed', tag, args)
 			}
 		},{
-			args:1, do(tag, args, body) {
+			// 💎 LINK
+			argtype:1,
+			do(tag, args, body) {
 				//todo: this is a hack
 				let url = /^([^[{]*)/.exec(tag)[1]
 				if (body) {
 					args = parse_args('link', args, url)
-					OPEN('link', tag, args, true)
-				} else {
-					args = parse_args('simple_link', args, url)
-					TAG('simple_link', tag, args)
+					return OPEN('link', tag, args, true)
 				}
+				args = parse_args('simple_link', args, url)
+				return TAG('simple_link', tag, args)
 			}
 		}],
 		// 💎 TABLE - NEXT ROW
-		[/ *[|] *\n[|]/, {args:4, do(tag, args, body) {
-			kill_styles()
-			if (current.type!='table_cell')
-				push_text(tag)
-			else {
+		[/ *[|] *\n[|]/, {
+			argtype:4,
+			do(tag, args, body) {
+				KILL_WEAK()
+				if (current.type!='table_cell')
+					return TEXT(tag)
 				args = parse_args('table_cell', args)
-				CLOSE(); // cell
-				CLOSE(); // row
-				OPEN('table_row', "")
-				OPEN('table_cell', tag.split("\n")[1], args, body)
+				return (
+					CLOSE(), // cell
+					CLOSE(), // row
+					OPEN('table_row', ""),
+					OPEN('table_cell', tag.split("\n")[1], args, body))
 			}
-		}}],
+		}],
 		// 💎 TABLE - END
-		[/ *[|] *<eol>/, {do(tag, args, body) {
-			kill_styles()
-			if (current.type!='table_cell') {
-				TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
-			} else {
-				CLOSE();
-				CLOSE();
-				CLOSE();
+		[/ *[|] *(?![^\n])/, {
+			do(tag, args, body) {
+				KILL_WEAK()
+				if (current.type!='table_cell')
+					return TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
+				return (
+					CLOSE(),
+					CLOSE(),
+					CLOSE())
 			}
-		}}],
+		}],
 		// 💎 TABLE - START
-		[/^ *[|]/, {args:4, do(tag, args, body) {
-			args = parse_args('table_cell', args)
-			OPEN('table', "")
-			OPEN('table_row', "")
-			OPEN('table_cell', tag, args, body)
-		}}],
-		// 💎 TABLE - NEXT CELL
-		[/ *[|]/, {args:4, do(tag, args, body) {
-			kill_styles()
-			if (current.type!='table_cell')
-				TEXT(tag)
-			else {
+		[/^ *[|]/, {
+			argtype:4,
+			do(tag, args, body) {
 				args = parse_args('table_cell', args)
-				CLOSE() // cell
-				OPEN('table_cell', tag.replace(/^ *[|]/,""), args, body)
+				return (
+					OPEN('table', ""),
+					OPEN('table_row', ""),
+					OPEN('table_cell', tag, args, body))
 			}
-		}}],
+		}],
+		// 💎 TABLE - NEXT CELL
+		[/ *[|]/, {
+			argtype:4,
+			do(tag, args, body) {
+				KILL_WEAK()
+				if (current.type!='table_cell')
+					return TEXT(tag)
+				args = parse_args('table_cell', args)
+				return (
+					CLOSE(), // cell
+					OPEN('table_cell', tag.replace(/^ *[|]/,""), args, body))
+			}}
+		],
 		//[/^ *- /, 'list'],
 	])
 	
+
+	
 	function process_def(table) {
-		//([^]*)
 		let regi = []
 		let groups = []
 		for (let [regex, ...matches] of table) {
-			let r = regex.source.replace(/<(\w+)>/g, (m,name)=>({
-				eol: /(?![^\n])/,
-				url_char: /[-\w./%?&=#+~@:$*',;!)(]/,
-				url_final: /[-\w/%&=#+~@$*';)(]/,
-			}[name].source))+"()"
-			regi.push(r)
-			
+			regi.push(regex.source+"()")
 			groups.push(...matches)
 		}
 		let r = new RegExp(regi.join("|"), 'g')
 		return [r, groups]
 	}
-	
-	let arg_regex = [
-		/(?:\[([^\]\n]*)\])?({)?/y,
-		/(?:\[([^\]\n]*)\])?(?:({)| )/y,
-		/(?:\[([^\]\n]*)\])?({)? */y,
-		/(?:\[([^\]\n]*)\])? */y,
-		/(?:\[([^\]\n]*)\])?/y,
-	]
-	
-
 	
 	function parse_args(type, arglist, ext) {
 		let map = {}
@@ -266,14 +293,12 @@ let Markup = (function(){
 		if (arglist!=null)
 			for (let arg of arglist.split(";")) {
 				let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-				if (name==undefined) // value
+				if (name==undefined || name=="") // value or =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
 					list.push(value)
-				else if (name!="") // name=value
+				else // name=value
 					map[name] = value
-				else // =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
-					list.push(value)
 			}
-		return blocks[type].arg_process(list, map, ext)
+		return BLOCKS[type].arg_process(list, map, ext)
 	}
 	// start a new block
 	function OPEN(type, text, args, body) {
@@ -281,7 +306,7 @@ let Markup = (function(){
 			type: type,
 			tag: text,
 			content: [],
-			parent: current, //todo: could just be a stack
+			parent: current, // could just be a stack
 		}
 		if (body) {
 			envs++
@@ -309,32 +334,33 @@ let Markup = (function(){
 	}
 	// cancel current block (flatten)
 	function CANCEL() {
-		if (current.body || blocks[current.type].auto_close)
-			return complete()
+		if (current.body || BLOCKS[current.type].auto_close)
+			return CLOSE()
 		let o = up()
-		// if we just cancelled a table cell, we don't want to insert text into the table row/body
-		// so instead we complete the table first.
+		// if we just cancelled a table cell, we don't want to insert text into the table row/body,
+		// so we complete the table first.
 		if (o.type=='table_cell') {
-			complete() // todo: don't complete if empty?
-			complete()
+			CLOSE() // todo: don't complete if empty?
+			CLOSE()
 		}
 		// push the start tag (as text)
 		if (o.tag)
-			push_text(o.tag) // todo: merge with surrounding text nodes?
+			TEXT(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
 		current.content.push(...o.content)
 	}
 	// push text
 	function TEXT(text) {
-		if (text!="") current.content.push(text)
+		if (text)
+			current.content.push(text)
 	}
 	// push empty tag
 	function TAG(type, text, args) {
 		current.content.push({type: type, tag: text, args: args})
 	}
-	function kill_styles() {
-		while (blocks[current.type].auto_cancel)
-			cancel()
+	function KILL_WEAK() {
+		while (BLOCKS[current.type].auto_cancel)
+			CANCEL()
 	}
 	function START() {
 		tree = {type:'ROOT',tag:"",content:[]}
@@ -343,7 +369,7 @@ let Markup = (function(){
 	}
 	function FINISH() {
 		while (current.type!='ROOT')
-			cancel()
+			CANCEL()
 		return tree
 	}
 	
@@ -353,15 +379,15 @@ let Markup = (function(){
 		let last = regex.lastIndex = 0
 		for (let match; match=regex.exec(text); ) {
 			// text before token
-			push_text(text.substring(last, match.index))
+			TEXT(text.substring(last, match.index))
 			// get token
 			let group = match.indexOf("", 1) - 1
 			let thing = groups[group]
 			let tag = match[0]
 			// parse args and {
 			let body = thing.body
-			if (thing.args) {
-				let ar = arg_regex[thing.args-1]
+			if (thing.argtype) {
+				let ar = arg_regex[thing.argtype]
 				ar.lastIndex = regex.lastIndex
 				let m = ar.exec(text)
 				if (m) {
@@ -382,11 +408,12 @@ let Markup = (function(){
 			}
 			// start of line
 			if (thing.newline || body) {
-				text = text.substring(last)
+				//text = text.substring(last)
+				text = RegExp["$'"]
 				last = regex.lastIndex = 0
 			}
 		}
-		push_text(text.substring(last))
+		TEXT(text.substring(last))
 		
 		return FINISH()
 	}
