@@ -89,11 +89,6 @@ let Markup = (function(){
 		/(?:\[([^\]\n]*)\])?/y, // 5: [...]?
 	]
 	
-	function newline_close() {
-		while (!current.body && BLOCKS[current.type].end_at_eol)
-			CANCEL()
-	}
-	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
 		/$/ matches end of string
@@ -101,17 +96,22 @@ let Markup = (function(){
 		/()/ empty tags are used to mark token types
 	*/
 	let [regex, groups] = process_def([[
-		// 💎 HEADING 💎
-		/(?:\n|^)#{1,3}/,
+		// 💎 NEWLINE 💎
+		/\n/,
+		{newline:true, do(tag) {
+			while (!current.body && BLOCKS[current.type].end_at_eol)
+				CANCEL()
+			return TAG('newline', tag)
+		}},
+	],[// 💎 HEADING 💎
+		/^#{1,3}/,
 		{argtype:3, do(tag, args, body) {
-			newline_close()
 			args = parse_args('heading', args)
 			return OPEN('heading', tag, args, body)
 		}},
 	],[// 💎 DIVIDER 💎
-		/(?:\n|^)---+(?![^\n])/,
+		/^---+(?![^\n])/,
 		{do(tag) {
-			newline_close()
 			return TAG('line', tag)
 		}},
 	],[// 💎💎 STYLE
@@ -167,16 +167,14 @@ let Markup = (function(){
 			return TEXT(tag.substr(1))
 		}},
 	],[// 💎 QUOTE 💎
-		/(?:\n|^)>/,
+		/^>/,
 		{argtype:2, do(tag, args, body) {
-			newline_close()
 			args = parse_args('quote', args)
 			return OPEN('quote', tag, args, body)
 		}},
 	],[// 💎 CODE BLOCK 💎
-		/(?:\n|^)```[^]*?(?:```|$)(?![^\n])/,
+		/^```[^]*?\n(?:```|$)/,
 		{do(tag) {
-			newline_close()
 			return TAG('code', tag, tag.replace(/^```|```$/g,"")) // hack...
 		}},
 	],[// 💎 INLINE CODE 💎
@@ -185,10 +183,9 @@ let Markup = (function(){
 			return TAG('icode', tag, tag.replace(/^`|`$/g,""))
 		}},
 	],[// 💎💎 URL
-		/(?:\n?!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
+		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
 		// 💎 EMBED 💎
 		{argtype:5, do(tag, args, body) {
-			newline_close()
 			args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
 			return TAG('embed', tag, args)
 		}},
@@ -217,7 +214,7 @@ let Markup = (function(){
 				OPEN('table_cell', tag.split("\n")[1], args, body))
 		}},
 	],[// 💎 TABLE - END 💎
-		/ *[|] *(?:\n|$)/,
+		/ *[|] *(?![^\n])/,
 		{do(tag, args, body) {
 			KILL_WEAK()
 			if (current.type!='table_cell')
@@ -228,9 +225,8 @@ let Markup = (function(){
 				CLOSE())
 		}},
 	],[// 💎 TABLE - START 💎
-		/(?:\n|^) *[|]/,
+		/^ *[|]/,
 		{argtype:4, do(tag, args, body) {
-			newline_close()
 			args = parse_args('table_cell', args)
 			return (
 				OPEN('table', ""),
@@ -247,12 +243,6 @@ let Markup = (function(){
 			return (
 				CLOSE(), // cell
 				OPEN('table_cell', tag.replace(/^ *[|]/,""), args, body))
-		}},
-	],[// 💎 NEWLINE 💎
-		/\n/,
-		{newline:true, do(tag) {
-			newline_close()
-			return TAG('newline', tag)
 		}},
 	]])
 	//[/^ *- /, 'list'], TODO
@@ -391,7 +381,7 @@ let Markup = (function(){
 				last = regex.lastIndex
 			}
 			// start of line
-			if (body) {
+			if (thing.newline || body) {
 				//text = text.substring(last)
 				text = RegExp["$'"]
 				last = regex.lastIndex = 0

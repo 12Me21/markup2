@@ -90,19 +90,39 @@ Markup.render = (function(){
 		// well, really it would be (\n|^)> quote(\n|$)
 		
 		if (tree.content!=undefined) {
+			let got_newline = false
 			for (let i of tree.content) {
 				if (typeof i == 'string') {
+					if (got_newline && !last_block)
+						branch.append(blocks.newline())
+					got_newline = false
 					branch.append(i)
 					last_block = false
 				} else if (i.type=='newline') {
-					if (!last_block)
-						branch.append(blocks.newline(), "")
-					last_block = false
+					if (got_newline) {
+						if (!last_block)
+							branch.append(blocks.newline())
+						branch.append("")
+						last_block = false
+					}
+					got_newline = true
 				} else {
 					let [elem, is_block] = render_branch(i)
+					if (got_newline) {
+						if (!is_block)
+							branch.append(blocks.newline())
+						branch.append("")
+					}
+					got_newline = false
 					branch.append(elem)
 					last_block = is_block
 				}
+			}
+			if (got_newline) {
+				if (!last_block)
+					branch.append(blocks.newline())
+				branch.append("")
+				last_block = false
 			}
 		}
 		return [elem, last_block || is_block[tree.type]]
