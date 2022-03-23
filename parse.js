@@ -416,6 +416,7 @@ let Markup = (function(){
 	return Object.seal({
 		parse: parse,
 		render: null,
+		regex, groups,
 		convert(text) {
 			let tree = this.parse(text)
 			return this.render(tree)
