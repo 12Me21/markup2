@@ -85,91 +85,94 @@ let Markup = (function(){
 		/$/ matches end of string
 		/<eol>/ matches end of line (replaced with /(?![^\n])/)
 		/<args>/ matches "[...]" arguments (replaced with /(?:\[[^\]\n]*\])/)
+		/()/ empty tags are used to mark token types
 	*/
 	let [regex, groups] = process_def([
 		// 💎 NEWLINE
 		[/\n/, {newline:true, do(tag) {
 			while (!current.body && blocks[current.type].end_at_eol)
 				cancel()
-			push_tag('newline', tag)
+			TAG('newline', tag)
 		}}],
 		// 💎 HEADING
 		[/^#{1,3}/, {args:3, do(tag, args, body) {
 			args = parse_args('heading', args)
-			newlevel('heading', tag, args, body)
+			OPEN('heading', tag, args, body)
 		}}],
 		// 💎 DIVIDER
 		[/^---+<eol>/, {do(tag){
-			push_tag('line', tag)
+			TAG('line', tag)
 		}}],
-		// 💎 STYLE
-		//todo: improve these
-		[/(?:[*][*]|__|~~|[/])(?=\w)/, {do(tag) {
-			newlevel('style', tag, tag)
-		}}], 
-		// 💎 STYLE END
-		[/(?:[*][*]|__|~~|[/])/, {do(tag) {
-			while (current.type=='style') { // should be checking for WEAK here?
-				if (current.args == tag) { // found opening
-					current.type = {
-						'**': 'bold',
-						'__': 'underline',
-						'~~': 'strikethrough',
-						'/': 'italic',
-					}[current.args]
-					complete()
-					return
+		// 💎 STYLE / 💎 STYLE END
+		[/(?:[*][*]|__|~~|[/])(?=\w()|)/, { //todo: improve these
+			do(tag) {
+				OPEN('style', tag, tag)
+			},
+		},{
+			do(tag) {
+				// todo: should be checking for WEAK here?
+				while (current.type=='style') { 
+					if (current.args == tag) { // found opening
+						current.type = {
+							'**': 'bold',
+							'__': 'underline',
+							'~~': 'strikethrough',
+							'/': 'italic',
+						}[current.args]
+						CLOSE()
+						return
+					}
+					CANCEL() // different style (kill)
 				}
-				cancel() // different style (kill)
-			}
-			push_text(tag)
-		}}],
+				TEXT(tag)
+			},
+		}],
 		// 💎 ENV
 		[/[\\]\w+/, {args:1, do(tag, args, body) {
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
 			args = parse_args('env', args)
-			newlevel('env', tag, args, body)
+			OPEN('env', tag, args, body)
 		}}],
 		//[/{/, {token:''}], // maybe
 		// 💎 BLOCK END
 		[/}/, {token:'block_end', do(tag) {
 			if (envs<=0)
-				push_text(tag)
+				TEXT(tag)
 			else {
 				while (!current.body)
-					cancel()
-				complete()
+					CANCEL()
+				CLOSE()
 			}
 		}}],
 		// 💎 ENV
 		[/[\\]{/, {body:true, do(tag) {
-			newlevel('null_env', tag, null, true)
+			OPEN('null_env', tag, null, true)
 		}}],
 		// 💎 ESCAPED CHAR
 		[/[\\][^]/, {do(tag) {
 			if (tag=='\\\n')
-				push_tag('newline')
+				TAG('newline')
 			else
-				push_text(tag.substr(1))
+				TEXT(tag.substr(1))
 		}}], //todo: match surrogate pairs
 		// 💎 QUOTE
 		[/^>/, {args:2, do(tag, args, body) {
 			args = parse_args('quote', args)
-			newlevel('quote', tag, args, body)
+			OPEN('quote', tag, args, body)
 		}}],
 		// 💎 CODE BLOCK
 		[/^```[^]*?\n```/, {do(tag) {
-			push_tag('code', tag, tag.slice(3,-3))
+			TAG('code', tag, tag.slice(3,-3))
 		}}],
 		// 💎 INLINE CODE
 		[/`[^`\n]+`/, {do(tag) {
-			push_tag('icode', tag, tag.slice(1,-1))
+			TAG('icode', tag, tag.slice(1,-1))
 		}}],
-		// 💎 LINK
+		// 💎 EMBED / 💎 LINK
 		[/(?:!())?(?:https?:[/][/]|sbs:)<url_char>*<url_final>/, {
 			args:5, do(tag, args, body) {
 				args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
-				push_tag('embed', tag, args)
+				TAG('embed', tag, args)
 			}
 		},{
 			args:1, do(tag, args, body) {
@@ -177,10 +180,10 @@ let Markup = (function(){
 				let url = /^([^[{]*)/.exec(tag)[1]
 				if (body) {
 					args = parse_args('link', args, url)
-					newlevel('link', tag, args, true)
+					OPEN('link', tag, args, true)
 				} else {
 					args = parse_args('simple_link', args, url)
-					push_tag('simple_link', tag, args)
+					TAG('simple_link', tag, args)
 				}
 			}
 		}],
@@ -191,38 +194,39 @@ let Markup = (function(){
 				push_text(tag)
 			else {
 				args = parse_args('table_cell', args)
-				complete();complete() // cell/row
-				newlevel('table_row', "")
-				newlevel('table_cell', tag.split("\n")[1], args, body)
+				CLOSE(); // cell
+				CLOSE(); // row
+				OPEN('table_row', "")
+				OPEN('table_cell', tag.split("\n")[1], args, body)
 			}
 		}}],
 		// 💎 TABLE - END
 		[/ *[|] *<eol>/, {do(tag, args, body) {
 			kill_styles()
 			if (current.type!='table_cell') {
-				push_text(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
+				TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
 			} else {
-				complete();
-				complete();
-				return complete();
+				CLOSE();
+				CLOSE();
+				CLOSE();
 			}
 		}}],
 		// 💎 TABLE - START
 		[/^ *[|]/, {args:4, do(tag, args, body) {
 			args = parse_args('table_cell', args)
-			newlevel('table', "") // table
-			newlevel('table_row', "") // row
-			newlevel('table_cell', tag, args, body) // cell
+			OPEN('table', "")
+			OPEN('table_row', "")
+			OPEN('table_cell', tag, args, body)
 		}}],
 		// 💎 TABLE - NEXT CELL
 		[/ *[|]/, {args:4, do(tag, args, body) {
 			kill_styles()
 			if (current.type!='table_cell')
-				push_text(tag)
+				TEXT(tag)
 			else {
 				args = parse_args('table_cell', args)
-				complete() // cell
-				newlevel('table_cell', tag.replace(/^ *[|]/,""), args, body)
+				CLOSE() // cell
+				OPEN('table_cell', tag.replace(/^ *[|]/,""), args, body)
 			}
 		}}],
 		//[/^ *- /, 'list'],
@@ -234,7 +238,6 @@ let Markup = (function(){
 		let groups = []
 		for (let [regex, ...matches] of table) {
 			let r = regex.source.replace(/<(\w+)>/g, (m,name)=>({
-				args: /(?:\[[^\]\n]*\])/,
 				eol: /(?![^\n])/,
 				url_char: /[-\w./%?&=#+~@:$*',;!)(]/,
 				url_final: /[-\w/%&=#+~@$*';)(]/,
@@ -273,12 +276,12 @@ let Markup = (function(){
 		return blocks[type].arg_process(list, map, ext)
 	}
 	// start a new block
-	function newlevel(type, text, args, body) {
+	function OPEN(type, text, args, body) {
 		current = {
 			type: type,
 			tag: text,
 			content: [],
-			parent: current,
+			parent: current, //todo: could just be a stack
 		}
 		if (body) {
 			envs++
@@ -291,13 +294,12 @@ let Markup = (function(){
 	function up() {
 		let o = current
 		current = current.parent
-		delete o.parent
 		if (o.body)
 			envs--
 		return o
 	}
 	// complete current block
-	function complete() {
+	function CLOSE() {
 		// push the block + move up
 		let o = up()
 		if (o.type=='null_env') // special case: merge
@@ -306,7 +308,7 @@ let Markup = (function(){
 			current.content.push(o)
 	}
 	// cancel current block (flatten)
-	function cancel() {
+	function CANCEL() {
 		if (current.body || blocks[current.type].auto_close)
 			return complete()
 		let o = up()
@@ -323,44 +325,40 @@ let Markup = (function(){
 		current.content.push(...o.content)
 	}
 	// push text
-	function push_text(text) {
+	function TEXT(text) {
 		if (text!="") current.content.push(text)
 	}
 	// push empty tag
-	function push_tag(type, text, args) {
+	function TAG(type, text, args) {
 		current.content.push({type: type, tag: text, args: args})
 	}
 	function kill_styles() {
 		while (blocks[current.type].auto_cancel)
 			cancel()
 	}
-	function start() {
+	function START() {
 		tree = {type:'ROOT',tag:"",content:[]}
 		current = tree
 		envs = 0
 	}
-	function finish() {
+	function FINISH() {
 		while (current.type!='ROOT')
 			cancel()
 		return tree
 	}
 	
 	function parse(text) {
-		let list = []
-		
-		start()
+		START()
 		
 		let last = regex.lastIndex = 0
 		for (let match; match=regex.exec(text); ) {
-			// pre
+			// text before token
 			push_text(text.substring(last, match.index))
-			// process
+			// get token
 			let group = match.indexOf("", 1) - 1
 			let thing = groups[group]
-			list.push(thing.token)
 			let tag = match[0]
 			// parse args and {
-			let args
 			let body = thing.body
 			if (thing.args) {
 				let ar = arg_regex[thing.args-1]
@@ -368,7 +366,7 @@ let Markup = (function(){
 				let m = ar.exec(text)
 				if (m) {
 					tag += m[0]
-					args = m[1]
+					let args = m[1]
 					body = m[2]
 					thing.do(tag, args, body)
 					last = regex.lastIndex = ar.lastIndex
@@ -389,8 +387,8 @@ let Markup = (function(){
 			}
 		}
 		push_text(text.substring(last))
-		window.l=list
-		return finish()
+		
+		return FINISH()
 	}
 	
 	///(?<![^\s({'"])[/](?![\s,'"])/
