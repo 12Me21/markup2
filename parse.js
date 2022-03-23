@@ -321,6 +321,7 @@ let Markup = (function(){
 			TEXT(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
 		current.content.push(...o.content)
+		let last = o.content[o.content.length-1]
 	}
 	// push text
 	function TEXT(text) {

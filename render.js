@@ -7,6 +7,11 @@ Markup.render = (function(){
 	let elem = document.createElement.bind(document)
 	let frag = document.createDocumentFragment.bind(document)
 	
+	let is_block = {
+		code:1, line:1, ROOT:1, heading:1, quote:1, table:1,
+		table_cell:1,
+	}
+	
 	let blocks = {
 		ROOT: frag,
 		newline() {
@@ -71,10 +76,6 @@ Markup.render = (function(){
 	}
 	
 	function render_branch(tree) {
-		// text
-		if (typeof tree == 'string')
-			return document.createTextNode(tree)
-		
 		// element
 		let elem = blocks[tree.type](tree.args, tree.tag)
 		let branch
@@ -83,14 +84,62 @@ Markup.render = (function(){
 		else
 			branch = elem
 		
-		if (tree.content!=undefined) {
-			for (let i of tree.content)
-				branch.append(render_branch(i))
+		let last_block = false
+		let got_newline = false
+		
+		function do_newline() {
+			if (got_newline) {
+				if (!last_block)
+					branch.append(document.createElement('br'))
+				branch.append("")
+				got_newline = false
+				last_block = false
+			}
 		}
-		return elem
+		
+		if (tree.content!=undefined) {
+			for (let i of tree.content) {
+				if (typeof i == 'string') {
+					if (got_newline) {
+						if (!last_block)
+							branch.append(document.createElement('br'))
+						branch.append("")
+						got_newline = false
+					}
+					last_block = false
+					branch.append(i)
+				} else if (i.type=='newline') {
+					if (got_newline) {
+						if (!last_block)
+							branch.append(document.createElement('br'))
+						branch.append("")
+						last_block = false
+					}
+					got_newline = true
+				} else {
+					let [elem, bl] = render_branch(i)
+					if (got_newline) {
+						if (!bl)
+							branch.append(document.createElement('br'))
+						branch.append("")
+						last_block = false
+					}
+					got_newline = false
+					if (bl)
+						last_block = true
+					branch.append(elem)
+				}
+			}
+		}
+		if (got_newline) {
+			if (!last_block)
+				branch.append(document.createElement('br'))
+			branch.append("")
+		}
+		return [elem, last_block || is_block[tree.type]]
 	}
 	
 	return function(tree) {
-		return render_branch(tree)
+		return render_branch(tree)[0]
 	}
 }())
