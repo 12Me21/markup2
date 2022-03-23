@@ -95,185 +95,157 @@ let Markup = (function(){
 		/(?![^\n])/ matches end of line
 		/()/ empty tags are used to mark token types
 	*/
-	let [regex, groups] = process_def([
-		// 💎 NEWLINE
-		[/\n/, {
-			newline:true,
-			do(tag) {
-				while (!current.body && BLOCKS[current.type].end_at_eol)
-					CANCEL()
-				return TAG('newline', tag)
-			}
-		}],
-		// 💎 HEADING
-		[/^#{1,3}/, {
-			argtype:3,
-			do(tag, args, body) {
-				args = parse_args('heading', args)
-				return OPEN('heading', tag, args, body)
-			}
-		}],
-		// 💎 DIVIDER
-		[/^---+(?![^\n])/, {
-			do(tag){
-				return TAG('line', tag)
-			}
-		}],
-		// 💎 STYLE / 💎 STYLE END
-		[/(?:[*][*]|__|~~|[/])(?=\w()|)/, { //todo: improve these
-			// 💎 STYLE
-			do(tag) {
-				return OPEN('style', tag, tag)
-			},
-		},{
-			// 💎 STYLE END
-			do(tag) {
-				// todo: should be checking for WEAK here?
-				while (current.type=='style') { 
-					if (current.args == tag) { // found opening
-						current.type = {
-							"**": 'bold',
-							"__": 'underline',
-							"~~": 'strikethrough',
-							"/": 'italic',
-						}[current.args]
-						return CLOSE()
-					}
-					CANCEL() // different style (kill)
+	let [regex, groups] = process_def([[
+		// 💎 NEWLINE 💎
+		/\n/,
+		{newline:true, do(tag) {
+			while (!current.body && BLOCKS[current.type].end_at_eol)
+				CANCEL()
+			return TAG('newline', tag)
+		}},
+	],[// 💎 HEADING 💎
+		/^#{1,3}/,
+		{argtype:3, do(tag, args, body) {
+			args = parse_args('heading', args)
+			return OPEN('heading', tag, args, body)
+		}},
+	],[// 💎 DIVIDER 💎
+		/^---+(?![^\n])/,
+		{do(tag) {
+			return TAG('line', tag)
+		}},
+	],[// 💎💎 STYLE
+		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve these
+		// 💎 STYLE START 💎
+		{do(tag) {
+			return OPEN('style', tag, tag)
+		}},
+		// 💎 STYLE END 💎
+		{do(tag) {
+			// todo: should be checking for WEAK here?
+			while (current.type=='style') { 
+				if (current.args == tag) { // found opening
+					current.type = {
+						"**": 'bold',
+						"__": 'underline',
+						"~~": 'strikethrough',
+						"/": 'italic',
+					}[current.args]
+					return CLOSE()
 				}
-				return TEXT(tag)
-			},
-		}],
-		// 💎 ENV
-		[/[\\]\w+/, {
-			argtype:1,
-			do(tag, args, body) {
-				let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
-				args = parse_args('env', args)
-				return OPEN('env', tag, args, body)
+				CANCEL() // different style (kill)
 			}
-		}],
+			return TEXT(tag)
+		}},
+	],[// 💎 ENV 💎
+		/[\\]\w+/,
+		{argtype:1, do(tag, args, body) {
+			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
+			args = parse_args('env', args)
+			return OPEN('env', tag, args, body)
+		}},
+	],[// 💎 BLOCK END 💎
 		//[/{/, {token:''}], // maybe
-		// 💎 BLOCK END
-		[/}/, {
-			do(tag) {
-				if (envs<=0)
-					return TEXT(tag)
-				while (!current.body)
-					CANCEL()
-				return CLOSE()
+		/}/,
+		{do(tag) {
+			if (envs<=0)
+				return TEXT(tag)
+			while (!current.body)
+				CANCEL()
+			return CLOSE()
+		}},
+	],[// 💎 NULL ENV 💎
+		/[\\]{/,
+		{body:true, do(tag) {
+			return OPEN('null_env', tag, null, true)
+		}},
+	],[// 💎 ESCAPED CHAR 💎
+		/[\\][^]/, //todo: match surrogate pairs
+		{do(tag) {
+			if (tag=="\\\n")
+				return TAG('newline')
+			return TEXT(tag.substr(1))
+		}},
+	],[// 💎 QUOTE 💎
+		/^>/,
+		{argtype:2, do(tag, args, body) {
+			args = parse_args('quote', args)
+			return OPEN('quote', tag, args, body)
+		}},
+	],[// 💎 CODE BLOCK 💎
+		/^```[^]*?\n```/,
+		{do(tag) {
+			return TAG('code', tag, tag.slice(3,-3))
+		}},
+	],[// 💎 INLINE CODE 💎
+		/`[^`\n]+`/,
+		{do(tag) {
+			return TAG('icode', tag, tag.slice(1,-1))
+		}},
+	],[// 💎💎 URL
+		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
+		// 💎 EMBED 💎
+		{argtype:5, do(tag, args, body) {
+			args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
+			return TAG('embed', tag, args)
+		}},
+		// 💎 LINK 💎
+		{argtype:1, do(tag, args, body) {
+			//todo: this is a hack
+			let url = /^([^[{]*)/.exec(tag)[1]
+			if (body) {
+				args = parse_args('link', args, url)
+				return OPEN('link', tag, args, true)
 			}
-		}],
-		// 💎 ENV
-		[/[\\]{/, {
-			body:true,
-			do(tag) {
-				return OPEN('null_env', tag, null, true)
-			}
-		}],
-		// 💎 ESCAPED CHAR
-		[/[\\][^]/, {
-			do(tag) {
-				if (tag=="\\\n")
-					return TAG('newline')
-				return TEXT(tag.substr(1))
-			}}], //todo: match surrogate pairs
-		// 💎 QUOTE
-		[/^>/, {
-			argtype:2,
-			do(tag, args, body) {
-				args = parse_args('quote', args)
-				return OPEN('quote', tag, args, body)
-			}
-		}],
-		// 💎 CODE BLOCK
-		[/^```[^]*?\n```/, {
-			do(tag) {
-				return TAG('code', tag, tag.slice(3,-3))
-			}
-		}],
-		// 💎 INLINE CODE
-		[/`[^`\n]+`/, {
-			do(tag) {
-				return TAG('icode', tag, tag.slice(1,-1))
-			}
-		}],
-		// 💎 EMBED / 💎 LINK
-		[/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/, {
-			// 💎 EMBED
-			argtype:5,
-			do(tag, args, body) {
-				args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
-				return TAG('embed', tag, args)
-			}
-		},{
-			// 💎 LINK
-			argtype:1,
-			do(tag, args, body) {
-				//todo: this is a hack
-				let url = /^([^[{]*)/.exec(tag)[1]
-				if (body) {
-					args = parse_args('link', args, url)
-					return OPEN('link', tag, args, true)
-				}
-				args = parse_args('simple_link', args, url)
-				return TAG('simple_link', tag, args)
-			}
-		}],
-		// 💎 TABLE - NEXT ROW
-		[/ *[|] *\n[|]/, {
-			argtype:4,
-			do(tag, args, body) {
-				KILL_WEAK()
-				if (current.type!='table_cell')
-					return TEXT(tag)
-				args = parse_args('table_cell', args)
-				return (
-					CLOSE(), // cell
-					CLOSE(), // row
-					OPEN('table_row', ""),
-					OPEN('table_cell', tag.split("\n")[1], args, body))
-			}
-		}],
-		// 💎 TABLE - END
-		[/ *[|] *(?![^\n])/, {
-			do(tag, args, body) {
-				KILL_WEAK()
-				if (current.type!='table_cell')
-					return TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
-				return (
-					CLOSE(),
-					CLOSE(),
-					CLOSE())
-			}
-		}],
-		// 💎 TABLE - START
-		[/^ *[|]/, {
-			argtype:4,
-			do(tag, args, body) {
-				args = parse_args('table_cell', args)
-				return (
-					OPEN('table', ""),
-					OPEN('table_row', ""),
-					OPEN('table_cell', tag, args, body))
-			}
-		}],
-		// 💎 TABLE - NEXT CELL
-		[/ *[|]/, {
-			argtype:4,
-			do(tag, args, body) {
-				KILL_WEAK()
-				if (current.type!='table_cell')
-					return TEXT(tag)
-				args = parse_args('table_cell', args)
-				return (
-					CLOSE(), // cell
-					OPEN('table_cell', tag.replace(/^ *[|]/,""), args, body))
-			}}
-		],
-		//[/^ *- /, 'list'],
-	])
-	
+			args = parse_args('simple_link', args, url)
+			return TAG('simple_link', tag, args)
+		}},
+	],[// 💎 TABLE - NEXT ROW 💎
+		/ *[|] *\n[|]/,
+		{argtype:4, do(tag, args, body) {
+			KILL_WEAK()
+			if (current.type!='table_cell')
+				return TEXT(tag)
+			args = parse_args('table_cell', args)
+			return (
+				CLOSE(), // cell
+				CLOSE(), // row
+				OPEN('table_row', ""),
+				OPEN('table_cell', tag.split("\n")[1], args, body))
+		}},
+	],[// 💎 TABLE - END 💎
+		/ *[|] *(?![^\n])/,
+		{do(tag, args, body) {
+			KILL_WEAK()
+			if (current.type!='table_cell')
+				return TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
+			return (
+				CLOSE(),
+				CLOSE(),
+				CLOSE())
+		}},
+	],[// 💎 TABLE - START 💎
+		/^ *[|]/,
+		{argtype:4, do(tag, args, body) {
+			args = parse_args('table_cell', args)
+			return (
+				OPEN('table', ""),
+				OPEN('table_row', ""),
+				OPEN('table_cell', tag, args, body))
+		}},
+	],[// 💎 TABLE - NEXT CELL 💎
+		/ *[|]/,
+		{argtype:4, do(tag, args, body) {
+			KILL_WEAK()
+			if (current.type!='table_cell')
+				return TEXT(tag)
+			args = parse_args('table_cell', args)
+			return (
+				CLOSE(), // cell
+				OPEN('table_cell', tag.replace(/^ *[|]/,""), args, body))
+		}},
+	]])
+	//[/^ *- /, 'list'], TODO
 
 	
 	function process_def(table) {
