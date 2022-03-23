@@ -84,9 +84,8 @@ Markup.render = (function(){
 			branch = elem
 		
 		if (tree.content!=undefined) {
-			for (let i of tree.content) {
+			for (let i of tree.content)
 				branch.append(render_branch(i))
-			}
 		}
 		return elem
 	}
