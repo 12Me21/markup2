@@ -76,7 +76,7 @@ Markup.render = (function(){
 			return document.createTextNode(tree)
 		
 		// element
-		let elem = blocks[tree.type](tree.args||{}, tree.tag)
+		let elem = blocks[tree.type](tree.args, tree.tag)
 		let branch
 		if (elem instanceof Array)
 			([elem, branch] = elem)

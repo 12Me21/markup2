@@ -173,14 +173,14 @@ let Markup = (function(){
 			return OPEN('quote', tag, args, body)
 		}},
 	],[// 💎 CODE BLOCK 💎
-		/^```[^]*?\n```/,
+		/^```[^]*?\n(?:```|$)/,
 		{do(tag) {
-			return TAG('code', tag, tag.slice(3,-3))
+			return TAG('code', tag, tag.replace(/^```|```$/g,"")) // hack...
 		}},
 	],[// 💎 INLINE CODE 💎
-		/`[^`\n]+`/,
+		/`[^`\n]+`?/,
 		{do(tag) {
-			return TAG('icode', tag, tag.slice(1,-1))
+			return TAG('icode', tag, tag.replace(/^`|`$/g,""))
 		}},
 	],[// 💎💎 URL
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,

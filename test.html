@@ -16,16 +16,20 @@
 <br>
 <div id=$output class='MARKUP'></div>
 <hr>
-<div id=$output2></div>
+parse: <output id=$time1></output> render: <output id=$time2></output>
 
 <script>
 	$input.oninput = ()=>{
 		let t = $input.value
 		
+		let n = performance.now()
 		let tree = Markup.parse(t)
 		window.tree = tree
+		$time1.value = performance.now()-n
 		
+		n = performance.now()
 		let e = Markup.render(tree)
+		$time2.value = performance.now()-n
 		$output.replaceChildren(e)
 	}
 </script>
