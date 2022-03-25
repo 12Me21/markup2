@@ -1,11 +1,6 @@
-// TODO:
-// the system for handling resizes (for autoscroll) is a big mess
-// maybe try creating a custom event that gets triggered whenever
-// an element's height will be changed (when clicking an image, activating a youtube player, etc.)
-// and listen for it on the root element externally
-// see: document.createEvent
-
 let Parse = (function(){
+	"use strict"
+	
 	let Parse = {
 		lang: {},
 		options: null,
@@ -121,7 +116,7 @@ let Parse = (function(){
 			}
 		else {
 			while (c) {
-				if ((/[-\w\$\.+!*',;/\?:@=&#%~]/).test(c)) {
+				if (/[-\w\$\.+!*',;/\?:@=&#%~]/.test(c)) {
 					scan()
 				} else if (eatChar("(")) {
 					depth++
@@ -533,7 +528,7 @@ let Parse = (function(){
 					// ``` code block
 					if (eatChar("`")) {
 						// read lang name
-						start = i
+						let start = i
 						while (c && c!="\n" && c!="`")
 							scan()
 						//treat first line as language name, if it matches the pattern. otherwise it's code
@@ -561,7 +556,7 @@ let Parse = (function(){
 					// --------------
 					// ` inline code
 				} else {
-					start = i
+					let start = i
 					var codeText = ""
 					while (c) {
 						if (c=="`") {
