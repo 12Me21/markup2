@@ -12,39 +12,16 @@ Markup.render = (function(){
 		table_cell:1,
 	}
 	
-	let blocks = {
-		ROOT: frag,
+	let CREATE = {
+		// blocks without children:
 		newline: creator('br'),
-		heading: creator('h2'),
 		divider: creator('hr'),
-		italic: creator('i'),
-		bold: creator('b'),
-		strikethrough: creator('s'),
-		underline: creator('u'),
-		quote(args) {
-			let x = elem('blockquote')
-			return x
-		},
-		table(args) {
-			let x = elem('table')
-			let y = elem('tbody')
-			x.append(y)
-			return [x, y]
-		},
-		table_row: creator('tr'),
-		table_cell({header, color, colspan, rowspan}) {
-			let e = elem(header ? 'th' : 'td')
-			if (color) e.dataset.bgcolor = color
-			if (colspan) e.colSpan = colspan
-			if (rowspan) e.rowSpan = rowspan
-			return e
-		},
-		code(args) {
+		code({text, lang}) {
 			let x = elem('pre')
 			x.textContent = args
 			return x
 		},
-		icode(args) {
+		icode({text}) {
 			let x = elem('code')
 			x.textContent = args.replace(/ /g, " ")
 			return x
@@ -55,67 +32,181 @@ Markup.render = (function(){
 			x.href = url
 			return x
 		},
+		image({url, alt, width, height}) {
+			let e = elem('img')
+			e.src = url
+			e.dataset.loading = ""
+			e.dataset.shrink = ""
+			e.onerror = e.onload = ()=>{
+				delete e.dataset.loading
+			}
+			e.tabIndex = -1
+			if (alt!=null) e.alt = alt
+			if (width) e.width = width
+			if (height) e.height = height
+			return e
+		},
+		error({error, stack}) {
+			let node = elem('div')
+			node.className = "error"
+			let err = elem('code')
+			err.textContent = error
+			node.append("Markup parsing error: ", err, "\nPlease report this!")
+			if (stack) {
+				let pre = elem('pre')
+				pre.textContent = stack
+				node.append(pre)
+			}
+			return node
+		},
+		audio({url}) {
+			let node = elem('audio')
+			node.controls = true
+			node.src = url
+			node.preload = 'none'
+			return node
+		},
+		// blocks with children:
+		ROOT: frag,
+		italic: creator('i'),
+		bold: creator('b'),
+		strikethrough: creator('s'),
+		underline: creator('u'),
+		heading({level}) {
+			return elem("h"+level)
+		},
+		quote({cite}) {
+			let x = elem('blockquote')
+			if (cite!=null) {
+				let c = elem('cite')
+				c.textContent = cite
+				x.append(c)
+			}
+			return x
+		},
+		table({}) {
+			let x = elem('table')
+			let y = elem('tbody')
+			x.append(y)
+			return [x,y]
+		},
+		table_row: creator('tr'),
+		table_cell({header, color, truecolor, colspan, rowspan, align}) {
+			let e = elem(header ? 'th' : 'td')
+			if (color) e.dataset.bgcolor = color
+			if (truecolor) e.style.backgroundColor = truecolor
+			if (colspan) e.colSpan = colspan
+			if (rowspan) e.rowSpan = rowspan
+			if (align) e.style.textAlign = align
+			return e
+		},
 		link({url}) {
 			let x = elem('a')
 			x.href = url
 			return x
 		},
-		embed({url}) {
-			let x = elem('img')
-			x.src = url
-			return x
+		list({style}) {
+			if (style==null)
+				return elem('ul')
+			let list = elem('ol')
+			list.style.listStyleType = style
+			return list
 		},
-		env() {
-			let x = elem('input')
-			return x
-		}
+		list_item: creator('li'),
+		align({align}) {
+			let e = elem('div')
+			e.style.textAlign = align
+			return e
+		},
+		subscript: creator('sub'),
+		superscript: creator('sup'),
+		anchor({name}) {
+			let e = elem('a')
+			e.name = "_anchor_"+name
+			return e
+		},
+		ruby({text}) {
+			let e = elem('ruby')
+			let first = elem('span')
+			let x1 = elem('rp')
+			x1.textContent = "("
+			let x2 = elem('rt')
+			x2.textContent = text
+			let x3 = elem('rp')
+			x3.textContent = ")"
+			e.append(first, x1, x2, x3)
+			return [e, first]
+		},
+		spoiler({label}) {
+			let button = elem('button')
+			button.className = 'spoilerButton'
+			button.onclick = ()=>{
+				if (button.dataset.show == null)
+					button.dataset.show = ""
+				else
+					delete button.dataset.show
+			}
+			button.textContent = label
+			
+			let box = elem('div')
+			box.className = "spoiler"
+			
+			let node = frag()
+			node.append(button, box)
+			
+			return [node, box]
+		},
+		background_color({color}) {
+			let e = elem('span')
+			if (color)
+				e.dataset.bgcolor = color
+			return e
+		},
 	}
 	
 	function render_branch(tree) {
 		// element
-		let elem = blocks[tree.type](tree.args, tree.tag)
-		let branch
-		if (elem instanceof Array)
-			([elem, branch] = elem)
+		let x = CREATE[tree.type](tree.args, tree.tag)
+		let node, branch
+		if (x instanceof Array)
+			[node, branch] = x
 		else
-			branch = elem
+			node = branch = x
+		// empty element
+		if (!tree.content)
+			return [node, is_block[tree.type]]
+		// add children
+		let got_newline = false
+		function add_newline(block, sp) {
+			if (got_newline) {
+				if (!block)
+					branch.append(CREATE.newline())
+				if (sp)
+					branch.append("")
+			}
+			got_newline = false
+		}
 		
 		let last_block = false
-		
-		if (tree.content!=undefined) {
-			let got_newline = false
-			for (let i of tree.content) {
-				if (typeof i == 'string') {
-					if (got_newline && !last_block)
-						branch.append(blocks.newline())
-					got_newline = false
-					branch.append(i)
-					last_block = false
-				} else if (i.type=='newline') {
-					if (got_newline && !last_block)
-						branch.append(blocks.newline())
-					got_newline = true
-					last_block = false
-				} else {
-					let [elem, is_block] = render_branch(i)
-					if (got_newline) {
-						if (!is_block)
-							branch.append(blocks.newline())
-						branch.append("")
-					}
-					got_newline = false
-					branch.append(elem)
-					last_block = is_block
-				}
-			}
-			if (got_newline) {
-				if (!last_block)
-					branch.append(blocks.newline())
-				branch.append("")
+		for (let item of tree.content) {
+			if (typeof item == 'string') {
+				do_newline(last_block)
+				branch.append(item)
 				last_block = false
+			} else if (item.type=='newline') {
+				do_newline(last_block)
+				got_newline = true
+				last_block = false
+			} else {
+				let [node, is_block] = render_branch(item)
+				do_newline(is_block, true)
+				branch.append(node)
+				last_block = is_block
 			}
 		}
-		return [elem, last_block || is_block[tree.type]]
+		do_newline(last_block, true)
+		
+		return [node, last_block || is_block[tree.type]]
 	}
 	
 	return function(tree) {

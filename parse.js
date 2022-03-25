@@ -14,14 +14,40 @@ let Markup = (function(){
 	let BLOCKS = {
 		// simple tags
 		newline: {},
-		link: {
-			arg_process(list, named, url) {
-				return {url: filter_url(url)}
-			}
-		},
+		divider: {},
+		code: {},
+		icode: {},
 		simple_link: {
 			arg_process(list, named, url) {
 				return {url: filter_url(url), text: url}
+			}
+		},
+		image: {
+			/* idea: but this isnt powerful enough
+			named_args: {
+				alt: 'string',
+				url: 'url',
+			},
+			list_args: [
+				[/^(\d+)x(\d+)$/, (x,y)=>{
+					return {width:x, height:y}
+				}],
+			],*/
+			
+			arg_process(list, named, url) {
+				let ret = {
+					url: filter_url(url),
+					alt: named.alt,
+				}
+				// todo: formal definitions for like
+				for (let arg of named) {
+					let m = /^(\d+)x(\d+)$/.exec(arg)
+					if (m) {
+						ret.width = +m[0]
+						ret.height = +m[1]
+					}
+				}
+				return ret
 			}
 		},
 		embed: {
@@ -30,25 +56,26 @@ let Markup = (function(){
 				return {url: filter_url(url)}
 			}
 		},
-		code: {block:true},
-		icode: {},
-		divider: {block:true},
 		// with contents:
-		ROOT: {block: true},
+		ROOT: {},
+		link: {
+			arg_process(list, named, url) {
+				return {url: filter_url(url)}
+			}
+		},
 		heading: {
-			block:true, auto_close:true, end_at_eol:true,
+			auto_close:true, end_at_eol:true,
 			arg_process(list, named) {
 				return {}
 			},
 		},
 		style: {auto_cancel: true, end_at_eol:true},
 		env: {},
-		quote: {block:true, auto_close:true, end_at_eol:true},
+		quote: {auto_close:true, end_at_eol:true},
 		
-		table: {block:true},
+		table: {},
 		table_row: {},
 		table_cell: {
-			block: true,
 			arg_process(list, named) {
 				let ret = {}
 				for (let a of list) {
@@ -402,10 +429,11 @@ let Markup = (function(){
 	return Object.seal({
 		parse: parse,
 		render: null,
-		regex, groups,
+		BLOCKS: BLOCKS,
 		convert(text) {
 			let tree = this.parse(text)
 			return this.render(tree)
 		}
+		regex, groups,
 	})
 })()
