@@ -11,6 +11,32 @@ let Markup = (function(){
 			return ""
 		return url
 	}
+	function embed_type(list, named, url) {
+		let type
+		for (let arg of list)
+			if (arg=='video' || arg=='audio' || arg=='image')
+				type = arg
+		if (type)
+			return type
+		if (/[.](mp3|ogg|wav)(?!\w)/i.test(url))
+			return 'audio'
+		if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
+			return 'video'
+		if (/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(url))
+			return 'youtube'
+		return 'image'
+	}
+	function match_args(list, defs) {
+		for (let arg of list) {
+			for (let [regex, func] of defs) {
+				let m = regex.exec(arg)
+				if (m) {
+					func(m)
+					break
+				}
+			}
+		}
+	}
 	let BLOCKS = {
 		// simple tags
 		newline: {},
@@ -22,76 +48,85 @@ let Markup = (function(){
 				return {url: filter_url(url), text: url}
 			}
 		},
-		image: {
-			/* idea: but this isnt powerful enough
+		//error: {},
+		/*image: {
 			named_args: {
-				alt: 'string',
 				url: 'url',
+				alt: 'string',
 			},
-			list_args: [
-				[/^(\d+)x(\d+)$/, (x,y)=>{
-					return {width:x, height:y}
-				}],
-			],*/
-			
-			arg_process(list, named, url) {
+			list_args: {
+				[/^(\d+)x(\d+)$/, (ret, [,x,y])=>{
+					if (+x >= 1) ret.width = +x
+					if (+y >= 1) ret.height = +y
+				}]
+				
+			}
+		},*/
+		// becomes one of: image, audio, video, youtube
+		embed: {
+			arg_process(list, named, tag) {
+				let url = /^!([^[{]*)/.exec(tag)[1]
+				
+				let type = embed_type(list, named, url)
 				let ret = {
 					url: filter_url(url),
 					alt: named.alt,
 				}
-				// todo: formal definitions for like
-				for (let arg of named) {
-					let m = /^(\d+)x(\d+)$/.exec(arg)
-					if (m) {
-						ret.width = +m[0]
-						ret.height = +m[1]
-					}
+				// process args
+				if (type=='image' || type=='video') {
+					match_args(named, [
+						[/^(\d+)x(\d+)$/, ([,x,y])=>{
+							ret.width = +x
+							ret.height = +y
+						}]
+					])
 				}
-				return ret
-			}
-		},
-		embed: {
-			arg_process(list, named, url) {
-				// todo: we need to figure out the filetype
-				return {url: filter_url(url)}
+				return [type, ret]
 			}
 		},
 		// with contents:
 		ROOT: {},
 		link: {
-			arg_process(list, named, url) {
+			arg_process(list, named, tag) {
+				//todo: this is a hack
+				let url = /^([^[{]*)/.exec(tag)[1]
 				return {url: filter_url(url)}
 			}
 		},
 		heading: {
 			auto_close:true, end_at_eol:true,
-			arg_process(list, named) {
-				return {}
+			arg_process(list, named, tag) {
+				// todo: anchor name (and, can this be chosen automatically based on contents?)
+				let level = /#*/.exec(tag)[1].length // hhhhh
+				return {level}
 			},
 		},
+		// becomes one of: italic, bold, underline, strikethrough
 		style: {auto_cancel: true, end_at_eol:true},
-		env: {},
-		quote: {auto_close:true, end_at_eol:true},
-		
+		quote: {
+			auto_close:true, end_at_eol:true,
+			arg_process(list, named) {
+				return {cite: list[0]}
+			}
+		},
 		table: {},
 		table_row: {},
 		table_cell: {
 			arg_process(list, named) {
 				let ret = {}
-				for (let a of list) {
-					if (a=="*") // should this be * or # or h ?  // perhaps # = heading applied to entire row?
+				match_args(named, [
+					// should this be * or # or h ?  // perhaps # = heading applied to entire row?
+					[/^[*]$/, ()=>{
 						ret.header = true
-					else if (/^(red|orange|yellow|green|blue|purple|gray)$/.test(a))
-						ret.color = a
-					else {
-						let m = /^(\d*)x(\d*)$/.exec(a)
-						if (m) {
-							if (+(m[1])) ret.colspan = +m[1]
-							if (+(m[2])) ret.rowspan = +m[2]
-						} else { //...
-						}
-					}
-				}
+					}],
+					[/^(?:red|orange|yellow|green|blue|purple|gray)$/, ([color])=>{
+						ret.color = color
+					}],
+					[/^(\d*)x(\d*)$/, ([,w,h])=>{
+						if (+w > 1) ret.colspan = +w
+						if (+h > 1) ret.rowspan = +h
+					}]
+				])
 				return ret
 			},
 		},
@@ -122,6 +157,7 @@ let Markup = (function(){
 		/(?![^\n])/ matches end of line
 		/()/ empty tags are used to mark token types
 	*/
+	// ⚠ The order of these is important!
 	let [regex, groups] = process_def([[
 		// 💎 NEWLINE 💎
 		/\n/,
@@ -131,9 +167,9 @@ let Markup = (function(){
 			return TAG('newline', tag)
 		}},
 	],[// 💎 HEADING 💎
-		/^#{1,3}/,
+		/^#{1,4}/,
 		{argtype:3, do(tag, args, body) {
-			args = parse_args('heading', args)
+			args = parse_args('heading', args, tag)
 			return OPEN('heading', tag, args, body)
 		}},
 	],[// 💎 DIVIDER 💎
@@ -213,18 +249,17 @@ let Markup = (function(){
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
 		// 💎 EMBED 💎
 		{argtype:5, do(tag, args, body) {
-			args = parse_args('embed', args, /^!([^[{]*)/.exec(tag)[1])
-			return TAG('embed', tag, args)
+			let type // weird hack
+			;[type, args] = parse_args('embed', args, tag)
+			return TAG(type, tag, args)
 		}},
 		// 💎 LINK 💎
 		{argtype:1, do(tag, args, body) {
-			//todo: this is a hack
-			let url = /^([^[{]*)/.exec(tag)[1]
 			if (body) {
-				args = parse_args('link', args, url)
+				args = parse_args('link', args, tag)
 				return OPEN('link', tag, args, true)
 			}
-			args = parse_args('simple_link', args, url)
+			args = parse_args('simple_link', args, tag)
 			return TAG('simple_link', tag, args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
