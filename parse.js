@@ -198,7 +198,7 @@ let Markup = (function(){
 				}
 				CANCEL() // different style (kill)
 			}
-			return false
+			return TEXT(tag)
 		}},
 	],[// 💎 ENV 💎
 		/[\\]\w+/,
@@ -212,7 +212,7 @@ let Markup = (function(){
 		/}/,
 		{do(tag) {
 			if (envs<=0)
-				return false
+				return TEXT(tag)
 			while (!current.body)
 				CANCEL()
 			return CLOSE()
@@ -267,7 +267,7 @@ let Markup = (function(){
 		{argtype:4, do(tag, args, body) {
 			KILL_WEAK()
 			if (current.type!='table_cell')
-				return false
+				return TEXT(tag)
 			args = parse_args('table_cell', args)
 			return (
 				CLOSE(), // cell
@@ -280,7 +280,7 @@ let Markup = (function(){
 		{do(tag, args, body) {
 			KILL_WEAK()
 			if (current.type!='table_cell')
-				return false // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
+				return TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
 			return (
 				CLOSE(),
 				CLOSE(),
@@ -300,7 +300,7 @@ let Markup = (function(){
 		{argtype:4, do(tag, args, body) {
 			KILL_WEAK()
 			if (current.type!='table_cell')
-				return false
+				return TEXT(tag)
 			args = parse_args('table_cell', args)
 			return (
 				CLOSE(), // cell
@@ -420,7 +420,6 @@ let Markup = (function(){
 			let group = match.indexOf("", 1) - 1
 			let thing = groups[group]
 			let tag = match[0]
-			let result
 			// parse args and {
 			let body = thing.body
 			if (thing.argtype) {
@@ -431,7 +430,7 @@ let Markup = (function(){
 					tag += m[0]
 					let args = m[1]
 					body = m[2]
-					result = thing.do(tag, args, body)
+					thing.do(tag, args, body)
 					last = regex.lastIndex = ar.lastIndex
 				} else { // INVALID!
 					// skip 1 char, try again
@@ -440,11 +439,9 @@ let Markup = (function(){
 					continue
 				}
 			} else {
-				result = thing.do(tag)
+				thing.do(tag)
 				last = regex.lastIndex
 			}
-			if (result == false)
-				TEXT(tag)
 			// start of line
 			if (thing.newline || body) {
 				//text = text.substring(last)
