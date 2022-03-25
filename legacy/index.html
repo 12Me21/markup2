@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<script src=legacy.js></script>
+<script src=old-render2.js></script>
+
+<textarea id=$input></textarea>
+<br>
+<div id=$output class='MARKUP'></div>
+
+<script>
+	$input.oninput = ()=>{
+		let t = $input.value
+		
+		let n = performance.now()
+		let html = Parse.parseLang(t, "12y")
+		//$time2.value = performance.now()-n
+		$output.replaceChildren(html)
+	}
+</script>
+

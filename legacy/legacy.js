@@ -5,54 +5,48 @@
 // and listen for it on the root element externally
 // see: document.createEvent
 
-var Parse = {
-	lang:{}
-}
-
-// so normally our path structure will look like
-// url#path?query#fragment
-// with #s in the path and query escaped with %
-// however, some browsers escape duplicate #s automatically, so this has to be dealt with somehow
-// I'm not sure of a good way which still allows # to be used in the path+query, though
-// may need to use a different character...
-
-Parse.BLOCKS = {
-	text: {},
-	lineBreak: {},
-	line: {block: true}, // now we can remove the hack
-	invalid: {},
-	code: {block:true},
-	icode: {},
-	audio: {block:true},
-	video: {block:true},
-	youtube: {block:true},
-	bg: {},
-	root: {},
-	bold: {},
-	italic: {},
-	underline: {},
-	strikethrough: {},
-	heading: {block:true},
-	quote: {block:true},
-	list: {block:true},
-	item: {block:true},
-	simpleLink: {},
-	customLink: {},
-	table: {block:true},
-	row: {block:true},//not sure, only used internally so block may not matter
-	cell: {},
-	image: {block:true},
-	error: {block:true},
-	align: {block:true},
-	superscript: {},
-	subscript: {},
-	anchor: {},
-	spoiler: {block:true},
-	ruby: {},
-	bg: {},
-}
-
-;(function(){
+let Parse = (function(){
+	let Parse = {
+		lang: {},
+		options: null,
+	}
+	
+	let BLOCKS = {
+		text: {},
+		lineBreak: {},
+		line: {block: true}, // now we can remove the hack
+		invalid: {},
+		code: {block:true},
+		icode: {},
+		audio: {block:true},
+		video: {block:true},
+		youtube: {block:true},
+		bg: {},
+		root: {},
+		bold: {},
+		italic: {},
+		underline: {},
+		strikethrough: {},
+		heading: {block:true},
+		quote: {block:true},
+		list: {block:true},
+		item: {block:true},
+		simpleLink: {},
+		customLink: {},
+		table: {block:true},
+		row: {block:true},//not sure, only used internally so block may not matter
+		cell: {},
+		image: {block:true},
+		error: {block:true},
+		align: {block:true},
+		superscript: {},
+		subscript: {},
+		anchor: {},
+		spoiler: {block:true},
+		ruby: {},
+		bg: {},
+	}
+	
 	/***********
 	 ** STATE **
     ***********/
@@ -246,7 +240,7 @@ Parse.BLOCKS = {
 			return blocks[type](arg, ext1, ext2)
 		})
 		options.append(curr, node)
-		if (Parse.BLOCKS[type].block)
+		if (BLOCKS[type].block)
 			skipNextLineBreak = true
 		else
 			skipNextLineBreak = false
@@ -255,7 +249,7 @@ Parse.BLOCKS = {
 	function startBlock(type, data, arg) {
 		data.type = type
 		if (type) {
-			data.isBlock = Parse.BLOCKS[type].block
+			data.isBlock = BLOCKS[type].block
 			openBlocks++
 			if (openBlocks > options.maxDepth)
 				throw "too deep nestted blocks"
@@ -1234,4 +1228,6 @@ Parse.BLOCKS = {
 			console.log("time:", performance.now() - start)
 		}*/
 	}
+	
+	return Parse
 })()
