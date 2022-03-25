@@ -177,7 +177,7 @@ Markup.render = (function(){
 			return [node, is_block[tree.type]]
 		// add children
 		let got_newline = false
-		function add_newline(block, sp) {
+		function do_newline(block, sp) {
 			if (got_newline) {
 				if (!block)
 					branch.append(CREATE.newline())

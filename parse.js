@@ -204,7 +204,7 @@ let Markup = (function(){
 		/[\\]\w+/,
 		{argtype:1, do(tag, args, body) {
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
-			args = parse_args('env', args)
+			args = parse_args('env', args, tag)
 			return OPEN('env', tag, args, body)
 		}},
 	],[// 💎 BLOCK END 💎
@@ -468,7 +468,7 @@ let Markup = (function(){
 		convert(text) {
 			let tree = this.parse(text)
 			return this.render(tree)
-		}
+		},
 		regex, groups,
 	})
 })()
