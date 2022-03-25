@@ -16,7 +16,7 @@ Markup.render = (function(){
 		ROOT: frag,
 		newline: creator('br'),
 		heading: creator('h2'),
-		line: creator('hr'),
+		divider: creator('hr'),
 		italic: creator('i'),
 		bold: creator('b'),
 		strikethrough: creator('s'),

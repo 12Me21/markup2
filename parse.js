@@ -32,7 +32,7 @@ let Markup = (function(){
 		},
 		code: {block:true},
 		icode: {},
-		line: {block:true},
+		divider: {block:true},
 		// with contents:
 		ROOT: {block: true},
 		heading: {
@@ -112,7 +112,7 @@ let Markup = (function(){
 	],[// 💎 DIVIDER 💎
 		/^---+(?![^\n])/,
 		{do(tag) {
-			return TAG('line', tag)
+			return TAG('divider', tag)
 		}},
 	],[// 💎💎 STYLE
 		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve these
@@ -391,22 +391,6 @@ let Markup = (function(){
 		
 		return FINISH()
 	}
-	
-	///(?<![^\s({'"])[/](?![\s,'"])/
-	
-	//tODO: kill newlines around things
-	
-	// we need to remove any newline which comes directly after a block element
-	// this INCLUDES things like, potentially
-	
-	// <i>
-	//	  <table>
-	//     ..
-	//   </table>
-	// </i>
-	// <br>
-	
-	// other problem: 
 	
 	// what if you want to write like, "{...}". well that's fine
 	// BUT if you are inside a tag, the } will close it.
