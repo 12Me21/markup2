@@ -1,13 +1,11 @@
 let Markup = (function(){
 	"use strict"
 	
-	// auto_cancel - will be cancelled at the end of a block, if open
-	// auto_close - if cancelled, will be completed instead
-	//   any tag with a {...} body  - also counts as auto_close
-	// end_at_eol - cancelled at the end of a line (or completed if auto_close is set)
-	
+	// if cancelled, will be completed instead:
 	let auto_close = {heading:1, quote:1, ROOT:1}
+	// will be cancelled at the end of a block, if open:
 	let auto_cancel = {style:1}
+	// cancelled at the end of a line (or completed if auto_close is set):
 	let end_at_eol = {heading:1, style:1, quote:1}
 	
 	let tree, current, envs
@@ -20,14 +18,10 @@ let Markup = (function(){
 	
 
 	// argtype
-	let arg_regex = [
-		null,
-		/(?:\[([^\]\n]*)\])?({)?/y, // 1: [...]?{?
-		/(?:\[([^\]\n]*)\])?(?:({)| )/y, // 2: [...]?{ or [...]?<space>
-		/(?:\[([^\]\n]*)\])?({)? */y, // 3: [...]?{?<space>*
-		/(?:\[([^\]\n]*)\])? */y, // 4: [...]?<space>*
-		/(?:\[([^\]\n]*)\])?/y, // 5: [...]?
-	]
+	let ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
+	let ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?: |({))/y // [...]?( |{)
+	let ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
+	let ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
 	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
@@ -46,7 +40,7 @@ let Markup = (function(){
 		}},
 	],[// 💎 HEADING 💎
 		/^#{1,4}/,
-		{argtype:3, do(tag, rargs, body) {
+		{argtype:ARGS_HEADING, do(tag, rargs, body) {
 			let level = /#*/.exec(tag)[1].length // hhhhh
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
@@ -82,7 +76,7 @@ let Markup = (function(){
 		}},
 	],[// 💎 ENV 💎
 		/[\\]\w+/,
-		{argtype:1, do(tag, rargs, body) {
+		{argtype:ARGS_NORMAL, do(tag, rargs, body) {
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
 			let args = {}
 			return OPEN('env', tag, args, body)
@@ -111,7 +105,7 @@ let Markup = (function(){
 		}},
 	],[// 💎 QUOTE 💎
 		/^>/,
-		{argtype:2, do(tag, rargs, body) {
+		{argtype:ARGS_HEADING, do(tag, rargs, body) {
 			return OPEN('quote', tag, {cite: rargs[0]}, body)
 		}},
 	],[// 💎 CODE BLOCK 💎
@@ -127,7 +121,7 @@ let Markup = (function(){
 	],[// 💎💎 URL
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
 		// 💎 EMBED 💎
-		{argtype:5, do(tag, rargs, body) {
+		{argtype:ARGS_BODYLESS, do(tag, rargs, body) {
 			let url = /^!([^[{]*)/.exec(tag)[1]
 			let type = embed_type(rargs, url)
 			let args = {
@@ -145,7 +139,7 @@ let Markup = (function(){
 			return TAG(type, tag, args)
 		}},
 		// 💎 LINK 💎
-		{argtype:1, do(tag, rargs, body) {
+		{argtype:ARGS_NORMAL, do(tag, rargs, body) {
 			let url = /^([^[{]*)/.exec(tag)[1] //todo: this is a hack
 			let args = {url: filter_url(url)}
 			if (body)
@@ -155,7 +149,7 @@ let Markup = (function(){
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
 		/ *[|] *\n[|]/,
-		{argtype:4, do(tag, rargs, body) {
+		{argtype:ARGS_TABLE, do(tag, rargs, body) {
 			KILL_WEAK()
 			if (current.type!='table_cell')
 				return TEXT(tag)
@@ -179,7 +173,7 @@ let Markup = (function(){
 		}},
 	],[// 💎 TABLE - START 💎
 		/^ *[|]/,
-		{argtype:4, do(tag, rargs, body) {
+		{argtype:ARGS_TABLE, do(tag, rargs, body) {
 			let args = table_args(rargs)
 			return (
 				OPEN('table', ""),
@@ -188,7 +182,7 @@ let Markup = (function(){
 		}},
 	],[// 💎 TABLE - NEXT CELL 💎
 		/ *[|]/,
-		{argtype:4, do(tag, rargs, body) {
+		{argtype:ARGS_TABLE, do(tag, rargs, body) {
 			KILL_WEAK()
 			if (current.type!='table_cell')
 				return TEXT(tag)
@@ -250,7 +244,7 @@ let Markup = (function(){
 		return 'image'
 	}
 	function match_args(rargs, defs) {
-		for (let arg of rargs.named) {
+		for (let arg of rargs)
 			for (let [regex, func] of defs) {
 				let m = regex.exec(arg)
 				if (m) {
@@ -278,13 +272,8 @@ let Markup = (function(){
 	}
 	
 	// start a new block
-	function OPEN(type, text, args, body) {
-		current = {
-			type: type,
-			tag: text,
-			content: [],
-			parent: current, // could just be a stack
-		}
+	function OPEN(type, tag, args, body) {
+		current = {type, tag, content: [], parent: current}
 		if (body) {
 			envs++
 			current.body = true
@@ -294,10 +283,10 @@ let Markup = (function(){
 	}
 	// move up
 	function up() {
+		if (current.body)
+			envs--
 		let o = current
 		current = current.parent
-		if (o.body)
-			envs--
 		return o
 	}
 	// complete current block
@@ -314,18 +303,17 @@ let Markup = (function(){
 		if (current.body || auto_close[current.type])
 			return CLOSE()
 		let o = up()
-		// if we just cancelled a table cell, we don't want to insert text into the table row/body,
+		// if we just cancelled a table cell,
+		// we don't want to insert text into the table row/body,
 		// so we complete the table first.
 		if (o.type=='table_cell') {
-			CLOSE() // todo: don't complete if empty?
-			CLOSE()
+			current.content.length ? CLOSE() : CANCEL() // row
+			current.content.length ? CLOSE() : CANCEL() // table
 		}
 		// push the start tag (as text)
-		if (o.tag)
-			TEXT(o.tag) // todo: merge with surrounding text nodes?
+		TEXT(o.tag) // todo: merge with surrounding text nodes?
 		// push the contents of the block
 		current.content.push(...o.content)
-		let last = o.content[o.content.length-1]
 	}
 	// push text
 	function TEXT(text) {
@@ -333,47 +321,39 @@ let Markup = (function(){
 			current.content.push(text)
 	}
 	// push empty tag
-	function TAG(type, text, args) {
-		current.content.push({type: type, tag: text, args: args})
+	function TAG(type, tag, args) {
+		current.content.push({type, tag, args})
 	}
 	function KILL_WEAK() {
 		while (auto_cancel[current.type])
 			CANCEL()
 	}
-	function START() {
-		tree = {type:'ROOT',tag:"",content:[]}
-		current = tree
-		envs = 0
-	}
-	function FINISH() {
-		while (current.type!='ROOT')
-			CANCEL()
-		return tree
-	}
-	
+		
 	function parse(text) {
-		START()
+		current = tree = {type:'ROOT', tag:"", content:[]}
+		envs = 0
 		
 		let last = regex.lastIndex = 0
 		for (let match; match=regex.exec(text); ) {
 			// text before token
 			TEXT(text.substring(last, match.index))
 			// get token
-			let thing = groups[match.indexOf("", 1)-1]
+			let group = match.indexOf("", 1)-1
+			let thing = groups[group]
 			// parse args and {
 			let body
-			if (thing.argtype) {
-				let ar = arg_regex[thing.argtype]
-				ar.lastIndex = regex.lastIndex
-				let m = ar.exec(text)
-				if (!m) { // INVALID! skip 1 char, try again
+			let argregex = thing.argtype
+			if (argregex) {
+				argregex.lastIndex = regex.lastIndex
+				let argmatch = argregex.exec(text)
+				if (!argmatch) { // INVALID! skip 1 char, try again
 					regex.lastIndex = match.index+1
 					last = match.index
 					continue
 				}
-				body = m[2]
-				thing.do(match[0]+m[0], parse_args(m[1]), body)
-				last = regex.lastIndex = ar.lastIndex
+				body = argmatch[2]
+				thing.do(match[0]+argmatch[0], parse_args(argmatch[1]), body)
+				last = regex.lastIndex = argregex.lastIndex
 			} else {
 				body = thing.body
 				thing.do(match[0])
@@ -388,7 +368,9 @@ let Markup = (function(){
 		}
 		TEXT(text.substring(last))
 		
-		return FINISH()
+		while (current.type!='ROOT')
+			CANCEL()
+		return tree
 	}
 	
 	// what if you want to write like, "{...}". well that's fine

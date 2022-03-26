@@ -84,7 +84,7 @@ Markup.render = (function(){
 			}
 			return x
 		},
-		table({}) {
+		table() {
 			let x = elem('table')
 			let y = elem('tbody')
 			x.append(y)
@@ -195,10 +195,12 @@ Markup.render = (function(){
 				last_block = false
 			} else if (item.type=='newline') {
 				do_newline(last_block)
-				got_newline = true
+				if (!last_block)
+					got_newline = true
 				last_block = false
 			} else {
 				let [node, is_block] = render_branch(item)
+				console.log("rb", item, is_block)
 				do_newline(is_block, true)
 				branch.append(node)
 				last_block = is_block
