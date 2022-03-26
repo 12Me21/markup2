@@ -361,8 +361,8 @@ let Markup = (function(){
 			}
 			// start of line
 			if (thing.newline || body) {
-				//text = text.substring(last)
-				text = RegExp['$\'']
+				text = text.substring(last)
+				//text = RegExp['$\'']
 				last = regex.lastIndex = 0
 			}
 		}
