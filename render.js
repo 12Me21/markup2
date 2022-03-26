@@ -183,29 +183,33 @@ Markup.render = (function(){
 					branch.append(CREATE.newline())
 				if (sp)
 					branch.append("")
+				last_block = false
 			}
 			got_newline = false
 		}
 		
 		let last_block = false
+		let only_newline = true
 		for (let item of tree.content) {
 			if (typeof item == 'string') {
 				do_newline(last_block)
 				branch.append(item)
 				last_block = false
+				only_newline = false
 			} else if (item.type=='newline') {
 				do_newline(last_block)
-				if (!last_block)
-					got_newline = true
-				last_block = false
+				got_newline = true
 			} else {
 				let [node, is_block] = render_branch(item)
-				do_newline(is_block, true)
+				do_newline(is_block || last_block, true)
 				branch.append(node)
 				last_block = is_block
+				only_newline = false
 			}
 		}
-		do_newline(last_block, true)
+		do_newline(last_block)
+		if (!only_newline)
+			branch.append("")
 		
 		return [node, last_block || is_block[tree.type]]
 	}
@@ -214,3 +218,5 @@ Markup.render = (function(){
 		return render_branch(tree)[0]
 	}
 }())
+
+//let append = Node.appendChild.call
