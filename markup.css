@@ -4,10 +4,17 @@
 .MARKUP {
 	word-break: break-word; /* prevent text overflow */
 	white-space: pre-wrap; /* preserve whitespace */
+	
+	/* set your font and line height here: */
+	font-family: sans-serif;
+	line-height: 1.2;
 }
+/* override the defaults for these */
 .MARKUP * {
 	word-break: inherit;
 	white-space: inherit;
+	font-family: inherit;
+	line-height: inherit;
 }
 /* Block items (default, just in case) */
 .MARKUP h2, .MARKUP h3, .MARKUP h4, .MARKUP h5,
