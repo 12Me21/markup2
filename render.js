@@ -207,9 +207,7 @@ Markup.render = (function(){
 				only_newline = false
 			}
 		}
-		do_newline(last_block)
-		if (!only_newline)
-			branch.append("")
+		do_newline(last_block, !only_newline)
 		
 		return [node, last_block || is_block[tree.type]]
 	}
