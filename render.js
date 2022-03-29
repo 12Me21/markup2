@@ -10,6 +10,42 @@ Markup.IMPORT = EXPORT=>{
 		table_cell:'block',
 	}
 	
+	function 𐀶([html]) {
+		let t = document.createElement('template')
+		t.innerHTML = html
+		return t.content
+	}
+	
+	let TEMPLATES = {
+		newline: 𐀶`<br>`,
+		divider: 𐀶`<hr>`,
+		code: 𐀶`<pre>`,
+		icode: 𐀶`<icode>`,
+		simple_link: 𐀶`<a>`,
+		image: 𐀶`<img data-loading data-shrink tabindex=-1>`,
+		error: 𐀶`<div class='error'><code>🌱error🌱</code><br id=message><pre><br id=stack>`,
+		audio: 𐀶`<audio controls preload=none>`,
+		italic: 𐀶`<i>`,
+		bold: 𐀶`<b>`,
+		strikethrough: 𐀶`<s>`,
+		underline: 𐀶`<u>`,
+		heading: null, // how are we... maybe have an override or
+		quote: 𐀶`<blockquote><cite>🌱cite🌱`,
+		table: 𐀶`<table><tbody>`,
+		table_row: 𐀶`<tr>`,
+		table_cell: null,
+		link: 𐀶`<a>`,
+		list: null,
+		list_item: 𐀶`<li>`,
+		align: 𐀶`<div>`,
+		subscript: 𐀶`<sub>`,
+		superscript: 𐀶`<sup>`,
+		anchor: 𐀶`<a>`,
+		ruby: 𐀶`<ruby><br id=inside><rp>(<rt><br id=top><rp>(`,
+		spoiler: 𐀶`<button class=spoilerButton><br id=button></button><div class=spoiler><br id=inside>`,
+		background_color: 𐀶`<span>`,
+	}
+	
 	let CREATE = {
 		// blocks without children:
 		newline: creator('br'),
@@ -200,6 +236,8 @@ Markup.IMPORT = EXPORT=>{
 		fill_branch(root, tree.content)
 		return root
 	}
+	
+	EXPORT.TEMPLATES = TEMPLATES
 	
 	EXPORT.create = CREATE
 }
