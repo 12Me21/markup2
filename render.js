@@ -172,27 +172,28 @@ Markup.render = (function(){
 			return 'text'
 		
 		// children
-		let prev = null
+		let prev = 'newline'
+		let all_newline = true
 		for (let leaf of leaves) {
 			if (typeof leaf == 'string') {
 				branch.append(leaf)
 				prev = 'text'
+				all_newline = false
 			} else if (leaf.type=='newline') {
-				if (!prev)
+				if (prev=='newline')
 					branch.append(document.createElement('hr'))
-				else {
-					if (prev=='text')
-						branch.append(CREATE.newline())
-					prev = false
-				}
+				else if (prev=='text')
+					branch.append(CREATE.newline())
+				prev = 'newline'
 			} else {
 				let node = CREATE[leaf.type](leaf.args, leaf.tag)
 				branch.append(node)
 				prev = fill_branch(node.B||node, leaf.content)
 				prev = is_block[leaf.type] || prev
+				all_newline = false
 			}
 		}
-		if (prev==false) // if we catch this on the last iteration then we can just insert it instead of newline hm ? no i dont think... since it fill_branch could return false.. unless we just prevent that?
+		if (!all_newline && prev=='newline') // if we catch this on the last iteration then we can just insert it instead of newline hm ?
 			branch.append(document.createElement('hr'))
 		
 		return prev
