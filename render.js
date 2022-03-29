@@ -8,8 +8,8 @@ Markup.render = (function(){
 	let frag = document.createDocumentFragment.bind(document)
 	
 	let is_block = {
-		code:1, line:1, ROOT:1, heading:1, quote:1, table:1,
-		table_cell:1,
+		code:'block', line:'block', ROOT:'block', heading:'block', quote:'block', table:'block',
+		table_cell:'block',
 	}
 	
 	let CREATE = {
@@ -172,51 +172,34 @@ Markup.render = (function(){
 			[node, branch] = x
 		else
 			node = branch = x
-		// empty element
+		// simple element
 		if (!tree.content)
-			return [node, is_block[tree.type]]
+			return [node, is_block[tree.type] || 'text']
 		// add children
-		let got_newline = false
-		let last_block = false
-		let last_text = false
-		let only_newline = true
 		
-		function do_newline() {
-			if (got_newline) {
-				if (!last_block) {
-					if (last_text)
-						branch.append(CREATE.newline())
-					else
-						branch.append(document.createElement('hr'))
-				}
-				last_text = last_block = false
-			}
-			got_newline = false
-		}
+		let last = null
 		for (let item of tree.content) {
 			if (typeof item == 'string') {
-				do_newline()
 				branch.append(item)
-				last_block = false
-				only_newline = false
-				last_text = true
+				last = 'text'
 			} else if (item.type=='newline') {
-				do_newline(last_block)
-				got_newline = true
+				if (!last) {
+					branch.append(document.createElement('hr'))
+				} else {
+					if (last=='text')
+						branch.append(CREATE.newline())
+					last = false
+				}
 			} else {
-				let [node, is_block] = render_branch(item)
-				do_newline()
+				let node
+				;[node, last] = render_branch(item)
 				branch.append(node)
-				last_block = is_block
-				last_text = false
-				only_newline = false
 			}
 		}
-		do_newline()
-		if (!last_block && !last_text && !only_newline)
+		if (last==false)
 			branch.append(document.createElement('hr'))
 		
-		return [node, last_block || is_block[tree.type]]
+		return [node, is_block[tree.type] || last]
 	}
 	
 	return function(tree) {
