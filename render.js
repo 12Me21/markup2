@@ -88,7 +88,8 @@ Markup.render = (function(){
 			let x = elem('table')
 			let y = elem('tbody')
 			x.append(y)
-			return [x,y]
+			x.B = y
+			return x
 		},
 		table_row: creator('tr'),
 		table_cell({header, color, truecolor, colspan, rowspan, align}) {
@@ -135,7 +136,8 @@ Markup.render = (function(){
 			let x3 = elem('rp')
 			x3.textContent = ")"
 			e.append(first, x1, x2, x3)
-			return [e, first]
+			e.B = first
+			return e
 		},
 		spoiler({label}) {
 			let button = elem('button')
@@ -153,8 +155,9 @@ Markup.render = (function(){
 			
 			let node = frag()
 			node.append(button, box)
+			node.B = box
 			
-			return [node, box]
+			return node
 		},
 		background_color({color}) {
 			let e = elem('span')
@@ -164,47 +167,40 @@ Markup.render = (function(){
 		},
 	}
 	
-	function fill_branch(branch, data) {
-		let last
-		if (!data.content) {
-			// simple element
-			last = 'text'
-		} else {
-			// children
-			for (let leaf of data.content) {
-				if (typeof leaf == 'string') {
-					branch.append(leaf)
-					last = 'text'
-				} else if (leaf.type=='newline') {
-					if (!last)
-						branch.append(document.createElement('hr'))
-					else {
-						if (last=='text')
-							branch.append(CREATE.newline())
-						last = false
-					}
-				} else {
-					let inner, outer = CREATE[leaf.type](leaf.args, leaf.tag)
-					if (outer instanceof Array)
-						[outer, inner] = outer
-					else
-						inner = outer
-					
-					branch.append(outer)
-					
-					last = fill_branch(inner, leaf)
-				}
-			}
-			if (last==false)
-				branch.append(document.createElement('hr'))
-		}
+	function fill_branch(branch, leaves) {
+		if (!leaves)
+			return 'text'
 		
-		return is_block[data.type] || last
+		// children
+		let prev = null
+		for (let leaf of leaves) {
+			if (typeof leaf == 'string') {
+				branch.append(leaf)
+				prev = 'text'
+			} else if (leaf.type=='newline') {
+				if (!prev)
+					branch.append(document.createElement('hr'))
+				else {
+					if (prev=='text')
+						branch.append(CREATE.newline())
+					prev = false
+				}
+			} else {
+				let node = CREATE[leaf.type](leaf.args, leaf.tag)
+				branch.append(node)
+				prev = fill_branch(node.B||node, leaf.content)
+				prev = is_block[leaf.type] || prev
+			}
+		}
+		if (prev==false) // if we catch this on the last iteration then we can just insert it instead of newline hm ? no i dont think... since it fill_branch could return false.. unless we just prevent that?
+			branch.append(document.createElement('hr'))
+		
+		return prev
 	}
 	
 	return function(tree) {
 		let root = frag()
-		fill_branch(root, tree)
+		fill_branch(root, tree.content)
 		return root
 	}
 }())
