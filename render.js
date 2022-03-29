@@ -174,24 +174,24 @@ Markup.render = (function(){
 		// children
 		let prev = 'newline'
 		let all_newline = true
-		for (let leaf of leaves) {
-			if (typeof leaf == 'string') {
-				branch.append(leaf)
-				prev = 'text'
-				all_newline = false
-			} else if (leaf.type=='newline') {
-				if (prev!='block')
-					branch.append(CREATE.newline())
-				prev = 'newline'
-			} else {
-				let node = CREATE[leaf.type](leaf.args, leaf.tag)
-				branch.append(node)
-				prev = fill_branch(node.B||node, leaf.content)
-				prev = is_block[leaf.type] || prev
-				all_newline = false
-			}
+		for (let leaf of leaves) switch (typeof leaf) { default:
+		continue;case 'string':
+			all_newline = false
+			branch.append(leaf)
+			prev = 'text'
+		continue;case 'boolean':
+			if (prev!='block')
+				branch.append(CREATE.newline())
+			prev = 'newline'
+		continue;case 'object':
+			all_newline = false
+			let node = CREATE[leaf.type](leaf.args, leaf.tag)
+			branch.append(node)
+			prev = fill_branch(node.B||node, leaf.content)
+			prev = is_block[leaf.type] || prev
 		}
-		if (!all_newline && prev=='newline') // if we catch this on the last iteration then we can just insert it instead of newline hm ?
+		// double the last newline, unless the block only contains newlines (or is empty)
+		if (prev=='newline' && !all_newline)
 			branch.append(CREATE.newline())
 		
 		return prev

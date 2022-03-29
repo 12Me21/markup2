@@ -36,7 +36,7 @@ let Markup = (function(){
 		{newline:true, do(tag) {
 			while (!current.body && end_at_eol[current.type])
 				CANCEL()
-			return TAG('newline', tag)
+			return TEXT(true)
 		}},
 	],[// 💎 HEADING 💎
 		/^#{1,4}/,
@@ -100,7 +100,7 @@ let Markup = (function(){
 		/[\\][^]/, //todo: match surrogate pairs
 		{do(tag) {
 			if (tag=="\\\n")
-				return TAG('newline')
+				return TEXT(true)
 			return TEXT(tag.substr(1))
 		}},
 	],[// 💎 QUOTE 💎
