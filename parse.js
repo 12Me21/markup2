@@ -1,4 +1,13 @@
-let Markup = (function(){
+const Markup = {
+	set IMPORT(fn) { fn(this) },
+	parse: null, render: null,
+	convert(text) {
+		let tree = this.parse(text)
+		return this.render(tree)
+	},
+}
+
+Markup.IMPORT = EXPORT=>{
 	"use strict"
 	
 	// if cancelled, will be completed instead:
@@ -328,8 +337,8 @@ let Markup = (function(){
 		while (auto_cancel[current.type])
 			CANCEL()
 	}
-		
-	function parse(text) {
+	
+	EXPORT.parse = function(text) {
 		current = tree = {type:'ROOT', tag:"", content:[]}
 		envs = 0
 		
@@ -380,13 +389,4 @@ let Markup = (function(){
 	// or match paired {}s :  
 	// \tag{ ...  {heck} ... } <- closes here
 	
-	return Object.seal({
-		parse: parse,
-		render: null,
-		convert(text) {
-			let tree = this.parse(text)
-			return this.render(tree)
-		},
-		regex, groups,
-	})
-})()
+}

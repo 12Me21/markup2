@@ -1,9 +1,7 @@
-Markup.render = (function(){
+Markup.IMPORT = EXPORT=>{
 	"use strict"
 	
-	function creator(type) {
-		return document.createElement.bind(document, type)
-	}
+	let creator = document.createElement.bind.bind(document.createElement, document)
 	let elem = document.createElement.bind(document)
 	let frag = document.createDocumentFragment.bind(document)
 	
@@ -168,40 +166,42 @@ Markup.render = (function(){
 	}
 	
 	function fill_branch(branch, leaves) {
-		if (!leaves)
-			return 'text'
-		
 		// children
 		let prev = 'newline'
 		let all_newline = true
-		for (let leaf of leaves) switch (typeof leaf) { default:
-		continue;case 'string':
-			all_newline = false
-			branch.append(leaf)
-			prev = 'text'
-		continue;case 'boolean':
-			if (prev!='block')
-				branch.append(CREATE.newline())
-			prev = 'newline'
-		continue;case 'object':
-			all_newline = false
-			let node = CREATE[leaf.type](leaf.args, leaf.tag)
-			branch.append(node)
-			prev = fill_branch(node.B||node, leaf.content)
-			prev = is_block[leaf.type] || prev
+		for (let leaf of leaves) {
+			if (typeof leaf == 'string') {
+				all_newline = false
+				branch.append(leaf)
+				prev = 'text'
+			} else if (leaf == true) {
+				if (prev!='block')
+					branch.append(CREATE.newline())
+				prev = 'newline'
+			} else {
+				all_newline = false
+				let node = CREATE[leaf.type](leaf.args, leaf.tag)
+				branch.append(node)
+				if (leaf.content)
+					prev = fill_branch(node.B||node, leaf.content)
+				else
+					prev = 'text'
+				prev = is_block[leaf.type] || prev
+			}
 		}
-		// double the last newline, unless the block only contains newlines (or is empty)
 		if (prev=='newline' && !all_newline)
 			branch.append(CREATE.newline())
 		
 		return prev
 	}
 	
-	return function(tree) {
+	EXPORT.render = function(tree) {
 		let root = frag()
 		fill_branch(root, tree.content)
 		return root
 	}
-}())
+	
+	EXPORT.create = CREATE
+}
 
 //let append = Node.appendChild.call
