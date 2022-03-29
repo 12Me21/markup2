@@ -177,37 +177,44 @@ Markup.render = (function(){
 			return [node, is_block[tree.type]]
 		// add children
 		let got_newline = false
-		function do_newline(block, sp) {
+		let last_block = false
+		let last_text = false
+		let only_newline = true
+		
+		function do_newline() {
 			if (got_newline) {
-				if (!block)
-					branch.append(CREATE.newline())
-				if (sp)
-					branch.append("")
-				last_block = false
+				if (!last_block) {
+					if (last_text)
+						branch.append(CREATE.newline())
+					else
+						branch.append(document.createElement('hr'))
+				}
+				last_text = last_block = false
 			}
 			got_newline = false
 		}
-		
-		let last_block = false
-		let only_newline = true
 		for (let item of tree.content) {
 			if (typeof item == 'string') {
-				do_newline(last_block)
+				do_newline()
 				branch.append(item)
 				last_block = false
 				only_newline = false
+				last_text = true
 			} else if (item.type=='newline') {
 				do_newline(last_block)
 				got_newline = true
 			} else {
 				let [node, is_block] = render_branch(item)
-				do_newline(is_block || last_block, true)
+				do_newline()
 				branch.append(node)
 				last_block = is_block
+				last_text = false
 				only_newline = false
 			}
 		}
-		do_newline(last_block, !only_newline)
+		do_newline()
+		if (!last_block && !last_text && !only_newline)
+			branch.append(document.createElement('hr'))
 		
 		return [node, last_block || is_block[tree.type]]
 	}
