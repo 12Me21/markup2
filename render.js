@@ -164,46 +164,48 @@ Markup.render = (function(){
 		},
 	}
 	
-	function render_branch(tree) {
-		// element
-		let x = CREATE[tree.type](tree.args, tree.tag)
-		let node, branch
-		if (x instanceof Array)
-			[node, branch] = x
-		else
-			node = branch = x
-		// simple element
-		if (!tree.content)
-			return [node, is_block[tree.type] || 'text']
-		// add children
-		
-		let last = null
-		for (let item of tree.content) {
-			if (typeof item == 'string') {
-				branch.append(item)
-				last = 'text'
-			} else if (item.type=='newline') {
-				if (!last) {
-					branch.append(document.createElement('hr'))
+	function fill_branch(branch, data) {
+		let last
+		if (!data.content) {
+			// simple element
+			last = 'text'
+		} else {
+			// children
+			for (let leaf of data.content) {
+				if (typeof leaf == 'string') {
+					branch.append(leaf)
+					last = 'text'
+				} else if (leaf.type=='newline') {
+					if (!last)
+						branch.append(document.createElement('hr'))
+					else {
+						if (last=='text')
+							branch.append(CREATE.newline())
+						last = false
+					}
 				} else {
-					if (last=='text')
-						branch.append(CREATE.newline())
-					last = false
+					let inner, outer = CREATE[leaf.type](leaf.args, leaf.tag)
+					if (outer instanceof Array)
+						[outer, inner] = outer
+					else
+						inner = outer
+					
+					branch.append(outer)
+					
+					last = fill_branch(inner, leaf)
 				}
-			} else {
-				let node
-				;[node, last] = render_branch(item)
-				branch.append(node)
 			}
+			if (last==false)
+				branch.append(document.createElement('hr'))
 		}
-		if (last==false)
-			branch.append(document.createElement('hr'))
 		
-		return [node, is_block[tree.type] || last]
+		return is_block[data.type] || last
 	}
 	
 	return function(tree) {
-		return render_branch(tree)[0]
+		let root = frag()
+		fill_branch(root, tree)
+		return root
 	}
 }())
 
