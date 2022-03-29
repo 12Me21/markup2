@@ -180,9 +180,7 @@ Markup.render = (function(){
 				prev = 'text'
 				all_newline = false
 			} else if (leaf.type=='newline') {
-				if (prev=='newline')
-					branch.append(document.createElement('hr'))
-				else if (prev=='text')
+				if (prev!='block')
 					branch.append(CREATE.newline())
 				prev = 'newline'
 			} else {
@@ -194,7 +192,7 @@ Markup.render = (function(){
 			}
 		}
 		if (!all_newline && prev=='newline') // if we catch this on the last iteration then we can just insert it instead of newline hm ?
-			branch.append(document.createElement('hr'))
+			branch.append(CREATE.newline())
 		
 		return prev
 	}
