@@ -64,19 +64,19 @@ Markup.IMPORT = EXPORT=>{
 		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve these
 		// 💎 STYLE START 💎
 		{do(tag) {
-			return OPEN('style', tag, tag)
+			return OPEN('style', tag)
 		}},
 		// 💎 STYLE END 💎
 		{do(tag) {
 			// todo: should be checking for WEAK here?
 			while (current.type=='style') { 
-				if (current.args == tag) { // found opening
+				if (current.tag == tag) { // found opening
 					current.type = {
 						"**": 'bold',
 						"__": 'underline',
 						"~~": 'strikethrough',
 						"/": 'italic',
-					}[current.args]
+					}[current.tag]
 					return CLOSE()
 				}
 				CANCEL() // different style (kill)

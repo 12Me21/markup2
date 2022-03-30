@@ -6,8 +6,6 @@ Markup.IMPORT = EXPORT=>{
 		table_cell:'block',
 	}
 	
-	
-	
 	// This tag-function parses an HTML string, and returns a function
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
