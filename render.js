@@ -15,6 +15,14 @@ Markup.IMPORT = EXPORT=>{
 		return c.cloneNode.bind(c, true)
 	}
 	
+//	id = DocumentFragment.prototype.getElementById.call
+	
+	function id(elem, id) {
+		let e = elem.getElementById(id)
+		e.removeAttribute('id')
+		return e
+	}
+	
 	let CREATE = {
 		newline: 𐀶`<br>`,
 		
@@ -70,24 +78,26 @@ Markup.IMPORT = EXPORT=>{
 			if (cite==null)
 				return this[0]()
 			let x = this[1]()
-			let c = x.getElementById('cite')
-			c.id = ""
-			c.textContent = cite
+			id(x, 'cite').textContent = cite
 			return x
 		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite id=cite>`]),
 		
-		table: 𐀶`<table>`, // todo: <tbody> ?
+		table: function() {
+			let x = this()
+			x.B = id(x, 'branch')
+			return x
+		}.bind(𐀶`<table><tbody id=branch>`),
 		
 		table_row: 𐀶`<tr>`,
 		
 		table_cell: function({header, color, truecolor, colspan, rowspan, align}) {
-			let e = this[header?1:0]()
-			if (color) e.dataset.bgcolor = color
-			if (truecolor) e.style.backgroundColor = truecolor
-			if (colspan) e.colSpan = colspan
-			if (rowspan) e.rowSpan = rowspan
-			if (align) e.style.textAlign = align
-			return e
+			let x = this[header?1:0]()
+			if (color) x.dataset.bgcolor = color
+			if (truecolor) x.style.backgroundColor = truecolor
+			if (colspan) x.colSpan = colspan
+			if (rowspan) x.rowSpan = rowspan
+			if (align) x.style.textAlign = align
+			return x
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
 		
 		link: function({url}) {
@@ -107,9 +117,9 @@ Markup.IMPORT = EXPORT=>{
 		list_item: 𐀶`<li>`,
 		
 		align: function({align}) {
-			let e = this()
-			e.style.textAlign = align
-			return e
+			let x = this()
+			x.style.textAlign = align
+			return x
 		}.bind(𐀶`<div>`),
 		
 		subscript: 𐀶`<sub>`,
@@ -117,38 +127,33 @@ Markup.IMPORT = EXPORT=>{
 		superscript: 𐀶`<sup>`,
 		
 		anchor: function({name}) {
-			let e = this()
-			e.name = "_anchor_"+name
-			return e
+			let x = this()
+			x.name = "_anchor_"+name
+			return x
 		}.bind(𐀶`<a name="">`),
 		
 		ruby: function({text}) {
-			let e = this()
-			let branch = this.getElementById('branch')
-			let top = this.getElementById('top')
-			this.branch.id = ""
-			this.top.id = ""
-			top.textContent = text
-			e.B = branch
-			return e
+			let x = this()
+			id(x, 'top').textContent = text
+			x.B = id(x, 'branch')
+			return x
 		}.bind(𐀶`<ruby><span id=branch></span><rp>(<rt id=top><rp>(`),
 		
 		spoiler: function({label}) {
-			let x = this()
-			let btn = x.getElementById('button')
-			let branch = x.getElementById('branch')
-			btn.id = ""
-			branch.id = ""
-			btn.onclick = btn.toggleAttribute.bind(btn, 'data-show') // could toggle attribute on branch instead?
-			x.B = branch
+			x = this()
+			id(x, 'btn').onclick = function() {
+				this.toggleAttribute('data-show')
+				// could toggle attribute on branch instead?
+			}
+			x.B = id(x, 'branch')
 			return x
 		}.bind(𐀶`<button class=spoiler-button id=button></button><div id=branch>`),
 		
 		background_color: function({color}) {
-			let e = this()
+			let x = this()
 			if (color)
-				e.dataset.bgcolor = color
-			return e
+				x.dataset.bgcolor = color
+			return x
 		}.bind(𐀶`<span>`),
 	}
 	
