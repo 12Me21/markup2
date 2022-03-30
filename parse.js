@@ -153,7 +153,7 @@ Markup.IMPORT = EXPORT=>{
 			let args = {url: filter_url(url)}
 			if (body)
 				return OPEN('link', tag, args, true)
-			args.text = rargs[0] || url // note: this treats "" and undefined the same...
+			args.text = rargs.length>0 ? rargs[0] : url
 			return TAG('simple_link', tag, args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
@@ -217,11 +217,12 @@ Markup.IMPORT = EXPORT=>{
 	}
 	
 	let null_args = []
-	null_args.named = {}
-	// todo: should this return [""] or [] when parsing, ex: \tag[]
+	null_args.named = Object.freeze({})
+	Object.freeze(null_args)
 	function parse_args(arglist) {
-		if (arglist==undefined)
+		if (!arglist) // note: tests for undefined (\tag) AND "" (\tag[])
 			return null_args
+		
 		let map = {}, list = []
 		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
