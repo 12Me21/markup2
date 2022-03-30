@@ -17,10 +17,12 @@ Markup.IMPORT = EXPORT=>{
 		let temp = document.createElement('template')
 		temp.innerHTML = html
 		let fragment = temp.content
+		let first = fragment.firstChild
 		// if the fragment only has 1 node in it, use that instead
-		if (fragment.getElementsByTagName('*').length == 1)
-			fragment = fragment.firstChild
-		return c.cloneNode.bind(c, true)
+		if (!first.nextSibling && !first.firstChild)
+			fragment = first
+		
+		return fragment.cloneNode.bind(fragment, true)
 	}
 	
 	function id(elem, id) {
