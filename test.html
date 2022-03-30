@@ -12,7 +12,11 @@
 	}
 </style>
 
-<textarea id=$input></textarea>
+<div style="border: 2px solid red;">
+	<textarea-container>
+		<textarea id=$input></textarea>
+	</textarea-container>
+</div>
 <br>
 <div id=$output class='MARKUP'></div>
 <hr>
@@ -32,4 +36,51 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 		$time2.value = performance.now()-n
 		$output.replaceChildren(e)
 	}
+</script>
+
+
+<style>
+	textarea-container {
+		display: block;
+		box-sizing: content-box;
+		overflow: hidden;
+		
+		border: 2px solid #00C8B4;
+		padding: 5px;
+	}
+	
+	textarea-container > textarea {
+		resize: none;
+		width: 100%;
+		overflow-y: scroll;
+		box-sizing: border-box;
+		margin: 0;
+		
+		height: 5em;
+		min-height: 5em;
+		
+		box-shadow: none;
+		border: none;
+		border-radius: 0;
+		padding: 0;
+		
+		outline-offset: 3px;
+	}
+	
+	textarea-container, textarea-container > textarea {
+		max-height: 15rem;
+		width: 300px
+	}
+	
+</style>
+
+<script>
+	let txt = $input
+	
+	let textarea_resize = function() {
+		this.style.height = ""
+		let height = this.scrollHeight
+		this.parentNode.style.height = this.style.height = `${height+1}px`
+	}
+	txt.addEventListener('input', textarea_resize)
 </script>
