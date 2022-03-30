@@ -153,7 +153,7 @@ Markup.IMPORT = EXPORT=>{
 			let args = {url: filter_url(url)}
 			if (body)
 				return OPEN('link', tag, args, true)
-			args.text = url
+			args.text = rargs[0] || url
 			return TAG('simple_link', tag, args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
