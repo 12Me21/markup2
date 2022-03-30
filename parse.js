@@ -17,7 +17,7 @@ Markup.IMPORT = EXPORT=>{
 	// cancelled at the end of a line (or completed if auto_close is set):
 	let end_at_eol = {heading:1, style:1, quote:1}
 	
-	let tree, current, envs
+	let tree, current, brackets
 	
 	// maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
@@ -94,7 +94,7 @@ Markup.IMPORT = EXPORT=>{
 		//[/{/, {token:''}], // maybe
 		/}/,
 		{do(tag) {
-			if (envs<=0)
+			if (brackets<=0)
 				return TEXT(tag)
 			while (!current.body)
 				CANCEL()
@@ -286,35 +286,36 @@ Markup.IMPORT = EXPORT=>{
 	function OPEN(type, tag, args, body) {
 		current = {type, tag, content: [], parent: current}
 		if (body) {
-			envs++
+			brackets++
 			current.body = true
 		}
 		if (args)
 			current.args = args
 	}
 	// move up
-	function up() {
+	function pop() {
 		if (current.body)
-			envs--
+			brackets--
 		let o = current
 		current = current.parent
-		delete o.parent
 		return o
 	}
 	// complete current block
 	function CLOSE() {
 		// push the block + move up
-		let o = up()
+		let o = pop()
 		if (o.type=='null_env') // special case: merge
 			current.content.push(...o.content)
-		else
+		else {
+			delete o.parent // remove cyclical reference before adding to tree
 			current.content.push(o)
+		}
 	}
 	// cancel current block (flatten)
 	function CANCEL() {
 		if (current.body || auto_close[current.type])
 			return CLOSE()
-		let o = up()
+		let o = pop()
 		// if we just cancelled a table cell,
 		// we don't want to insert text into the table row/body,
 		// so we complete the table first.
@@ -343,7 +344,7 @@ Markup.IMPORT = EXPORT=>{
 	
 	EXPORT.parse = function(text) {
 		current = tree = {type:'ROOT', tag:"", content:[]}
-		envs = 0
+		brackets = 0
 		
 		let last = regex.lastIndex = 0
 		for (let match; match=regex.exec(text); ) {
