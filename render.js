@@ -20,6 +20,8 @@ Markup.IMPORT = EXPORT=>{
 		
 		divider: 𐀶`<hr>`,
 		
+		env: 𐀶`<hr>`,
+		
 		code: function({text, lang}) {
 			let x = this()
 			x.textContent = text
