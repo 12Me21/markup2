@@ -298,6 +298,7 @@ Markup.IMPORT = EXPORT=>{
 			envs--
 		let o = current
 		current = current.parent
+		delete o.parent
 		return o
 	}
 	// complete current block
