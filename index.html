@@ -2,10 +2,9 @@
 <html lang=en-QC-2sbs>
 <meta charset="utf-8">
 
-<?: hello ?>
-
 <script src=parse.js></script>
 <script src=render.js></script>
+
 <link rel=stylesheet href=markup.css>
 <style>
 	#\$output {
@@ -14,75 +13,80 @@
 	}
 </style>
 
-<div style="border: 2px solid red;">
-	<textarea-container>
-		<textarea id=$input></textarea>
-	</textarea-container>
-</div>
-<br>
-<div id=$output class='MARKUP'></div>
-<hr>
+<textarea-container style="--min:5; --max:15;">
+	<textarea id=$input></textarea>
+</textarea-container>
 parse: <output id=$time1></output> render: <output id=$time2></output>
+<div id=$output class='MARKUP'></div>
 
 <script>
+	let tₛ
+	let 𖹭 = Object.freeze({
+		valueOf() {
+			if (tₛ)
+				return tₛ=null, -1
+			tₛ = performance.now() || 1
+		}
+	})
+	let Δ = {
+		toString() {
+			return (performance.now() - tₛ).toFixed(1)+" ms"
+		}
+	}
+
 	$input.oninput = ()=>{
 		let t = $input.value
+		//𐎌
 		
-		let n = performance.now()
-		let tree = Markup.parse(t)
+		for (;~𖹭; $time1.value = Δ)
+			var tree = Markup.parse(t)
+		
 		window.tree = tree
-		$time1.value = performance.now()-n
 		
-		n = performance.now()
-		let e = Markup.render(tree)
-		$time2.value = performance.now()-n
+		for (;~𖹭; $time2.value = Δ)
+			var e = Markup.render(tree)
+		
 		$output.replaceChildren(e)
 	}
 </script>
 
 
 <style>
-	textarea-container {
+	textarea-container, textarea-container > textarea {
 		display: block;
 		box-sizing: content-box;
-		overflow: hidden;
-		
+		min-height: 5em;
+		max-height: 15em;
+		height: 0;
+		font-family: monospace;
+		font-size: 1em;
+	}
+	
+	textarea-container {
+		padding: 2px;
 		border: 2px solid #00C8B4;
-		padding: 5px;
+		border-radius: 2px;
 	}
 	
 	textarea-container > textarea {
 		resize: none;
-		width: 100%;
 		overflow-y: scroll;
-		box-sizing: border-box;
 		margin: 0;
-		
-		height: 5em;
-		min-height: 5em;
-		
-		box-shadow: none;
 		border: none;
-		border-radius: 0;
 		padding: 0;
+		width: 100%;
 		
-		outline-offset: 3px;
+		appearance: none;
+		outline-offset: 2px;
 	}
-	
-	textarea-container, textarea-container > textarea {
-		max-height: 15rem;
-		width: 300px
-	}
-	
 </style>
 
 <script>
-	let txt = $input
-	
-	let textarea_resize = function() {
-		this.style.height = ""
-		let height = this.scrollHeight
-		this.parentNode.style.height = this.style.height = `${height+1}px`
-	}
-	txt.addEventListener('input', textarea_resize)
+	document.addEventListener('input', function(e) {
+		let t = e.target
+		if (t instanceof HTMLTextAreaElement && t.parentNode.tagName=='TEXTAREA-CONTAINER') {
+			t.style.height = "0"
+			t.parentNode.style.height = t.style.height = `${t.scrollHeight+1}px`
+		}
+	}, {passive: true})
 </script>
