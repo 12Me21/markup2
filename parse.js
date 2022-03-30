@@ -120,12 +120,12 @@ Markup.IMPORT = EXPORT=>{
 	],[// 💎 CODE BLOCK 💎
 		/^```[^]*?\n(?:```|$)/,
 		{do(tag) {
-			return TAG('code', tag, tag.replace(/^```|```$/g,"")) // hack...
+			return TAG('code', tag, {text: tag.replace(/^```|```$/g,"")}) // hack...
 		}},
 	],[// 💎 INLINE CODE 💎
 		/`[^`\n]+`?/,
 		{do(tag) {
-			return TAG('icode', tag, tag.replace(/^`|`$/g,""))
+			return TAG('icode', tag, {text: tag.replace(/^`|`$/g,"")})
 		}},
 	],[// 💎💎 URL
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
