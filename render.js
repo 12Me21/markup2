@@ -68,9 +68,9 @@ Markup.IMPORT = EXPORT=>{
 			if (cite==null)
 				return this[0]()
 			let x = this[1]()
-			let cite = x.getElementById('cite')
-			cite.id = ""
-			cite.textContent = cite
+			let c = x.getElementById('cite')
+			c.id = ""
+			c.textContent = cite
 			return x
 		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite id=cite>`]),
 		
