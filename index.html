@@ -13,43 +13,42 @@
 	}
 </style>
 
-<textarea-container style="--min:5; --max:15;">
+<textarea-container>
 	<textarea id=$input></textarea>
 </textarea-container>
 parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='MARKUP'></div>
 
 <script>
-	let tₛ
-	let 𖹭 = Object.freeze({
-		valueOf() {
-			if (tₛ)
-				return tₛ=null, -1
-			tₛ = performance.now() || 1
-		}
-	})
-	let Δ = {
-		toString() {
-			return (performance.now() - tₛ).toFixed(1)+" ms"
-		}
-	}
-
-	$input.oninput = ()=>{
-		let t = $input.value
-		//𐎌
+	$input.oninput = function() {
+		let t = this.value
 		
-		for (;~𖹭; $time1.value = Δ)
-			var tree = Markup.parse(t)
+		~Δ
+		let tree = Markup.parse(t)
+		$time1.value = Δ
 		
 		window.tree = tree
 		
-		for (;~𖹭; $time2.value = Δ)
-			var e = Markup.render(tree)
+		~Δ
+		let e = Markup.render(tree)
+		$time2.value = Δ
 		
 		$output.replaceChildren(e)
 	}
+	
+	// Timer	
+	let tₛ = 0
+	function Δ() {
+		let t = performance.now()
+		let str = (t - tₛ).toFixed(1)+" ms"
+		tₛ = performance.now()
+		return str
+	}
+	Δ.valueOf = Δ.toString = Δ
 </script>
 
+
+<!-- textarea -->
 
 <style>
 	textarea-container, textarea-container > textarea {
