@@ -63,7 +63,18 @@ Markup.INJECT = Markup=>{
 		}.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
-		audio: 𐀶`<audio controls preload=none>`,
+		// todo: we need a preview flag which disables these because they're very slow... invalid images are bad too.
+		audio: function({url}) {
+			let e = this()
+			e.src = url
+			return e
+		}.bind(𐀶`<audio controls preload=none>`),
+		
+		video: function({url}) {
+			let e = this()
+			e.src = url
+			return e
+		}.bind(𐀶`<video controls preload=none>`),
 		
 		italic: 𐀶`<i>`,
 		
