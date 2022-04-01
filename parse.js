@@ -54,7 +54,7 @@ Markup.INJECT = Markup=>{
 	],[// 💎 HEADING 💎
 		/^#{1,4}/,
 		{argtype:ARGS_HEADING, do(tag, rargs, body) {
-			let level = /#*/.exec(tag)[1].length // hhhhh
+			let level = /#*/.exec(tag)[0].length // hhhhh
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
 			return OPEN('heading', tag, args, body)
@@ -124,7 +124,7 @@ Markup.INJECT = Markup=>{
 	],[// 💎 CODE BLOCK 💎
 		/^```[^]*?\n(?:```|$)/,
 		{do(tag) {
-			return TAG('code', tag, {text: tag.replace(/^```|```$/g,"")}) // hack...
+			return TAG('code', tag, {text: tag.replace(/^```\n?|\n?```$/g,"")}) // hack...
 		}},
 	],[// 💎 INLINE CODE 💎
 		/`[^`\n]+`?/,
