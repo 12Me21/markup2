@@ -33,16 +33,17 @@
 <div>
 	<button onclick="run()">run tests</button>
 	<hr>
-	add new test case: (saved in localstorage)<br>
+	
+	<textarea id=$input placeholder='markup'></textarea>
 	<div>
+		new test case:
 		<input id=$title placeholder='name'>
 		<button onclick="add_test($title.value, $input.value)">add</button>
 	</div>
-	<textarea id=$input placeholder='markup'></textarea>
 	<div class=MARKUP id=$preview style='padding: 5px; border: 1px solid black;'></div>
-	<br>
 	<hr>
-	<textarea id=$show_entries style='resize: vertical;'></textarea>
+	test definitions: (saved in localstorage)
+	<textarea id=$show_entries style='resize: vertical;height: 200px;'></textarea>
 </div>
 <div>
 	<div id=$output></div>
