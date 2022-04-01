@@ -245,7 +245,7 @@ Markup.INJECT = Markup=>{
 	}
 	function embed_type(rargs, url) {
 		let type
-		for (let arg of list)
+		for (let arg of rargs)
 			if (arg=='video' || arg=='audio' || arg=='image')
 				type = arg
 		if (type)
