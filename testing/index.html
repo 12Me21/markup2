@@ -7,8 +7,6 @@
 <script src=test.js></script>
 <script src=draw.js></script>
 
-<script src=Tests/1.js></script>
-
 <style>
 	test- {
 		display: flex;
@@ -31,17 +29,23 @@
 	}
 </style>
 
-a
-
-<button onclick="run()">run</button> (note: the times are usually bad on the first run)
+<button onclick="load_tests().then(x=>run())">reload test file</button>
+<br>
+<button onclick="run()">run tests</button>
+<hr>
 <div id=$output></div>
 
 <script>
+	function load_tests() {
+		return Test.load_file("Tests/1.txt")
+	}
+	
 	function run() {
 		Test.run_all()
 		$output.replaceChildren(Test.draw_results())
 	}
-	run()
+	
+	load_tests().then(x=>run())
 </script>
 
 

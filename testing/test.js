@@ -56,6 +56,24 @@ class Test {
 			test.run()
 		}
 	}
+	
+	static async load_file(url) {
+		this.all = []
+		let text = await fetch(url).then(x=>x.text())
+		text = text.replace(/\r/g, "")
+		// todo: indent? (\t*) and then \1 backref match on other lines
+		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*({.*)$|(🟩)/mg
+		let m, l
+		while (m = r.exec(text)) {
+			let [, name, input, output, fail] = m
+			if (fail) {
+				let line = text.substr(0, m.index).match(/\n/g).length+1
+				console.warn("error parsing tests file:", line)
+			} else {
+				let test = new this({name: name}, input, JSON.parse(output))
+			}
+		}
+	}
 }
 
 class InvalidTree extends Error {
@@ -72,6 +90,14 @@ class Mismatch extends Error {
 		this.got = got
 		this.message = `${msg}\nExpect: ${correct}\n   Got: ${got}`
 		this.name = 'Mismatch'
+	}
+}
+
+function safe_string(obj) {
+	try {
+		return JSON.stringify(obj)
+	} catch(e) {
+		return "<???>"
 	}
 }
 
@@ -110,7 +136,7 @@ function compare_object(correct, got) {
 		if (correct.length != got.length)
 			return false
 	} else {
-		throw new Error("invalid reference data??") // very bad,
+		return false
 	}
 	
 	let n = 0
@@ -202,7 +228,7 @@ function compare_node(correct, got) {
 	
 	if (!compare_object(correct.args, got.args)) {
 		console.info(correct.args, got.args)
-		throw new Mismatch("arg mismatch", JSON.stringify(correct.args), 'idk')
+		throw new Mismatch("arg mismatch", JSON.stringify(correct.args), safe_string(got.args))
 	}
 	
 	compare_content(correct, got)
