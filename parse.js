@@ -21,12 +21,12 @@ Markup.INJECT = Markup=>{
 	
 
 	
-	Markup.IS_BLOCK = {code:'block', line:'block', ROOT:'block', heading:'block', quote:'block', table:'block', table_cell:'block'}
+	Markup.IS_BLOCK = {code:1, line:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1}
 	
 	// if cancelled, will be completed instead:
 	let AUTO_CLOSE = {heading:1, quote:1, ROOT:1}
 	// will be cancelled at the end of a block, if open:
-	let AUTO_CANCEL = {style:1}
+	let WEAK = {style:1}
 	// cancelled at end of a line (or completed if auto_close is set):
 	let END_AT_EOL = {heading:1, style:1, quote:1}
 	
@@ -342,7 +342,7 @@ Markup.INJECT = Markup=>{
 		current.content.push({type, tag, args})
 	}
 	function kill_weak() {
-		while (AUTO_CANCEL[current.type])
+		while (WEAK[current.type])
 			CANCEL()
 	}
 	

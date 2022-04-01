@@ -182,7 +182,7 @@ Markup.INJECT = Markup=>{
 					prev = fill_branch(new_branch, leaf.content)
 				else
 					prev = 'text'
-				prev = Markup.IS_BLOCK[leaf.type] || prev
+				prev = Markup.IS_BLOCK[leaf.type] ? 'block' : prev
 			}
 		}
 		if (prev=='newline' && !all_newline)
