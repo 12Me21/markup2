@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang=en-QC-2sbs><meta charset="utf-8">
+
+<script src=../parse.js></script>
+<script src=../render.js></script>
+<link rel=stylesheet href=../markup.css>
+
+<link rel=stylesheet href=style.css>
+<script src=test.js></script>
+<script src=draw.js></script>
+
+<body style='display:flex; flex-direction: column;'>
+
+<button onclick="run()">run tests</button>
+<hr>
+<div id=$output></div>
+<hr>
+add new test case:<br>
+<input id=$title><br>
+<textarea id=$input></textarea>
+<div class=MARKUP id=$preview style='padding: 5px; border: 1px solid black;'></div>
+<br>
+<button onclick="add_test($title.value, $input.value)">add</button>
+<hr>
+<textarea id=$show_entries style='resize: vertical;'></textarea>
+
+<script>
+	$show_entries.value = localStorage.tests || `🟩 text
+abc
+🟩 {"type":"ROOT","tag":"","content":["abc"]}`
+	
+	load()
+	run()
+	
+	$input.oninput = function() {
+		let tree = Markup.parse(this.value)
+		let e = Markup.render(tree)
+		$preview.replaceChildren(e)
+	}
+	
+	function load() {
+		localStorage.tests = $show_entries.value // todo: only update if valid
+		Test.load_text($show_entries.value)
+	}
+	
+	function run() {
+		load()
+		Test.run_all()
+		$output.replaceChildren(Test.draw_results())
+	}
+	
+	//$output.replaceChildren(Test.draw_results())
+	//run()
+	
+	function add_test(title, input) {
+		// todo: insert the output results element right away
+		
+		input = input.replace(/🟩/g, "")
+		let tree = Markup.parse(input)
+		JSON.stringify(tree)
+		
+		let t = new Test({name: title}, input, tree)
+		
+		$show_entries.value += "\n\n"+t.to_entry()
+		
+		load()
+		run()
+	}
+</script>

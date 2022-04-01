@@ -12,6 +12,8 @@ class Test {
 		
 		this.reset()
 		
+		if (this.constructor.all.find(test=>test.input == input))
+			console.warn('duplicate test!', this)
 		this.constructor.all.push(this)
 	}
 	
@@ -49,6 +51,10 @@ class Test {
 		this.parse_time = null
 	}
 	
+	to_entry() {
+		return `🟩 ${this.name}\n${this.input}\n🟩 ${JSON.stringify(this.correct)}`
+	}
+	
 	static all = []
 	
 	static run_all() {
@@ -57,9 +63,9 @@ class Test {
 		}
 	}
 	
-	static async load_file(url) {
+	static load_text(text) {
 		this.all = []
-		let text = await fetch(url).then(x=>x.text())
+		//let text = await fetch(url).then(x=>x.text())
 		text = text.replace(/\r/g, "")
 		// todo: indent? (\t*) and then \1 backref match on other lines
 		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*({.*)$|(🟩)/mg

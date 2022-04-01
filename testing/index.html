@@ -6,46 +6,81 @@
 
 <script src=test.js></script>
 <script src=draw.js></script>
+<link rel=stylesheet href=style.css>
 
-<style>
-	test- {
-		display: flex;
-		border: 1px solid black;
-		background: darkyellow;
-		margin: 3px;
-		column-gap: 16px;
-		white-space: pre-wrap;
-		font-family: monospace;
-	}
-	test-.passed {
-		background: lime;
-	}
-	test-.failed {
-		background: red;
-	}
-	test-name {
-		font-weight: bold;
-		margin: 2px;
-	}
-</style>
-
-<button onclick="load_tests().then(x=>run())">reload test file</button>
-<br>
 <button onclick="run()">run tests</button>
 <hr>
 <div id=$output></div>
 
 <script>
-	function load_tests() {
-		return Test.load_file("Tests/1.txt")
-	}
-	
 	function run() {
 		Test.run_all()
 		$output.replaceChildren(Test.draw_results())
 	}
-	
-	load_tests().then(x=>run())
+	window.onload = function() {
+		Test.load_text($data.nextSibling.textContent)
+		run()
+	}
 </script>
 
+<meta id=$data><![CDATA[
+🟩 text
+abc
+🟩 {"type":"ROOT","tag":"","content":["abc"]}
 
+🟩 should fail
+abcb
+🟩 {"type":"ROOT","tag":"","content":["abc"]}
+
+🟩	italic
+/italic/
+🟩 {"type":"ROOT","tag":"","content":[{"type":"italic","tag":"/","content":["italic"]}]}
+
+🟩 unclosed italic
+/italic
+🟩 {"type":"ROOT","tag":"","content":["/","italic"]}
+
+🟩 table
+| one | two |
+|[2x] oatmeal |
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"| ","content":["one"],"args":{}},{"type":"table_cell","tag":" ","content":["two"],"args":{}}]},{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":" |\n|[2x] ","content":["oatmeal"],"args":{"colspan":2}}]}]}]}
+
+🟩	table (should fail)
+| one | two |
+|[2x] oatmeal |
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"| ","content":["one"],"args":{}},{"type":"table_cell","tag":" ","content":["two"],"args":{}}]},{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":" |\n|[2x] ","content":["oatmeal"],"args":{"colspan":2, "rowspan":1}}]}]}]}
+)
+
+🟩	table (should fail)
+| one | two |
+|[2x] oatmeal |
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"| ","content":["one"],"args":{}},{"type":"table_cell","tag":" ","content":["two"],"args":{}}]},{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":" |\n|[2x] ","content":["oatmeal"],"args":{"colspan":"2"}}]}]}]}
+
+🟩 empty
+
+🟩 {"type":"ROOT","tag":"","content":[]}
+
+🟩 one newline
+
+
+🟩	{"type":"ROOT","tag":"","content":[true]}
+
+🟩 link
+https://example.com
+🟩	{"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"https://example.com","args":{"url":"https://example.com","text":"https://example.com"}}]}
+
+🟩 link with label
+https://example.com[heck]
+🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"https://example.com[heck]","args":{"url":"https://example.com","text":"heck"}}]}
+
+🟩 link with empty args
+https://example.com[]
+🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"https://example.com[]","args":{"url":"https://example.com","text":"https://example.com"}}]}
+
+🟩 link with blank label
+https://example.com[=]
+🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"https://example.com[=]","args":{"url":"https://example.com","text":""}}]}
+
+🟩 link with blank label 2
+https://example.com[;]
+🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"https://example.com[;]","args":{"url":"https://example.com","text":""}}]}

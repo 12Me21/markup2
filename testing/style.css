@@ -1,0 +1,25 @@
+test- {
+	display: flex;
+	border: 1px solid black;
+	background: darkyellow;
+	margin: 3px;
+	column-gap: 16px;
+	white-space: pre-wrap;
+	font-family: monospace;
+}
+test-.passed {
+	background: lime;
+}
+test-.failed {
+	background: red;
+}
+test-name {
+	font-weight: bold;
+	margin: 2px;
+}
+
+script.data-script {
+	display: block;
+	white-space: pre-wrap;
+	font-family: monospace;
+}
