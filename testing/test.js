@@ -31,10 +31,10 @@ class Test {
 		}
 		
 		try {
-			compare_node(t, this.correct)
+			compare_node(this.correct, t)
 		} catch (e) {
 			this.status = -1
-			this.result = "wrong output!\n"+e
+			this.result = e
 			return false
 		}
 		
@@ -58,6 +58,25 @@ class Test {
 	}
 }
 
+class InvalidTree extends Error {
+	constructor(msg) {
+		super(msg)
+		this.name = 'InvalidTree'
+	}
+}
+
+class Mismatch extends Error {
+	constructor(msg, correct, got) {
+		super(msg)
+		this.correct = correct
+		this.got = got
+		this.message = `${msg}\nExpect: ${correct}\n   Got: ${got}`
+		this.name = 'Mismatch'
+	}
+}
+
+// todo; during the comparison process, keep track of which node in `correct` is being checked, 
+
 function simple_type(x) {
 	if (x===null)
 		return 'null'
@@ -71,56 +90,77 @@ function simple_type(x) {
 		if (p==Array.prototype)
 			return 'array'
 	}
-	throw 'illegal type'
+	throw new InvalidTree("value has illegal type")
 }
 
 function is_object(x) {
 	return x && Object.getPrototypeOf(x) == Object.prototype
 }
 
-function compare_object(a, b) {
-	// simple comparison
-	if (a === b)
+function compare_object(correct, got) {
+	// simple comparison (primitive)
+	if (correct === got)
 		return true
-	// passes if both are objects
-	if (!(a && b && typeof a == 'object' && typeof b == 'object'))
-		return false
-	// get prototypes
-	let ap = Object.getPrototypeOf(a)
-	let bp = Object.getPrototypeOf(b)
-	if (ap != bp)
-		return false
-	// passes if both are arrays (with same length), or simple objects
-	if (ap == Array.prototype) {
-		if (ap.length != bp.length)
+	if (is_object(correct)) {
+		if (!is_object(got))
 			return false
-	} else if (ap != Object.prototype)
-		return false
-	// compare fields (note that we always use `in` even for arrays, since we might have an array with extra fields)
-	for (let key in a)
-		if (!compare_object(a[key], b[key]))
+	} else if (Array.isArray(correct)) {
+		if (!Array.isArray(got))
 			return false
-	// todo: check for extra keys in `b` ?
+		if (correct.length != got.length)
+			return false
+	} else {
+		throw new Error("invalid reference data??") // very bad,
+	}
 	
+	let n = 0
+	for (let key in correct)
+		if (correct[key] !== undefined) {
+			if (!compare_object(correct[key], got[key]))
+				return false
+			n++
+		}
+	
+	for (let key in got)
+		if (got[key] !== undefined)
+			n--
+	
+	if (n!=0)
+		return false
+		
 	return true
 }
 
+function node_kind(node) {
+	if (typeof node == 'string')
+		return 'text'
+	if (node == true)
+		return 'newline'
+	if (!is_object(node))
+		throw new InvalidTree("illegal node")
+	if (typeof node.type != 'string')
+		throw new InvalidTree("illegal node.type")
+	return 'block'
+}
+
 function compare_node_types(correct, got) {
+	let type = node_kind(got)
+	// text
 	if (typeof correct == 'string') {
-		if (typeof got != 'string')
-			throw "expected text, got something else"
+		if (type != 'text')
+			throw new Mismatch("wrong node kind", 'text', type)
 		if (correct != got)
-			throw "wrong text: "
+			throw new Mismatch("wrong text", correct, got)
+	// newline
 	} else if (correct == true) {
-		if (got != true)
-			throw "wrong text: "
+		if (type != 'newline')
+			throw new Mismatch("wrong node kind", 'newline', type)
+	// block
 	} else {
-		if (!is_object(got))
-			throw "expected object node"
-		if (typeof got.type != 'string')
-			throw "node type must be string"
+		if (type != 'block')
+			throw new Mismatch("wrong node kind", 'block', type)
 		if (correct.type != got.type)
-			throw "wrong type"
+			throw new Mismatch("wrong block type", correct.type, got.type)
 	}
 	return true
 }
@@ -130,7 +170,31 @@ function has_content(node) {
 		return false
 	if (Array.isArray(node.content))
 		return true
-	throw "invalid content type"
+	throw new InvalidTree(".content field is not array")
+}
+
+function compare_content(correct, got) {
+	
+	if (got.content===undefined)
+		return false
+
+	let got_content = has_content(got)
+	
+	// no content
+	// todo: whether a node has .content depends on the node type
+	// i.e. /italic/ always has content, --- <hr> never does, etc.
+	// so instead of this check, perhaps we should have a table of which blocks have contents?
+	if (!correct.content) {
+		if (got_content)
+			throw new Mismatch("wrong children", "(none)", "(array)")
+	} else {
+		if (!got_content)
+			throw new Mismatch("wrong children", "(array)", "(none)")
+		if (correct.content.length != got.content.length)
+			throw new Mismatch("wrong children length", correct.content.length, got.content.length)
+		for (let i=0; i<correct.content.length; i++)
+			compare_node(correct.content[i], got.content[i])
+	}
 }
 
 function compare_node(correct, got) {
@@ -138,24 +202,8 @@ function compare_node(correct, got) {
 	
 	if (!compare_object(correct.args, got.args)) {
 		console.info(correct.args, got.args)
-		throw 'arg mismatch'
+		throw new Mismatch("arg mismatch", JSON.stringify(correct.args), 'idk')
 	}
 	
-	let got_content = has_content(got)
-	// no content
-	// todo: whether a node has .content depends on the node type
-	// i.e. /italic/ always has content, --- <hr> never does, etc.
-	// so instead of this check, perhaps we should have a table of which blocks have contents?
-	if (!correct.content) {
-		if (!got_content)
-			return true
-		throw "expected no content"
-	}
-	
-	if (!got_content)
-		throw "expected content, got none"
-	if (correct.content.length != got.content.length)
-		throw "wrong number of children"
-	for (let i=0; i<correct.content.length; i++)
-		compare_node(correct.content[i], got.content[i])
+	compare_content(correct, got)
 }

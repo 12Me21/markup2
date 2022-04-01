@@ -9,6 +9,10 @@ Test.prototype.draw_result = function() {
 	e.textContent = this.name
 	d.append(e)
 	
+	e = document.createElement('test-input')
+	e.textContent = this.input
+	d.append(e)
+	
 	let f = document.createElement('test-result')
 	f.textContent = this.result
 	d.append(f)
