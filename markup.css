@@ -27,7 +27,7 @@
 /* Inline items (default, just in case) */
 .MARKUP a,
 .MARKUP b, .MARKUP i, .MARKUP u, .MARKUP s,
-.markup sub, .markup sup,
+.MARKUP sub, .MARKUP sup,
 .MARKUP code {
 	display: inline;
 }

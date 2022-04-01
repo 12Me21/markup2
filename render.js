@@ -1,10 +1,5 @@
-Markup.IMPORT = EXPORT=>{
+Markup.INJECT = Markup=>{
 	"use strict"
-	
-	let is_block = {
-		code:'block', line:'block', ROOT:'block', heading:'block', quote:'block', table:'block',
-		table_cell:'block',
-	}
 	
 	// This tag-function parses an HTML string, and returns a function
 	//  which creates a copy of that HTML DOM tree when called.
@@ -187,7 +182,7 @@ Markup.IMPORT = EXPORT=>{
 					prev = fill_branch(new_branch, leaf.content)
 				else
 					prev = 'text'
-				prev = is_block[leaf.type] || prev
+				prev = Markup.IS_BLOCK[leaf.type] || prev
 			}
 		}
 		if (prev=='newline' && !all_newline)
@@ -196,11 +191,11 @@ Markup.IMPORT = EXPORT=>{
 		return prev
 	}
 	
-	EXPORT.render = function(tree) {
+	Markup.render = function(tree) {
 		let root = document.createDocumentFragment()
 		fill_branch(root, tree.content)
 		return root
 	}
 	
-	EXPORT.create = CREATE
+	Markup.create = CREATE
 }

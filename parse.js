@@ -1,21 +1,15 @@
 const Markup = {
-	set IMPORT(fn) { fn(this) },
-	parse: null, render: null,
+	set INJECT(fn) { fn(this) },
+	parse: null,
+	render: null,
 	convert(text) {
 		let tree = this.parse(text)
 		return this.render(tree)
 	},
 }
 
-Markup.IMPORT = EXPORT=>{
+Markup.INJECT = Markup=>{
 	"use strict"
-	
-	// if cancelled, will be completed instead:
-	let auto_close = {heading:1, quote:1, ROOT:1}
-	// will be cancelled at the end of a block, if open:
-	let auto_cancel = {style:1}
-	// cancelled at the end of a line (or completed if auto_close is set):
-	let end_at_eol = {heading:1, style:1, quote:1}
 	
 	let tree, current, brackets
 	
@@ -26,6 +20,16 @@ Markup.IMPORT = EXPORT=>{
 	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 	
 
+	
+	Markup.IS_BLOCK = {code:'block', line:'block', ROOT:'block', heading:'block', quote:'block', table:'block', table_cell:'block'}
+	
+	// if cancelled, will be completed instead:
+	let AUTO_CLOSE = {heading:1, quote:1, ROOT:1}
+	// will be cancelled at the end of a block, if open:
+	let AUTO_CANCEL = {style:1}
+	// cancelled at end of a line (or completed if auto_close is set):
+	let END_AT_EOL = {heading:1, style:1, quote:1}
+	
 	// argtype
 	let ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
 	let ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?: |({))/y // [...]?( |{)
@@ -43,7 +47,7 @@ Markup.IMPORT = EXPORT=>{
 		// 💎 NEWLINE 💎
 		/\n/,
 		{newline:true, do(tag) {
-			while (!current.body && end_at_eol[current.type])
+			while (!current.body && END_AT_EOL[current.type])
 				CANCEL()
 			return TEXT(true)
 		}},
@@ -159,7 +163,7 @@ Markup.IMPORT = EXPORT=>{
 	],[// 💎 TABLE - NEXT ROW 💎
 		/ *[|] *\n[|]/,
 		{argtype:ARGS_TABLE, do(tag, rargs, body) {
-			KILL_WEAK()
+			kill_weak()
 			if (current.type!='table_cell')
 				return TEXT(tag)
 			let args = table_args(rargs)
@@ -172,7 +176,7 @@ Markup.IMPORT = EXPORT=>{
 	],[// 💎 TABLE - END 💎
 		/ *[|] *(?![^\n])/,
 		{do(tag) {
-			KILL_WEAK()
+			kill_weak()
 			if (current.type!='table_cell')
 				return TEXT(tag) // todo: wait, if this happens, we just killed all those blocks even though this tag isn't valid ??
 			return (
@@ -192,7 +196,7 @@ Markup.IMPORT = EXPORT=>{
 	],[// 💎 TABLE - NEXT CELL 💎
 		/ *[|]/,
 		{argtype:ARGS_TABLE, do(tag, rargs, body) {
-			KILL_WEAK()
+			kill_weak()
 			if (current.type!='table_cell')
 				return TEXT(tag)
 			let args = table_args(rargs)
@@ -313,7 +317,7 @@ Markup.IMPORT = EXPORT=>{
 	}
 	// cancel current block (flatten)
 	function CANCEL() {
-		if (current.body || auto_close[current.type])
+		if (current.body || AUTO_CLOSE[current.type])
 			return CLOSE()
 		let o = pop()
 		// if we just cancelled a table cell,
@@ -337,12 +341,12 @@ Markup.IMPORT = EXPORT=>{
 	function TAG(type, tag, args) {
 		current.content.push({type, tag, args})
 	}
-	function KILL_WEAK() {
-		while (auto_cancel[current.type])
+	function kill_weak() {
+		while (AUTO_CANCEL[current.type])
 			CANCEL()
 	}
 	
-	EXPORT.parse = function(text) {
+	Markup.parse = function(text) {
 		current = tree = {type:'ROOT', tag:"", content:[]}
 		brackets = 0
 		
