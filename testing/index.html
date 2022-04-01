@@ -7,18 +7,39 @@
 <script src=testing.js></script>
 <script src=draw.js></script>
 
+<script src=tests/1.js></script>
+
 <style>
-	test-result {
-		display: block;
-		outline: 1px solid black;
+	test- {
+		display: flex;
+		border: 1px solid black;
 		background: darkyellow;
+		margin: 3px;
+		column-gap: 16px;
 	}
-	test-result.passed {
+	test-.passed {
 		background: lime;
 	}
-	test-result.failed {
+	test-.failed {
 		background: red;
+	}
+	test-name {
+		font-weight: bold;
+		margin: 2px;
 	}
 </style>
 
-testing
+a
+
+<button onclick="run()">run</button> (note: the times are usually bad on the first run)
+<div id=$output></div>
+
+<script>
+	function run() {
+		Test.run_all()
+		$output.replaceChildren(Test.draw_results())
+	}
+	run()
+</script>
+
+

@@ -1,23 +1,35 @@
 class Test {
-	constructor({name, input, correct}) {
+	constructor({name}, input, correct) {
 		Object.defineProperties(this, {
 			name: {value: name},
 			input: {value: input},
 			correct: {value: correct},
-			status: {value: 0, writable: true},
-			result: {value: null, writable: true},
+			status: {writable: true},
+			result: {writable: true},
+			parse_time: {writable: true},
 		})
 		Object.preventExtensions(this)
+		
+		this.reset()
+		
+		this.constructor.all.push(this)
 	}
 	
 	run() {
+		this.reset()
+		
+		let t, p
 		try {
-			let t = Markup.parse(this.input)
+			p = performance.now()
+			t = Markup.parse(this.input)
+			this.parse_time = performance.now() - p
 		} catch (e) {
+			this.parse_time = performance.now() - p
 			this.status = -2
 			this.result = "Error during parsing!\n"+e+"\n"+e.stack
 			return false
 		}
+		
 		try {
 			compare_node(t, this.correct)
 		} catch (e) {
@@ -25,6 +37,7 @@ class Test {
 			this.result = "wrong output!\n"+e
 			return false
 		}
+		
 		this.status = 1
 		this.result = "ok"
 		return true
@@ -33,6 +46,15 @@ class Test {
 	reset() {
 		this.status = 0
 		this.result = null
+		this.parse_time = null
+	}
+	
+	static all = []
+	
+	static run_all() {
+		for (let test of this.all) {
+			test.run()
+		}
 	}
 }
 
@@ -114,8 +136,10 @@ function has_content(node) {
 function compare_node(correct, got) {
 	compare_node_types(correct, got)
 	
-	if (!compare_object(correct.args, got.args))
+	if (!compare_object(correct.args, got.args)) {
+		console.info(correct.args, got.args)
 		throw 'arg mismatch'
+	}
 	
 	let got_content = has_content(got)
 	// no content
