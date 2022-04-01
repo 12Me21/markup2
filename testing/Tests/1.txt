@@ -21,7 +21,7 @@ abcb
 
 🟩	table (should fail)
 | one | two |
-|[2x] oatmeal |`
+|[2x] oatmeal |
 🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"| ","content":["one"],"args":{}},{"type":"table_cell","tag":" ","content":["two"],"args":{}}]},{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":" |\n|[2x] ","content":["oatmeal"],"args":{"colspan":2, "rowspan":1}}]}]}]}
 )
 
