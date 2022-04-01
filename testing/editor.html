@@ -8,21 +8,45 @@
 <link rel=stylesheet href=style.css>
 <script src=test.js></script>
 <script src=draw.js></script>
+<style>
+	html, body {
+		position: fixed;
+		overflow: hidden;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	body {
+		display: flex;
+		flex-direction: row;
+	}
+	body > div {
+		width: 50%;
+		display: flex;
+		flex-direction: column;
+		overflow-y: scroll;
+	}
+</style>
 
-<body style='display:flex; flex-direction: column;'>
-
-<button onclick="run()">run tests</button>
-<hr>
-<div id=$output></div>
-<hr>
-add new test case:<br>
-<input id=$title><br>
-<textarea id=$input></textarea>
-<div class=MARKUP id=$preview style='padding: 5px; border: 1px solid black;'></div>
-<br>
-<button onclick="add_test($title.value, $input.value)">add</button>
-<hr>
-<textarea id=$show_entries style='resize: vertical;'></textarea>
+<body>
+<div>
+	<button onclick="run()">run tests</button>
+	<hr>
+	add new test case: (saved in localstorage)<br>
+	<div>
+		<input id=$title placeholder='name'>
+		<button onclick="add_test($title.value, $input.value)">add</button>
+	</div>
+	<textarea id=$input placeholder='markup'></textarea>
+	<div class=MARKUP id=$preview style='padding: 5px; border: 1px solid black;'></div>
+	<br>
+	<hr>
+	<textarea id=$show_entries style='resize: vertical;'></textarea>
+</div>
+<div>
+	<div id=$output></div>
+</div>
 
 <script>
 	$show_entries.value = localStorage.tests || `🟩 text
