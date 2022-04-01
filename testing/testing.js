@@ -1,3 +1,61 @@
+class Test {
+	constructor({name, input, correct}) {
+		Object.defineProperties(this, {
+			name: {value: name},
+			input: {value: input},
+			correct: {value: correct},
+			status: {value: 0, writable: true},
+			result: {value: null, writable: true},
+		})
+		Object.preventExtensions(this)
+	}
+	
+	run() {
+		try {
+			let t = Markup.parse(this.input)
+		} catch (e) {
+			this.status = -2
+			this.result = "Error during parsing!\n"+e+"\n"+e.stack
+			return false
+		}
+		try {
+			compare_node(t, this.correct)
+		} catch (e) {
+			this.status = -1
+			this.result = "wrong output!\n"+e
+			return false
+		}
+		this.status = 1
+		this.result = "ok"
+		return true
+	}
+	
+	reset() {
+		this.status = 0
+		this.result = null
+	}
+}
+
+function simple_type(x) {
+	if (x===null)
+		return 'null'
+	let t = typeof x
+	if (t=='number' || t=='undefined' || t=='boolean' || t=='string')
+		return t
+	if (t=='object') {
+		let p = Object.getPrototypeOf(x)
+		if (p==Object.prototype)
+			return 'object'
+		if (p==Array.prototype)
+			return 'array'
+	}
+	throw 'illegal type'
+}
+
+function is_object(x) {
+	return x && Object.getPrototypeOf(x) == Object.prototype
+}
+
 function compare_object(a, b) {
 	// simple comparison
 	if (a === b)
@@ -16,10 +74,64 @@ function compare_object(a, b) {
 			return false
 	} else if (ap != Object.prototype)
 		return false
-	// compare fields
+	// compare fields (note that we always use `in` even for arrays, since we might have an array with extra fields)
 	for (let key in a)
 		if (!compare_object(a[key], b[key]))
 			return false
+	// todo: check for extra keys in `b` ?
 	
 	return true
+}
+
+function compare_node_types(correct, got) {
+	if (typeof correct == 'string') {
+		if (typeof got != 'string')
+			throw "expected text, got something else"
+		if (correct != got)
+			throw "wrong text: "
+	} else if (correct == true) {
+		if (got != true)
+			throw "wrong text: "
+	} else {
+		if (!is_object(got))
+			throw "expected object node"
+		if (typeof got.type != 'string')
+			throw "node type must be string"
+		if (correct.type != got.type)
+			throw "wrong type"
+	}
+	return true
+}
+
+function has_content(node) {
+	if (node.content===undefined)
+		return false
+	if (Array.isArray(node.content))
+		return true
+	throw "invalid content type"
+}
+
+function compare_node(correct, got) {
+	compare_node_types(correct, got)
+	
+	if (!compare_object(correct.args, got.args))
+		throw 'arg mismatch'
+	
+	let got_content = has_content(got)
+	// no content
+	// todo: whether a node has .content depends on the node type
+	// i.e. /italic/ always has content, --- <hr> never does, etc.
+	// so instead of this check, perhaps we should have a table of which blocks have contents?
+	if (!correct.content) {
+		if (!got_content)
+			return true
+		throw "expected no content"
+	}
+	
+	if (!got_content)
+		throw "expected content, got none"
+	if (correct.content.length != got.content.length)
+		throw "wrong number of children"
+	for (let i=0; i<correct.content.length; i++)
+		compare_node(correct.content[i], got.content[i])
 }
