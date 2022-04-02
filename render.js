@@ -55,7 +55,7 @@ Markup.INJECT = Markup=>{
 		image: function({url, alt, width, height}) {
 			let e = this()
 			e.src = url
-			e.onerror = e.onload = e.removeAttribute.bind(e, 'loading')
+			e.onerror = e.onload = e.removeAttribute.bind(e, 'data-loading')
 			if (alt!=null) e.alt = alt
 			if (width) e.width = width
 			if (height) e.height = height
