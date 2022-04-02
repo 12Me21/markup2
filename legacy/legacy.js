@@ -823,7 +823,7 @@ let Parse = (function(){
 						if (indent == top.level) {
 							startBlock('item', {level: indent})
 							// OPTION 3:
-							// next item has larger indent; start nested list	
+							// next item has larger indent; start nested list
 						} else if (indent > top.level) {
 							startBlock('list', {level: indent}, {})
 							startBlock('item', {level: indent}) // then made the first item of the new list
@@ -831,7 +831,7 @@ let Parse = (function(){
 							// next item has less indent; try to exist 1 or more layers of nested lists
 							// if this fails, fall back to just creating a new item in the current list
 						} else {
-							// TODO: currently this will just fail completely 
+							// TODO: currently this will just fail completely
 							while(1) {
 								top = stack.top()
 								if (top && top.type == 'list') {

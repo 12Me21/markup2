@@ -6,7 +6,7 @@ let Highlight = (function(){
 		"BREAK","COMMON","CONTINUE","ELSE","END","ENDIF","REM","REPEAT","THEN","WEND",
 	]
 	var keywords_sb3=[
-		"STOP"	
+		"STOP"
 	]
 	var keywords_sb4=[
 		"OTHERWISE","ENDCASE","LOOP","ENDLOOP"
