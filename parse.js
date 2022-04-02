@@ -21,20 +21,20 @@ Markup.INJECT = Markup=>{
 	
 
 	
-	Markup.IS_BLOCK = {code:1, line:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1}
+	Markup.IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1}
 	
 	// if cancelled, will be completed instead:
-	let AUTO_CLOSE = {heading:1, quote:1, ROOT:1}
+	const AUTO_CLOSE = {heading:1, quote:1, ROOT:1}
 	// will be cancelled at the end of a block, if open:
-	let WEAK = {style:1}
+	const WEAK = {style:1}
 	// cancelled at end of a line (or completed if auto_close is set):
-	let END_AT_EOL = {heading:1, style:1, quote:1}
+	const END_AT_EOL = {heading:1, style:1, quote:1}
 	
 	// argtype
-	let ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
-	let ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?: |({))/y // [...]?( |{)
-	let ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
-	let ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
+	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
+	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?: |({))/y // [...]?( |{)
+	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
+	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
 	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
@@ -43,7 +43,7 @@ Markup.INJECT = Markup=>{
 		/()/ empty tags are used to mark token types
 	*/
 	// ⚠ The order of these is important!
-	let [regex, groups] = process_def([[
+	const [regex, groups] = process_def([[
 		// 💎 NEWLINE 💎
 		/\n/,
 		{newline:true, do(tag) {
@@ -92,7 +92,9 @@ Markup.INJECT = Markup=>{
 		{argtype:ARGS_NORMAL, do(tag, rargs, body) {
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
 			let args = {}
-			return OPEN('env', tag, args, body)
+			if (body)
+				return OPEN('env', tag, args, body)
+			return TAG('env', tag, args)
 		}},
 	],[// 💎 BLOCK END 💎
 		//[/{/, {token:''}], // maybe
@@ -220,7 +222,7 @@ Markup.INJECT = Markup=>{
 		return [r, groups]
 	}
 	
-	let null_args = []
+	const null_args = []
 	null_args.named = Object.freeze({})
 	Object.freeze(null_args)
 	function parse_args(arglist) {
