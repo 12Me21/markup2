@@ -41,7 +41,7 @@ Markup.INJECT = Markup=>{
 		
 		icode: function({text}) {
 			let e = this()
-			e.textContent = text.replace(/ /g, " ")
+			e.textContent = text.replace(/ /g, " ") // non breaking space..
 			return e
 		}.bind(𐀶`<code>`),
 		

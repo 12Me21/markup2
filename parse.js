@@ -11,7 +11,7 @@ const Markup = {
 Markup.INJECT = Markup=>{
 	"use strict"
 	
-	let tree, current, brackets
+	let current, brackets
 	
 	// maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
@@ -65,7 +65,7 @@ Markup.INJECT = Markup=>{
 			return TAG('divider', tag)
 		}},
 	],[// 💎💎 STYLE
-		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve these
+		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve start/end detect
 		// 💎 STYLE START 💎
 		{do(tag) {
 			return OPEN('style', tag)
@@ -232,7 +232,7 @@ Markup.INJECT = Markup=>{
 		let map = {}, list = []
 		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-			if (name==undefined || name=="") // value or =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+			if (!name) // value OR =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
 				list.push(value)
 			else // name=value
 				map[name] = value
@@ -324,7 +324,7 @@ Markup.INJECT = Markup=>{
 		let o = pop()
 		// if we just cancelled a table cell,
 		// we don't want to insert text into the table row/body,
-		// so we complete the table first.
+		// so we close the table/row first.
 		if (o.type=='table_cell') {
 			current.content.length ? CLOSE() : CANCEL() // row
 			current.content.length ? CLOSE() : CANCEL() // table
@@ -349,7 +349,8 @@ Markup.INJECT = Markup=>{
 	}
 	
 	Markup.parse = function(text) {
-		current = tree = {type:'ROOT', tag:"", content:[]}
+		let tree = {type:'ROOT', tag:"", content:[]}
+		current = tree
 		brackets = 0
 		
 		let last = regex.lastIndex = 0
@@ -381,15 +382,14 @@ Markup.INJECT = Markup=>{
 			// start of line
 			if (thing.newline || body) {
 				text = text.substring(last)
-				//text = RegExp['$\'']
 				last = regex.lastIndex = 0
 			}
 		}
-		TEXT(text.substring(last))
+		TEXT(text.substring(last)) // text after last token
 		
 		while (current.type!='ROOT')
 			CANCEL()
-		return tree
+		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
 	// what if you want to write like, "{...}". well that's fine
