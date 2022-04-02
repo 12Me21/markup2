@@ -30,9 +30,22 @@ Markup.INJECT = Markup=>{
 	// cancelled at end of a line (or completed if auto_close is set):
 	const END_AT_EOL = {heading:1, style:1, quote:1}
 	
+	const envs_body_type = {
+		// either
+		// - must be \env
+		// - must be \env{ or \env word
+		// - must be \env{ maybe
+		// etc.
+	}
+	const envs = {
+		sup: 'superscript',
+		sub: 'subscript',
+	}
+	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
-	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?: |({))/y // [...]?( |{)
+	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({|( [\w+]*))/y // [...]?{ or [...]? <word>
+	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
 	
@@ -89,12 +102,19 @@ Markup.INJECT = Markup=>{
 		}},
 	],[// 💎 ENV 💎
 		/[\\]\w+/,
-		{argtype:ARGS_NORMAL, do(tag, rargs, body) {
+		// 1, ← just put a dummy value here instead of...
+		{argtype:ARGS_WORD, do(tag, rargs, body) {
 			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
-			let args = {}
+			let e = envs[envtype]
+			let type, args
+			if (!e)
+				return TEXT(TAG) //todo: reject the tag earlier, before parsing args. we need to process these there anyway, since it has to decide which arg regex to use based on the tag name.
+			
+			//if (typeof e == 'string')
+			type = e
 			if (body)
-				return OPEN('env', tag, args, body)
-			return TAG('env', tag, args)
+				return OPEN(type, tag, args, body)
+			return TAG(type, tag, args)
 		}},
 	],[// 💎 BLOCK END 💎
 		//[/{/, {token:''}], // maybe
@@ -206,7 +226,10 @@ Markup.INJECT = Markup=>{
 				CLOSE(), // cell
 				OPEN('table_cell', tag.replace(/^ *[|]/, ""), args, body))
 		}},
-	]])
+	]]) // todo: we can probably merge a few table types, to save on match count / complexity..
+	// and, maybe instead of using ^ and truncating the string on newline,
+	// we can just filter the match results and retry if a match is in an invalid location (similar to how results are rejected if arg parsing fails)
+	
 	//[/^ *- /, 'list'], TODO
 	
 
@@ -373,6 +396,10 @@ Markup.INJECT = Markup=>{
 				}
 				body = argmatch[2]
 				thing.do(match[0]+argmatch[0], parse_args(argmatch[1]), body)
+				if (argmatch[3]) {
+					TEXT(argmatch[3].substr(1))
+					CLOSE()
+				}
 				last = regex.lastIndex = argregex.lastIndex
 			} else {
 				body = thing.body
