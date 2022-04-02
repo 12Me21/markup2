@@ -5,32 +5,41 @@
 	word-break: break-word; /* prevent text overflow */
 	white-space: pre-wrap; /* preserve whitespace */
 	
-	/* set your font and line height here: */
+	/* set your font here: */
 	font-family: sans-serif;
-	line-height: 1.2;
 }
 /* override the defaults for these */
 .MARKUP * {
 	word-break: inherit;
 	white-space: inherit;
 	font-family: inherit;
-	line-height: inherit;
 }
-/* Block items (default, just in case) */
-.MARKUP h2, .MARKUP h3, .MARKUP h4, .MARKUP h5,
-.MARKUP pre,
-.MARKUP ol, .MARKUP ul, .MARKUP li,
-.MARKUP img, .MARKUP audio, .MARKUP video,
-.MARKUP blockquote {
-	display: block;
-}
-/* Inline items (default, just in case) */
-.MARKUP a,
-.MARKUP b, .MARKUP i, .MARKUP u, .MARKUP s,
-.MARKUP sub, .MARKUP sup,
-.MARKUP code {
-	display: inline;
-}
+/* change these from inline to block: */
+.MARKUP img, .MARKUP audio, .MARKUP video { display: block; }
+/* ruby text doesn't work if set to white-space: pre */
+.MARKUP rt { white-space: nowrap; }
+
+/*𐇵*𐇵*𔓘𐇵**𐇵𖠇𔓘*𖠇
+ 𐇵𔓘 DEFAULTS *𔓘
+ *𔓘𐇵**𔓘𖠇**𐇵*𖠇𐇵*/
+/* These are the default values, just in case */
+/* You likely don't need most of these */
+
+.MARKUP, .MARKUP * { vertical-align: baseline; }
+
+.MARKUP div, .MARKUP h2, .MARKUP h3, .MARKUP h4, .MARKUP h5, .MARKUP hr, .MARKUP pre, .MARKUP ol, .MARKUP ul, .MARKUP blockquote { display: block; }
+
+.MARKUP span, .MARKUP a, .MARKUP br, .MARKUP b, .MARKUP i, .MARKUP u, .MARKUP s, .MARKUP sub, .MARKUP sup, .MARKUP code { display: inline; }
+.MARKUP li { display: list-item; }
+
+.MARKUP table { display: table; }
+.MARKUP tbody { display: table-row-group; }
+.MARKUP tr { display: table-row; }
+.MARKUP td, .MARKUP th { display: table-cell; }
+
+.MARKUP ruby { display: ruby; }
+.MARKUP rt { display: ruby-text; }
+.MARKUP rp { display: none; }
 
 /***************
  ** Suggested **
@@ -43,17 +52,6 @@
 	contain: layout paint style;
 }
 
-/* Image size limit */
-.MARKUP img {
-	max-width: 100%;
-	max-height: 10vh;
-}
-
-/* Reset vertical align just in case */
-.MARKUP, .MARKUP * {
-	vertical-align: baseline;
-}
-
 /* Styles */
 .MARKUP sub { vertical-align: sub; }
 .MARKUP sup { vertical-align: super; }
@@ -62,10 +60,49 @@
 .MARKUP u { text-decoration: underline; }
 .MARKUP s { text-decoration-line: line-through; }
 
-/* Colors (change these based on the theme) */
+/*** images ***/
+.MARKUP img {
+	/* Image size limit */
+	max-width: 100%;
+	max-height: 10vh;
+	/* display images at correct aspect ratio, just in case */
+	object-fit: contain;
+}
+
+/*** Tables ***/
+.MARKUP table, .MARKUP td, .MARKUP th {
+	border: 1px solid var(--color);
+	border-collapse: collapse;
+}
+.MARKUP td, .MARKUP th {
+	padding-block: 0.2em;
+	padding-inline: 0.3em;
+}
+
+/*** Background colors (for table cells etc) ***/
+.MARKUP [data-bgcolor="red"]    { background: var(--bgred); }
+.MARKUP [data-bgcolor="green"]  { background: var(--bggreen); }
+.MARKUP [data-bgcolor="yellow"] { background: var(--bgyellow); }
+.MARKUP [data-bgcolor="orange"] { background: var(--bgorange); }
+.MARKUP [data-bgcolor="blue"]   { background: var(--bgblue); }
+.MARKUP [data-bgcolor="purple"] { background: var(--bgpurple); }
+.MARKUP [data-bgcolor="gray"]   { background: var(--bggray); }
+.MARKUP table { background: var(--background); } /* reset */
+
+/*** code and inline code ***/
+.MARKUP pre, .MARKUP code {
+	-moz-tab-size: 4;
+	tab-size: 4;
+	font: monospace;
+}
+
+/*******************
+ ** Theme Example **
+ *******************/
 .MARKUP {
 	--color: black;
 	--background: white;
+	
 	--bgred: #FCC;
 	--bgorange: #FEA;
 	--bgyellow: #FF8;
@@ -77,33 +114,5 @@
 
 .MARKUP {
 	color: var(--color);
-}
-/* Reset background color */
-.MARKUP,
-.MARKUP table {
 	background: var(--background);
-}
-
-/* Table borders, padding */
-.MARKUP table,
-.MARKUP td, .MARKUP th {
-	border: 1px solid var(--color);
-	border-collapse: collapse;
-}
-.MARKUP td, .MARKUP th {
-	padding: 0.2em 0.3em;
-}
-
-/* Background colors */
-.MARKUP [data-bgcolor="red"]    { background: var(--bgred); }
-.MARKUP [data-bgcolor="green"]  { background: var(--bggreen); }
-.MARKUP [data-bgcolor="yellow"] { background: var(--bgyellow); }
-.MARKUP [data-bgcolor="orange"] { background: var(--bgorange); }
-.MARKUP [data-bgcolor="blue"]   { background: var(--bgblue); }
-.MARKUP [data-bgcolor="purple"] { background: var(--bgpurple); }
-.MARKUP [data-bgcolor="gray"]   { background: var(--bggray); }
-
-.MARKUP pre, .MARKUP code {
-	-moz-tab-size: 4;
-	tab-size: 4;
 }

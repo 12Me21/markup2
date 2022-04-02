@@ -86,7 +86,7 @@ Markup.INJECT = Markup=>{
 		
 		heading: function({level}) {
 			return this[level-1]()
-		}.bind([𐀶`<h1>`,𐀶`<h2>`,𐀶`<h3>`,𐀶`<h4>`]),
+		}.bind([𐀶`<h2>`,𐀶`<h3>`,𐀶`<h4>`,𐀶`<h5>`]),
 		
 		quote: function({cite}) {
 			if (cite==null)
@@ -124,7 +124,7 @@ Markup.INJECT = Markup=>{
 			if (style==null)
 				return this[0]()
 			let e = this[1]()
-			e.style.listStyleType = style
+			//e.style.listStyleType = style // this was only supported by old bbcode so i can probably secretly remove it.
 			return e
 		}.bind([𐀶`<ul>`, 𐀶`<ol>`]),
 		
