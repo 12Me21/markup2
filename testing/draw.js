@@ -5,7 +5,7 @@ function 𐀶([html]) {
 	return elem.cloneNode.bind(elem, true)
 }
 
-let RESULT = 𐀶`<test-><p id=name><p id=input><p id=result><p id=time>` // p autoclose select by id?
+let RESULT = 𐀶`<test- class=row><div class=col><name-></name-><result- class=grow></result-></div><input- class=grow></input->` // p autoclose select by id?
 
 Test.prototype.draw_result = function() {
 	let d = RESULT()
@@ -15,18 +15,26 @@ Test.prototype.draw_result = function() {
 	else if (this.status > 0)
 		d.classList.add('passed')
 	
-	d.children.name.textContent = this.name
-	d.children.input.textContent = this.input
-	d.children.result.textContent = this.result
-	d.children.time.textContent = (+this.parse_time).toFixed(1)+" ms"
+	d.querySelector('name-').textContent = this.name
+	d.querySelector('input-').textContent = this.input
+	let result = this.result
+	if (this.status > 0)
+		result += " ["+(+this.parse_time).toFixed(1)+" ms]"
+	d.querySelector('result-').textContent = result
+	//d.querySelector('time-').textContent = 
 	
 	return d
 }
 
 Test.draw_results = function() {
 	let f = document.createDocumentFragment()
+	let good = []
 	for (let test of this.all) {
-		f.append(test.draw_result())
+		if (test.status > 0)
+			good.push(test.draw_result())
+		else
+			f.append(test.draw_result())
 	}
+	f.append(...good)
 	return f
 }

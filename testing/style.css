@@ -1,38 +1,61 @@
+html {
+	white-space: pre-wrap;
+	word-wrap: break-all;
+}
+
+.row, .col { display: flex; }
+.col { flex-direction: column; }
+.row > *, .col > * {
+	flex-shrink: 1;
+	flex-grow: 0;
+}
+.row > .grow, .col > .grow {
+	flex-grow: 1;
+}
+
 test- {
-	border: 1px solid black;
+	border: 2px solid black;
 	background: magenta;
 	margin: 3px;
-	column-gap: 16px;
 	white-space: pre-wrap;
-	font-family: monospace;
-	
-	display: grid;
-	grid-template:
-		"name input time" auto
-		"result input other" auto
-		/ max-content auto max-content
-	;
+	font: 0.8em sans-serif;
+	height: 2.2rem;
 }
 test-.passed {
-	background: lime;
+	background: #7F6;
+	border-color: green;
 }
 test-.failed {
-	background: red;
+	background: maroon;
+	color: white;
+	border-color: red;
+	height: unset;
 }
-test- > * { margin: 0; padding: 0; }
 
-test- > #name {
-	grid-area: name;
+test-.failed name- {
+	width: unset;
+}
+
+test- name- {
+	padding: 0.1rem;
+	padding-left: 0.3rem;
+	padding-right: 0;
 	font-weight: bold;
+	width: 7rem;
+	white-space: pre;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
-test- > #input {
-	grid-area: input;
-	font-family: monospace;
+test- result- {
+	padding: 0.1rem;
+	padding-inline: 0.3rem;
+	padding-top: 0;
+	overflow-y: auto;
 }
-test- > #result {
-	grid-area: result;
+test- input- {
+	border-inline: 1px solid black;
+	padding: 0.2rem;
+	font: 1em monospace;
+	background-color: rgba(255,255,255,0.5);
+	overflow-y: auto;
 }
-test- > #time {
-	grid-area: time;
-}
-
