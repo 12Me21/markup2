@@ -5,10 +5,11 @@ Markup.INJECT = Markup=>{
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
-	const RANGE = document.createRange() // we just use this for the createContextualFragment method
 	function 𐀶([html]) {
-		let e = RANGE.createContextualFragment(html).firstChild
-		return e.cloneNode.bind(e, true)
+		let temp = document.createElement('template')
+		temp.innerHTML = html
+		let elem = temp.content.firstChild
+		return elem.cloneNode.bind(elem, true)
 	}
 	
 	let CREATE = {
