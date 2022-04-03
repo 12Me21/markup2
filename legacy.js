@@ -62,8 +62,7 @@ Markup.INJECT = Markup=>{
 	/***********
 	 ** STATE **
     ***********/
-	var c,i,cache = null,code
-	var editorCache = {video:{},audio:{},youtube:{}}
+	var c,i,code
 	var skipNextLineBreak
 	var textBuffer
 	var curr, output
@@ -77,12 +76,6 @@ Markup.INJECT = Markup=>{
 	function init(scanFunc, text) {
 		scan = scanFunc
 		code = text
-		if (cache)
-			for (type in cache)
-				for (arg in cache[type])
-					cache[type][arg].forEach(function(x){
-						x.used = false
-					})
 		blocks = options//myBlocks
 		openBlocks = 0
 		leadingSpaces = 0
@@ -231,26 +224,10 @@ Markup.INJECT = Markup=>{
 			endBlock()
 	}
 	
-	/*****************
-    ** cache stuff **
-    *****************/
-	function findUnusedCached(cache, type, arg) {
-		var list = cache[type][arg]
-		if (!list)
-			return null
-		for (var i=0;i<list.length;i++) {
-			if (!list[i].used)
-				return list[i]
-		}
-		return null
-	}
-	
 	// add simple block with no children
 	function addBlock(type, arg, ext1, ext2) {
 		flushText()
-		var node = tryGetCached(cache, type, arg && arg[""], function() {
-			return blocks[type](arg, ext1, ext2)
-		})
+		var node = blocks[type](arg, ext1, ext2)
 		options.append(curr, node)
 		if (BLOCKS[type].block)
 			skipNextLineBreak = true
@@ -265,9 +242,7 @@ Markup.INJECT = Markup=>{
 			openBlocks++
 			if (openBlocks > options.maxDepth)
 				throw "too deep nestted blocks"
-			var node = tryGetCached(cache, type, arg && arg[""], function() {
-				return blocks[type](arg)
-			})
+			var node = blocks[type](arg)
 			data.node = node
 			if (data.isBlock)
 				skipNextLineBreak = true
@@ -284,29 +259,6 @@ Markup.INJECT = Markup=>{
 		if (code[i-1] && /\w/.test(code[i-1]))
 			return false
 		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
-	}
-	
-	// try to get a node from cache.
-	// will get nodes where `type` and `arg` matches
-	// if not found, returns make(), and adds to cache
-	function tryGetCached(cache, type, arg, make) {
-		var node
-		if (cache && type && cache[type]) {
-			var item = findUnusedCached(cache, type, arg)
-			if (item) {
-				item.used = true
-				node = item.node
-			}
-		}
-		if (!node && type) {
-			node = make()
-			if (cache && cache[type]) {
-				if (!cache[type][arg])
-					cache[type][arg] = []
-				cache[type][arg].push({node:node, used:true})
-			}
-		}
-		return node
 	}
 	
 	var options = Parse.options
@@ -1184,18 +1136,13 @@ Markup.INJECT = Markup=>{
 		return root.node
 	}
 	
-	Parse.parseLang = function(text, lang, preview) {
+	Parse.parseLang = function(text, lang) {
 		//var start = performance.now()
 		options = Parse.options //temp
 		i=0
 		code = text
 		if (code == undefined || code == "") // "" is... debatable
 			return options.root().node
-		if (preview) {
-			cache = editorCache
-		} else {
-			cache = null
-		}
 		try {
 			var parser = Parse.lang[lang] || Parse.fallback
 			return parser(text)
