@@ -1,11 +1,17 @@
 test- {
-	display: flex;
 	border: 1px solid black;
-	background: darkyellow;
+	background: magenta;
 	margin: 3px;
 	column-gap: 16px;
 	white-space: pre-wrap;
 	font-family: monospace;
+	
+	display: grid;
+	grid-template:
+		"name input time" auto
+		"result input other" auto
+		/ max-content auto max-content
+	;
 }
 test-.passed {
 	background: lime;
@@ -13,13 +19,20 @@ test-.passed {
 test-.failed {
 	background: red;
 }
-test-name {
-	font-weight: bold;
-	margin: 2px;
-}
+test- > * { margin: 0; padding: 0; }
 
-script.data-script {
-	display: block;
-	white-space: pre-wrap;
+test- > #name {
+	grid-area: name;
+	font-weight: bold;
+}
+test- > #input {
+	grid-area: input;
 	font-family: monospace;
 }
+test- > #result {
+	grid-area: result;
+}
+test- > #time {
+	grid-area: time;
+}
+

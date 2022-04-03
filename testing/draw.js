@@ -1,25 +1,24 @@
+function 𐀶([html]) {
+	let temp = document.createElement('template')
+	temp.innerHTML = html
+	let elem = temp.content.firstChild
+	return elem.cloneNode.bind(elem, true)
+}
+
+let RESULT = 𐀶`<test-><p id=name><p id=input><p id=result><p id=time>` // p autoclose select by id?
+
 Test.prototype.draw_result = function() {
-	let d = document.createElement('test-')
+	let d = RESULT()
+	console.log(d)
 	if (this.status < 0)
 		d.classList.add('failed')
 	else if (this.status > 0)
 		d.classList.add('passed')
 	
-	let e = document.createElement('test-name')
-	e.textContent = this.name
-	d.append(e)
-	
-	e = document.createElement('test-input')
-	e.textContent = this.input
-	d.append(e)
-	
-	let f = document.createElement('test-result')
-	f.textContent = this.result
-	d.append(f)
-	
-	let g = document.createElement('test-time')
-	g.textContent = (+this.parse_time).toFixed(1)+" ms"
-	d.append(g)
+	d.children.name.textContent = this.name
+	d.children.input.textContent = this.input
+	d.children.result.textContent = this.result
+	d.children.time.textContent = (+this.parse_time).toFixed(1)+" ms"
 	
 	return d
 }
