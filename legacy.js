@@ -79,15 +79,15 @@ Markup.INJECT = Markup=>{
 	/***********
 	 ** STATE **
     ***********/
-	var c,i,code
-	var skipNextLineBreak
-	var textBuffer
-	var curr, output
-	var openBlocks
-	var stack
-	var startOfLine
-	var leadingSpaces
-	function scan(){}
+	let c,i,code
+	let skipNextLineBreak
+	let textBuffer
+	let curr, output
+	let openBlocks
+	let stack
+	let startOfLine
+	let leadingSpaces
+	let scan
 	
 	function init(scanFunc, text) {
 		scan = scanFunc
@@ -125,8 +125,8 @@ Markup.INJECT = Markup=>{
 	// read a url
 	// if `allow` is true, url is only ended by end of file or ]] or ][ (TODO)
 	function readUrl(allow) {
-		var start = i
-		var depth = 0
+		let start = i
+		let depth = 0
 		if (allow)
 			while (c) {
 				if (eatChar("[")) {
@@ -153,7 +153,7 @@ Markup.INJECT = Markup=>{
 				} else
 					break
 			}
-			var last = code[i-1]
+			let last = code[i-1]
 			if (/[,\.?!:]/.test(last)) {
 				i-=2
 				scan()
@@ -166,7 +166,7 @@ Markup.INJECT = Markup=>{
     ** stack **
     ***********/
 	function stackContains(type) {
-		for (var i=0; i<stack.length; i++) {
+		for (let i=0; i<stack.length; i++) {
 			if (stack[i].type == type) {
 				return true
 			}
@@ -174,7 +174,7 @@ Markup.INJECT = Markup=>{
 		return false
 	}
 	function top_is(type) {
-		var top = stack.top()
+		let top = stack.top()
 		return top && top.type == type
 	}
 	
@@ -183,12 +183,12 @@ Markup.INJECT = Markup=>{
     ****************/
 	function endBlock() {
 		flushText()
-		var item = stack.pop()
-		if (item.node && item.isBlock)
+		let item = stack.pop()
+		if (item.isBlock)
 			skipNextLineBreak = true
 		
 		if (stack.length) {
-			var i=stack.length-1
+			let i=stack.length-1
 			// this skips {} fake nodes
 			// it will always find at least the root <div> element I hope
 			while (!stack[i].node)
@@ -246,7 +246,7 @@ Markup.INJECT = Markup=>{
 	// add simple block with no children
 	function addBlock(type, arg, ext1, ext2) {
 		flushText()
-		var node = BLOCKS[type].convert(arg, ext1, ext2)
+		let node = BLOCKS[type].convert(arg, ext1, ext2)
 		curr.content.push(node)
 		if (BLOCKS[type].block)
 			skipNextLineBreak = true
@@ -281,7 +281,8 @@ Markup.INJECT = Markup=>{
 			openBlocks++
 			if (openBlocks > 10)
 				throw "too deep nestted blocks"
-			var node = BLOCKS[type].convert(arg)
+			
+			let node = BLOCKS[type].convert(arg)
 			data.node = node
 			if (data.isBlock)
 				skipNextLineBreak = true
@@ -313,16 +314,6 @@ Markup.INJECT = Markup=>{
 			c = code.charAt(i)
 		}, codeInput)
 		
-		var tags = {
-			spoiler: "spoiler",
-			ruby: "ruby",
-			align: "align",
-			sub: "subscript",
-			sup: "superscript",
-			anchor: "anchor",
-			bg: "bg"
-		}
-		
 		while (c) {
 			if (eatChar("\n")) {
 				endLine()
@@ -350,7 +341,7 @@ Markup.INJECT = Markup=>{
 				// * heading/bold
 			} else if (c == "*") {
 				if (startOfLine && (code[i+1] == "*" || code[i+1] == " ")) {
-					var headingLevel = 0
+					let headingLevel = 0
 					while (eatChar("*"))
 						headingLevel++
 					if (headingLevel > 3)
@@ -359,7 +350,7 @@ Markup.INJECT = Markup=>{
 					if (eatChar(" "))
 						start_block('heading', {level:headingLevel}, {}, true)
 					else
-						addMulti('*', headingLevel)
+						addText('*'.repeat(headingLevel))
 				} else {
 					doMarkup('bold')
 				}
@@ -380,7 +371,7 @@ Markup.INJECT = Markup=>{
 				//----------
 				// --... hr
 				if (eatChar("-")) {
-					var count = 2
+					let count = 2
 					while (eatChar("-"))
 						count++
 					//-------------
@@ -390,7 +381,7 @@ Markup.INJECT = Markup=>{
 						//----------
 						// ---... normal text
 					} else {
-						addMulti("-", count)
+						addText("-".repeat(count))
 					}
 					//------------
 					// - ... list
@@ -415,13 +406,13 @@ Markup.INJECT = Markup=>{
 				//============
 				// |... table
 			} else if (c == "|") {
-				var top = stack.top()
+				let top = stack.top()
 				// continuation
 				if (top.type == 'table_cell') {
 					scan()
-					var row = top.row
-					var table = top.row.table
-					var eaten = eatChar("\n")
+					let row = top.row
+					let table = top.row.table
+					let eaten = eatChar("\n")
 					//--------------
 					// | | next row
 					if (eaten && eatChar("|")) {
@@ -436,12 +427,12 @@ Markup.INJECT = Markup=>{
 						// start row
 						// calculate number of cells in row which will be
 						// already filled due to previous row-spanning cells
-						var cells = 0
+						let cells = 0
 						table.rowspans = table.rowspans.map(function(span){
 							cells++
 							return span-1
 						}).filter(function(span){return span > 0})
-						var row = start_block('table_row', null, {table:table, cells:cells}, true)
+						row = start_block('table_row', null, {table:table, cells:cells}, true)
 						row.header = eatChar("*")
 						// start cell
 						startCell(row)
@@ -470,8 +461,8 @@ Markup.INJECT = Markup=>{
 					// start of new table (must be at beginning of line)
 				} else if (startOfLine) {
 					scan()
-					table = start_block('table', null, {columns: null, rowspans: []}, true)
-					row = start_block('table_row', null, {table: table, cells: 0}, true)
+					let table = start_block('table', null, {columns: null, rowspans: []}, true)
+					let row = start_block('table_row', null, {table: table, cells: 0}, true)
 					row.header = eatChar("*")
 					startCell(row)
 				} else {
@@ -492,8 +483,8 @@ Markup.INJECT = Markup=>{
 						while (c && c!="\n" && c!="`")
 							scan()
 						//treat first line as language name, if it matches the pattern. otherwise it's code
-						var language = code.substring(start, i)
-						var eaten = false
+						let language = code.substring(start, i)
+						let eaten = false
 						if (/^\s*\w*\s*$/.test(language)) {
 							language = language.trim().toLowerCase()
 							eaten = eatChar("\n")
@@ -517,7 +508,7 @@ Markup.INJECT = Markup=>{
 					// ` inline code
 				} else {
 					let start = i
-					var codeText = ""
+					let codeText = ""
 					while (c) {
 						if (c=="`") {
 							if (code[i+1] == "`") {
@@ -562,20 +553,20 @@ Markup.INJECT = Markup=>{
 			if (eatChar("[")) {
 				if (eatChar("[")) {
 					// read url:
-					var start = i
-					var after = false
-					var url = readUrl(true)
+					let start = i
+					let after = false
+					let url = readUrl(true)
 					if (eatChar("]")) {
-						if (eatChar("]")){
-						}else if (eatChar("["))
+						if (eatChar("]")) {
+						} else if (eatChar("["))
 							after = true
 					}
 					if (embed) {
-						var type = urlType(url)
-						var altText = null
+						let type = urlType(url)
+						let altText = null
 						if (after) {
 							altText = ""
-							while (c) { //TODO: should this break on newline too?
+							while (c) {
 								if (c==']' && code[i+1]==']') { //messy
 									scan()
 									scan()
@@ -607,10 +598,10 @@ Markup.INJECT = Markup=>{
 			start_block(null, null, {})
 			lineStart()
 			
-			var start = i
+			let start = i
 			if (eatChar("#")){
-				var name = readTagName()
-				var props = readProps()
+				let name = readTagName()
+				let props = readProps()
 				// todo: make this better lol
 				let arg = props[""]
 				if (name=='spoiler' && !stackContains("spoiler")) {
@@ -645,7 +636,7 @@ Markup.INJECT = Markup=>{
 		// read table cell properties and start cell block, and eat whitespace
 		// assumed to be called when pointing to char after |
 		function startCell(row) {
-			var props = {}
+			let props = {}
 			if (eatChar("#"))
 				props = readProps()
 			
@@ -671,7 +662,7 @@ Markup.INJECT = Markup=>{
 		
 		// split string on first occurance
 		function split1(string, sep) {
-			var n = string.indexOf(sep)
+			let n = string.indexOf(sep)
 			if (n == -1)
 				return [string, null]
 			else
@@ -679,10 +670,9 @@ Markup.INJECT = Markup=>{
 		}
 		
 		function readTagName() {
-			var start = i
-			while (c>="a" && c<="z") {
+			let start = i
+			while (c>="a" && c<="z")
 				scan()
-			}
 			if (i > start)
 				return code.substring(start, i)
 		}
@@ -691,11 +681,11 @@ Markup.INJECT = Markup=>{
 		// =value is optional and defaults to `true`
 		// todo: add support for escaping and quoting to the parser here. newlines should not be allowed even in quoted attribs unless escaped
 		function readProps() {
-			var start = i
-			var end = code.indexOf(" ", i)
+			let start = i
+			let end = code.indexOf(" ", i)
 			if (end < 0)
 				end = code.length
-			var end2 = code.indexOf("\n", i)
+			let end2 = code.indexOf("\n", i)
 			if (end2 >= 0 && end2 < end)
 				end = end2
 			end2 = code.indexOf("}", i)
@@ -708,10 +698,10 @@ Markup.INJECT = Markup=>{
 			restore(end)
 			eatChar(" ")
 			
-			var propst = code.substring(start, end)
-			var props = {}
+			let propst = code.substring(start, end)
+			let props = {}
 			propst.split(",").forEach(function(x){
-				var pair = split1(x, "=")
+				let pair = split1(x, "=")
 				if (pair[1] == null)
 					pair[1] = true
 				props[pair[0]] = pair[1]
@@ -719,17 +709,11 @@ Markup.INJECT = Markup=>{
 			return props
 		}
 		
-		// string.repeat doesn't exist
-		function addMulti(text, count) {
-			while (count --> 0)
-				addText(text)
-		}
-		
 		function readLink() {
-			var embed = eatChar("!")
+			let embed = eatChar("!")
 			if (readBracketedLink(embed) || readPlainLink(embed))
 				return true
-			else if (embed) {
+			if (embed) {
 				addText("!")
 				return true
 				//lesson: if anything is eaten, you must return true if it's in the top level if switch block
@@ -737,41 +721,40 @@ Markup.INJECT = Markup=>{
 		}
 		
 		function readPlainLink(embed) {
-			if (isUrlStart()) {
-				var url = readUrl()
-				var after = eatChar("[")
-				
-				if (embed) {
-					var type = urlType(url)
-					var altText = null
-					if (after) {
-						altText = ""
-						while (c && c!=']' && c!="\n") {
-							eatChar("\\")
-							altText += c
-							scan()
-						}
+			if (!isUrlStart()) return
+			
+			let url = readUrl()
+			let after = eatChar("[")
+			
+			if (embed) {
+				let type = urlType(url)
+				let altText = null
+				if (after) {
+					altText = ""
+					while (c && c!=']' && c!="\n") {
+						eatChar("\\")
+						altText += c
 						scan()
 					}
-					add_block(type, {url, alt:altText}, true)
-				} else {
-					if (after)
-						start_block('link', {url}, {inBrackets: true})
-					else
-						add_block({type:'simple_link', args:{text:url, url:url}})
+					scan()
 				}
-				return true
+				add_block(type, {url, alt:altText}, true)
+			} else {
+				if (after)
+					start_block('link', {url}, {inBrackets: true})
+				else
+					add_block({type:'simple_link', args:{text:url, url:url}})
 			}
+			return true
 		}
 		
 		// closeAll(true) - called at end of document
 		// closeAll(false) - called at end of {} block
 		function closeAll(force) {
-			while(stack.length) {
-				var top = stack.top()
-				if (top.type == 'root') {
+			while (stack.length) {
+				let top = stack.top()
+				if (top.type == 'root')
 					break
-				}
 				if (!force && top.type == null) {
 					endBlock()
 					break
@@ -783,13 +766,13 @@ Markup.INJECT = Markup=>{
 		// called at the end of a line (unescaped newline)
 		function endLine() {
 			while (1) {
-				var top = stack.top()
+				let top = stack.top()
 				if (top.type == 'heading' || top.type == 'quote') {
 					endBlock()
 				} else if (top.type == 'item') {
 					if (top.type == 'item')
 						endBlock()
-					var indent = 0
+					let indent = 0
 					while (eatChar(" "))
 						indent++
 					// OPTION 1:
@@ -797,7 +780,7 @@ Markup.INJECT = Markup=>{
 					if (c != "-") {
 						while (top_is('list')) //should ALWAYS happen at least once
 							endBlock()
-						addMulti(" ", indent)
+						addText(" ".repeat(indent))
 					} else {
 						scan()
 						while (eatChar(" ")) {}
@@ -856,15 +839,14 @@ Markup.INJECT = Markup=>{
 		
 		// common code for all text styling tags (bold etc.)
 		function doMarkup(type) {
-			var symbol = c
+			let symbol = c
 			scan()
-			if (canStartMarkup(type)) {
+			if (canStartMarkup(type))
 				start_block(type, null, {})
-			} else if (canEndMarkup(type)) {
+			else if (canEndMarkup(type))
 				endBlock()
-			} else {
+			else
 				addText(symbol)
-			}
 		}
 		// todo: maybe have support for non-ASCII punctuation/whitespace?
 		function canStartMarkup(type) {
@@ -893,16 +875,16 @@ Markup.INJECT = Markup=>{
 	}
 	
 	Markup.langs.bbcode = function(codeArg) {
-		var noNesting = {
-			spoiler:true
+		const noNesting = {
+			spoiler: true
 		}
 		// this translates bbcode tag names into
 		// the standard block names, + arg, + contents for special blocks
 		// to be passed to startblock or functions to addblock
-		var blockNames = {'b':true,'i':true,'u':true,'s':true,'sup':true,'sub':true,'table':true,'tr':true,'td':true,'align':true,'list':true,'spoiler':true,'quote':true,'anchor':true,'item':true,'h1':true,'h2':true,'h3':true,'th':true,'code':2,'url':2,'youtube':2,'audio':2,'video':2,'img':2,ruby:true}
+		const blockNames = {b:1,i:1,u:1,s:1,sup:1,sub:1,table:1,tr:1,td:1,align:1,list:1,spoiler:1,quote:1,anchor:1,item:1,h1:1,h2:1,h3:1,th:1,code:2,url:2,youtube:2,audio:2,video:2,img:2,ruby:1}
 		function blockTranslate(name, args, contents) {
 			// direct translations:
-			var name2 = {
+			let name2 = {
 				b: 'bold',
 				i: 'italic',
 				u: 'underline',
@@ -933,7 +915,7 @@ Markup.INJECT = Markup=>{
 				return ['cell', Object.assign({h:true}, args)]
 			
 			if (name == 'code') {
-				var inline = args[""] == 'inline'
+				let inline = args[""] == 'inline'
 				args[""] = args.lang
 				if (inline)
 					return ['icode', args, contents]
@@ -965,7 +947,7 @@ Markup.INJECT = Markup=>{
 			c = code.charAt(i)
 		}, codeArg)
 		
-		var point = 0
+		let point = 0
 		
 		while (c) {
 			//===========
@@ -974,7 +956,7 @@ Markup.INJECT = Markup=>{
 				point = i-1
 				// [/... end tag?
 				if(eatChar("/")) {
-					var name = readTagName()
+					let name = readTagName()
 					// invalid end tag
 					if (!eatChar("]") || !name) {
 						cancel()
@@ -995,13 +977,13 @@ Markup.INJECT = Markup=>{
 					}
 				// [... start tag?
 				} else {
-					var name = readTagName()
+					let name = readTagName()
 					if (!name || !blockNames[name]) {
 						// special case [*] list item
 						if (eatChar("*") && eatChar("]")) {
 							if (stack.top().type == "item")
 								endBlock(point)
-							var top = stack.top()
+							let top = stack.top()
 							if (top.type == "list")
 								start_block('item', null, {bbcode:'item'}, true)
 							else
@@ -1010,9 +992,9 @@ Markup.INJECT = Markup=>{
 							cancel()
 					} else {
 						// [tag=...
-						var arg = true, args = {}
+						let arg = true, args = {}
 						if (eatChar("=")) {
-							var start=i
+							let start=i
 							if (eatChar('"')) {
 								start++
 								while (c && c!='"')
@@ -1035,22 +1017,21 @@ Markup.INJECT = Markup=>{
 							args[""] = arg
 						if (eatChar("]")) {
 							if (blockNames[name]==2 && !(name=="url" && arg!==true)) {
-								var endTag = "[/"+name+"]"
-								var end = code.indexOf(endTag, i)
+								let endTag = "[/"+name+"]"
+								let end = code.indexOf(endTag, i)
 								if (end < 0)
 									cancel()
 								else {
-									var contents = code.substring(i, end)
+									let contents = code.substring(i, end)
 									restore(end + endTag.length)
 									
-									var tx = blockTranslate(name, args, contents)
+									let tx = blockTranslate(name, args, contents)
 									addBlock(tx[0], tx[1], tx[2])
 								}
 							} else if (name!="item" && blockNames[name] && !(noNesting[name] && stackContains(name))) {
 								if (name == 'tr' || name == 'table')
-									while(eatChar(' ')||eatChar('\n')){
-									}
-								var tx = blockTranslate(name, args)
+									while (eatChar(' ')||eatChar('\n')) {}
+								let tx = blockTranslate(name, args)
 								startBlock(tx[0], {bbcode:name}, tx[1])
 							} else
 								add_block({type:'invalid', args:{text: code.substring(point, i), message:"invalid tag"}})
@@ -1076,14 +1057,13 @@ Markup.INJECT = Markup=>{
 		}
 		
 		function greedyCloseTag(name) {
-			for (var j=0; j<stack.length; j++)
+			for (let j=0; j<stack.length; j++)
 				if (stack[j].bbcode == name) {
 					while (stack.top().bbcode != name)//scary
 						endBlock()
 					endBlock()
 					return true
 				}
-			return false
 		}
 		
 		function readPlainLink() {
@@ -1095,13 +1075,13 @@ Markup.INJECT = Markup=>{
 		}
 		
 		function readArgList() {
-			var args = {}
+			let args = {}
 			while (1) {
 				// read key
-				var start = i
+				let start = i
 				while (isTagChar(c))
 					scan()
-				var key = code.substring(start, i)
+				let key = code.substring(start, i)
 				// key=...
 				if (eatChar("=")) {
 					// key="...
@@ -1121,9 +1101,9 @@ Markup.INJECT = Markup=>{
 						if (c == "]") {
 							args[key] = code.substring(start, i)
 							return args
-						} else if (eatChar(" "))
+						} else if (eatChar(" ")) {
 							args[key] = code.substring(start, i-1)
-						else
+						} else
 							return null
 					}
 					// key ...
@@ -1140,7 +1120,7 @@ Markup.INJECT = Markup=>{
 		}
 		
 		function readTagName() {
-			var start = i
+			let start = i
 			while (isTagChar(c))
 				scan()
 			return code.substring(start, i)
@@ -1153,21 +1133,25 @@ Markup.INJECT = Markup=>{
 	
 	// "plain text" (with autolinker)
 	Markup.langs.fallback = function(text) {
-		var root = {type:'ROOT', content:[]}
+		let root = {type:'ROOT', content:[]}
 		
-		var linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
-		var result
-		var last = 0
+		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
+		let result
+		let last = 0
 		while (result = linkRegex.exec(text)) {
 			// text before link
-			root.content.push(text.substring(last, result.index))
+			let before = text.substring(last, result.index)
+			if (before)
+				root.content.push(before)
 			// generate link
 			let url = result[0]
 			root.content.push({type:'simple_link', args:{url:url, text:url}})
 			last = result.index + result[0].length
 		}
 		// text after last link (or entire message if no links were found)
-		root.content.push(text.substr(last))
+		let after = text.substr(last)
+		if (after)
+			root.content.push(after)
 		
 		return root
 	}
