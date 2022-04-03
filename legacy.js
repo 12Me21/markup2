@@ -73,7 +73,7 @@ Markup.INJECT = Markup=>{
 	var leadingSpaces
 	var blocks
 	function scan(){}
-
+	
 	function init(scanFunc, text) {
 		scan = scanFunc
 		code = text
@@ -101,7 +101,7 @@ Markup.INJECT = Markup=>{
 		i = pos-1
 		scan()
 	}
-
+	
 	//try to read a char
 	function eatChar(chr) {
 		if (c == chr) {
@@ -109,7 +109,7 @@ Markup.INJECT = Markup=>{
 			return true
 		}
 	}
-
+	
 	function matchNext(str) {
 		return code.substr(i, str.length) == str
 	}
@@ -178,7 +178,7 @@ Markup.INJECT = Markup=>{
 		var item = stack.pop()
 		if (item.node && item.isBlock)
 			skipNextLineBreak = true
-
+		
 		if (stack.length) {
 			var i=stack.length-1
 			// this skips {} fake nodes
@@ -193,8 +193,8 @@ Markup.INJECT = Markup=>{
 		}
 	}
 	
-
-
+	
+	
 	// output contents of text buffer
 	function flushText() {
 		if (textBuffer) {
@@ -202,7 +202,7 @@ Markup.INJECT = Markup=>{
 			textBuffer = ""
 		}
 	}
-
+	
 	// add linebreak to output
 	// todo: skipping linebreaks should skip / *\n? */ (spaces before/after!)
 	// so like [h1]test[/h1] [h2]test[/h2]
@@ -215,7 +215,7 @@ Markup.INJECT = Markup=>{
 			addBlock('lineBreak')
 		}
 	}
-
+	
 	// add text to output (buffered)
 	function addText(text) {
 		if (text) {
@@ -308,7 +308,7 @@ Markup.INJECT = Markup=>{
 		}
 		return node
 	}
-
+	
 	var options = Parse.options
 	
 	Markup.langs['12y'] = function(codeInput) {
@@ -676,7 +676,7 @@ Markup.INJECT = Markup=>{
 			while (eatChar(" ")){
 			}
 		}
-
+		
 		// split string on first occurance
 		function split1(string, sep) {
 			var n = string.indexOf(sep)
@@ -726,13 +726,13 @@ Markup.INJECT = Markup=>{
 			})
 			return props
 		}
-
+		
 		// string.repeat doesn't exist
 		function addMulti(text, count) {
 			while (count --> 0)
 				addText(text)
 		}
-
+		
 		function readLink() {
 			var embed = eatChar("!")
 			if (readBracketedLink(embed) || readPlainLink(embed))
@@ -743,7 +743,7 @@ Markup.INJECT = Markup=>{
 				//lesson: if anything is eaten, you must return true if it's in the top level if switch block
 			}
 		}
-
+		
 		function readPlainLink(embed) {
 			if (isUrlStart()) {
 				var url = readUrl()
@@ -771,7 +771,7 @@ Markup.INJECT = Markup=>{
 				return true
 			}
 		}
-	
+		
 		// closeAll(true) - called at end of document
 		// closeAll(false) - called at end of {} block
 		function closeAll(force) {
@@ -787,7 +787,7 @@ Markup.INJECT = Markup=>{
 				endBlock()
 			}
 		}
-
+		
 		// called at the end of a line (unescaped newline)
 		function endLine() {
 			while (1) {
@@ -848,7 +848,7 @@ Markup.INJECT = Markup=>{
 				}
 			}
 		}
-
+		
 		// audio, video, image, youtube
 		//todo: improve this lol
 		function urlType(url) {
@@ -860,7 +860,7 @@ Markup.INJECT = Markup=>{
 				return "youtube"
 			return "image"
 		}
-
+		
 		// common code for all text styling tags (bold etc.)
 		function doMarkup(type, create) {
 			var symbol = c
@@ -898,7 +898,7 @@ Markup.INJECT = Markup=>{
 		}
 		
 	}
-
+	
 	Parse.lang.bbcode = function(codeArg) {
 		var noNesting = {
 			spoiler:true
@@ -948,7 +948,7 @@ Markup.INJECT = Markup=>{
 					contents = contents.substr(1)
 				return ['code', args, contents]
 			}
-
+			
 			//todo: maybe these should have args mapped over uh
 			if (name == 'url') {
 				if (contents != undefined)
@@ -1081,7 +1081,7 @@ Markup.INJECT = Markup=>{
 			addText(c)
 			scan()
 		}
-
+		
 		function greedyCloseTag(name) {
 			for (var j=0; j<stack.length; j++)
 				if (stack[j].bbcode == name) {
@@ -1092,7 +1092,7 @@ Markup.INJECT = Markup=>{
 				}
 			return false
 		}
-
+		
 		function readPlainLink() {
 			if (isUrlStart()) {
 				var url = readUrl()
@@ -1100,7 +1100,7 @@ Markup.INJECT = Markup=>{
 				return true
 			}
 		}
-
+		
 		function readArgList() {
 			var args = {}
 			while (1) {
@@ -1152,7 +1152,7 @@ Markup.INJECT = Markup=>{
 				scan()
 			return code.substring(start, i)
 		}
-
+		
 		function isTagChar(c) {
 			return c>="a" && c<="z" || c>="A"&&c<="Z" || c>="0"&&c<="9"
 		}
