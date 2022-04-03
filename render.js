@@ -159,6 +159,13 @@ Markup.INJECT = Markup=>{
 				e.dataset.bgcolor = color
 			return e
 		}.bind(𐀶`<span>`),
+		
+		invalid: function({text, reason}) {
+			let e = this()
+			e.title = reason
+			e.textContent = text
+			return e
+		}.bind(𐀶`<span class='invalid'>`),
 	}
 	
 	function fill_branch(branch, leaves) {
