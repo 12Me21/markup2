@@ -218,7 +218,8 @@ Markup.INJECT = Markup=>{
 		if (skipNextLineBreak)
 			skipNextLineBreak = false
 		else
-			add_block(true)
+			addText("\n")
+			//add_block(true)
 	}
 	
 	// add text to output (buffered)
@@ -328,10 +329,10 @@ Markup.INJECT = Markup=>{
 				//==========
 				// \ escape
 			} else if (eatChar("\\")) {
-				if (c == "\n") {
+/*				if (c == "\n") {
 					add_block(true)
-				} else
-					addText(c)
+				} else*/
+				addText(c)
 				scan()
 				//===============
 				// { group start (why did I call these "groups"?)
