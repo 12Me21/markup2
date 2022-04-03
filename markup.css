@@ -15,9 +15,18 @@
 	font-family: inherit;
 }
 /* change these from inline to block: */
-.MARKUP img, .MARKUP audio, .MARKUP video { display: block; }
+.MARKUP img, .MARKUP audio, .MARKUP video {
+	display: block;
+}
 /* ruby text doesn't work if set to white-space: pre */
-.MARKUP rt { white-space: nowrap; }
+.MARKUP rt {
+	white-space: pre-line;
+}
+/* table borders */
+.MARKUP table, .MARKUP td, .MARKUP th {
+	border: 1px solid currentColor;
+	border-collapse: collapse;
+}
 
 /*𐇵*𐇵*𔓘𐇵**𐇵𖠇𔓘*𖠇
  𐇵𔓘 DEFAULTS *𔓘
@@ -70,10 +79,6 @@
 }
 
 /*** Tables ***/
-.MARKUP table, .MARKUP td, .MARKUP th {
-	border: 1px solid var(--color);
-	border-collapse: collapse;
-}
 .MARKUP td, .MARKUP th {
 	padding-block: 0.2em;
 	padding-inline: 0.3em;
