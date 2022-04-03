@@ -3,24 +3,41 @@ Markup.INJECT = Markup=>{
 	
 	Markup.langs = {
 		'12y2': Markup.parse,
-		plaintext(text) {
-			return {type: 'ROOT', content: [text]}
-		},
+		bbcode: null,
+		'12y': null,
+		text: null,
+		fallback: null,
 	}
 	
-	Markup.convert_lang = function(text, lang='plaintext') {
+	Markup.parse_lang = function(text, lang='fallback') {
+		if (!text)
+			return {type:'ROOT', content:[]}
+		if (typeof text != 'string')
+			throw new TypeError('non-string value passed to markup parser')
+		
 		try {
-			let parser = Markup.langs[lang] || Markup.langs.plaintext
-			let tree = parser(text)
-			return Markup.render(tree)
+			let parser = Markup.langs[lang] || Markup.langs.fallback
+			return parser(text)
 		} catch(e) {
-			return Document.createTextNode(text) // todo: error msg + move this to render.js
+			console.error(e)
+			try { // todo
+				return Markup.langs.text(text)
+			} catch (e) {
+				console.error(e)
+				return {type:'ROOT', content:['ERROR!']}
+			}
 		}
 	}
 	
-	let Parse = {
-		lang: {},
-		options: null,
+	Markup.langs.text = function(text) {
+		let tree = {type:'ROOT', content:[]}
+		for (let line of text.split("\n")) {
+			if (line)
+				tree.content.push(line)
+			tree.content.push(true)
+		}
+		tree.content.pop()
+		return tree
 	}
 	
 	let BLOCKS = {
@@ -261,8 +278,6 @@ Markup.INJECT = Markup=>{
 		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
 	}
 	
-	var options = Parse.options
-	
 	Markup.langs['12y'] = function(codeInput) {
 		
 		init(function() {
@@ -336,19 +351,6 @@ Markup.INJECT = Markup=>{
 				//============
 				// >... quote
 			} else if (startOfLine && eatChar(">")) {
-				// todo: maybe >text should be a quote without author... 
-				// need to add a way to add information to quotes:
-				// - user ID
-				// - post ID
-				/*start = i
-				while (eatChar(" "))
-					
-				while (c && !char_in(c, " \n{:"))
-					scan()
-				var name = code.substring(start, i).trim()
-				eatChar(":")
-				while (eatChar(" "))*/
-				
 				startBlock('quote', {}, {/*"":name*/})
 				//==============
 				// -... list/hr
@@ -851,7 +853,7 @@ Markup.INJECT = Markup=>{
 		
 	}
 	
-	Parse.lang.bbcode = function(codeArg) {
+	Markup.langs.bbcode = function(codeArg) {
 		var noNesting = {
 			spoiler:true
 		}
@@ -1111,54 +1113,23 @@ Markup.INJECT = Markup=>{
 	}
 	
 	// "plain text" (with autolinker)
-	Parse.fallback = function(text) {
-		var options = Parse.options
-		var root = options.root()
-		i = 0
-		code = text
-		output = root
+	Markup.langs.fallback = function(text) {
+		var root = {type:'ROOT', content:[]}
 		
 		var linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
 		var result
-		var out = "", last = 0
+		var last = 0
 		while (result = linkRegex.exec(text)) {
 			// text before link
-			options.append(root, options.text(text.substring(last, result.index)))
+			root.content.push(text.substring(last, result.index))
 			// generate link
-			var link = options.simpleLink({"": result[0]})
-			options.append(root, link)
-			
+			let url = result[0]
+			root.content.push({type:'simple_link', args:{url:url, text:url}})
 			last = result.index + result[0].length
 		}
 		// text after last link (or entire message if no links were found)
-		options.append(root, options.text(text.substr(last)))
+		root.content.push(text.substr(last))
 		
-		return root.node
-	}
-	
-	Parse.parseLang = function(text, lang) {
-		//var start = performance.now()
-		options = Parse.options //temp
-		i=0
-		code = text
-		if (code == undefined || code == "") // "" is... debatable
-			return options.root().node
-		try {
-			var parser = Parse.lang[lang] || Parse.fallback
-			return parser(text)
-		} catch(e) {
-			try {
-				if (!output) {
-					output = options.root()
-				}
-				options.append(output, options.error(e, e.stack))
-				options.append(output, options.text(code.substr(i)))
-				return output.node
-			} catch (e) {
-				alert("Unrecoverable parser error! please report this!\n"+e+"\n"+e.stack)
-			}
-		}/* finally {
-			console.log("time:", performance.now() - start)
-		}*/
+		return root
 	}
 }
