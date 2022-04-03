@@ -37,17 +37,51 @@ Markup.INJECT = Markup=>{
 		// - must be \env{ maybe
 		// etc.
 	}
-	const envs = {
-		sup: 'superscript',
-		sub: 'subscript',
-	}
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
-	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({|( [\w+]*))/y // [...]?{ or [...]? <word>
+	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({|( \w*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
 	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
+	
+	// when an unknown \tag is encountered, we create a block
+	// rather than just ignoring it, so in the future,
+	// we can add a new tag without changing the parsing (much)
+	const ENV_INVALID = {
+		argtype:ARGS_WORD, do(tag, rargs, body) {
+			return OPEN('invalid', tag, {tag:tag}, body)
+		}
+	}
+	
+	function arg0(rargs, def) {
+		if (rargs.length<1)
+			return def
+		return rargs[0]
+	}
+	
+	const ENVS = {
+		sub: {argtype:ARGS_WORD, do(tag, rargs, body) {
+			return OPEN('subscript', tag, null, body)
+		}},
+		sup: {argtype:ARGS_WORD, do(tag, rargs, body) {
+			return OPEN('superscript', tag, null, body)
+		}},
+		align: {argtype:ARGS_WORD, do(tag, rargs, body) {
+			let a = rargs[0]
+			if (!(a=='left' || a=='right' || a=='center'))
+				a = 'center'
+			return OPEN('align', tag, {align: a}, body)
+		}},
+		spoiler: {argtype:ARGS_WORD, do(tag, rargs, body) {
+			let label = arg0(rargs, "spoiler")
+			return OPEN('spoiler', tag, {label}, body)
+		}},
+		ruby: {argtype:ARGS_WORD, do(tag, rargs, body) {
+			let text = arg0(rargs, "true")
+			return OPEN('ruby', tag, {text}, body)
+		}},
+	}
 	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
@@ -56,7 +90,7 @@ Markup.INJECT = Markup=>{
 		/()/ empty tags are used to mark token types
 	*/
 	// ⚠ The order of these is important!
-	const [regex, groups] = process_def([[
+	const [REGEX, GROUPS] = process_def([[
 		// 💎 NEWLINE 💎
 		/\n/,
 		{newline:true, do(tag) {
@@ -100,22 +134,9 @@ Markup.INJECT = Markup=>{
 			}
 			return TEXT(tag)
 		}},
-	],[// 💎 ENV 💎
+	],[// 💎 ENV 💎 (handled separately)
 		/[\\]\w+/,
-		// 1, ← just put a dummy value here instead of...
-		{argtype:ARGS_WORD, do(tag, rargs, body) {
-			let envtype = /^[\\](\w+)/.exec(tag)[1] //todo: use this
-			let e = envs[envtype]
-			let type, args
-			if (!e)
-				return TEXT(TAG) //todo: reject the tag earlier, before parsing args. we need to process these there anyway, since it has to decide which arg regex to use based on the tag name.
-			
-			//if (typeof e == 'string')
-			type = e
-			if (body)
-				return OPEN(type, tag, args, body)
-			return TAG(type, tag, args)
-		}},
+		false,
 	],[// 💎 BLOCK END 💎
 		//[/{/, {token:''}], // maybe
 		/}/,
@@ -126,7 +147,7 @@ Markup.INJECT = Markup=>{
 				CANCEL()
 			return CLOSE()
 		}},
-	],[// 💎 NULL ENV 💎
+	],[// 💎 NULL ENV 💎 (maybe can be in the envs table now? todo)
 		/[\\]{/,
 		{body:true, do(tag) {
 			return OPEN('null_env', tag, null, true)
@@ -179,7 +200,7 @@ Markup.INJECT = Markup=>{
 			let args = {url: filter_url(url)}
 			if (body)
 				return OPEN('link', tag, args, true)
-			args.text = rargs.length>0 ? rargs[0] : url
+			args.text = arg0(rargs, url)
 			return TAG('simple_link', tag, args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
@@ -248,6 +269,7 @@ Markup.INJECT = Markup=>{
 	const null_args = []
 	null_args.named = Object.freeze({})
 	Object.freeze(null_args)
+	// todo: args class? and then have arg0() etc as methods
 	function parse_args(arglist) {
 		if (!arglist) // note: tests for undefined (\tag) AND "" (\tag[])
 			return null_args
@@ -279,10 +301,11 @@ Markup.INJECT = Markup=>{
 			return 'audio'
 		if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
 			return 'video'
-		if (/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(url))
+		if (/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(url)) // ew
 			return 'youtube'
 		return 'image'
 	}
+	// ugly...
 	function match_args(rargs, defs) {
 		for (let arg of rargs)
 			for (let [regex, func] of defs) {
@@ -313,6 +336,9 @@ Markup.INJECT = Markup=>{
 	
 	// start a new block
 	function OPEN(type, tag, args, body) {
+		// todo: anything with a body doesn't need a tag, i think
+		// since body items can never be cancelled.
+		// so perhaps we can specify the body flag by setting tag = true
 		current = {type, tag, content: [], parent: current}
 		if (body) {
 			brackets++
@@ -376,40 +402,47 @@ Markup.INJECT = Markup=>{
 		current = tree
 		brackets = 0
 		
-		let last = regex.lastIndex = 0
-		for (let match; match=regex.exec(text); ) {
+		let last = REGEX.lastIndex = 0
+		for (let match; match=REGEX.exec(text); ) {
 			// text before token
 			TEXT(text.substring(last, match.index))
 			// get token
-			let group = match.indexOf("", 1)-1
-			let thing = groups[group]
+			let group_num = match.indexOf("", 1)-1
+			let thing = GROUPS[group_num]
+			// is a \tag
+			if (thing===false) {
+				let name = match[0].substr(1)
+				thing = ENVS[name] || ENV_INVALID
+			}
 			// parse args and {
 			let body
 			let argregex = thing.argtype
 			if (argregex) {
-				argregex.lastIndex = regex.lastIndex
+				argregex.lastIndex = REGEX.lastIndex
 				let argmatch = argregex.exec(text)
-				if (!argmatch) { // INVALID! skip 1 char, try again
-					regex.lastIndex = match.index+1
+				if (!argmatch) { // INVALID! skip 1 char
+					REGEX.lastIndex = match.index+1
 					last = match.index
 					continue
 				}
 				body = argmatch[2]
 				thing.do(match[0]+argmatch[0], parse_args(argmatch[1]), body)
 				if (argmatch[3]) {
-					TEXT(argmatch[3].substr(1))
+					let text = argmatch[3].substr(1)
+					TEXT(text.replace(/\\([^])/g,"$1")) // todo: i wonder if we could pass indexes to TEXT, and have it automatically extract from the input string, only when necessary. i.e. 2 consecutive text tokens are pulled with a single .substring()
 					CLOSE()
+					body = false
 				}
-				last = regex.lastIndex = argregex.lastIndex
+				last = REGEX.lastIndex = argregex.lastIndex
 			} else {
 				body = thing.body
 				thing.do(match[0])
-				last = regex.lastIndex
+				last = REGEX.lastIndex
 			}
-			// start of line
-			if (thing.newline || body) {
+			// "start of line"
+			if (body || thing.newline) {
 				text = text.substring(last)
-				last = regex.lastIndex = 0
+				last = REGEX.lastIndex = 0
 			}
 		}
 		TEXT(text.substring(last)) // text after last token
