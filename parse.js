@@ -181,7 +181,7 @@ Markup.INJECT = Markup=>{
 			let url = /^!([^[{]*)/.exec(tag)[1]
 			let type = embed_type(rargs, url)
 			let args = {
-				url: filter_url(url),
+				url: url,
 				alt: rargs.named.alt,
 			}
 			if (type=='image' || type=='video') {
@@ -197,7 +197,7 @@ Markup.INJECT = Markup=>{
 		// 💎 LINK 💎
 		{argtype:ARGS_NORMAL, do(tag, rargs, body) {
 			let url = /^([^[{]*)/.exec(tag)[1] //todo: this is a hack
-			let args = {url: filter_url(url)}
+			let args = {url}
 			if (body)
 				return OPEN('link', tag, args, true)
 			args.text = arg0(rargs, url)
@@ -284,11 +284,6 @@ Markup.INJECT = Markup=>{
 		}
 		list.named = map
 		return list
-	}
-	function filter_url(url) {
-		if (/^ *javascript:/i.test(url))
-			return ""
-		return url
 	}
 	function embed_type(rargs, url) {
 		let type

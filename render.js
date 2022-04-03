@@ -12,6 +12,12 @@ Markup.INJECT = Markup=>{
 		return elem.cloneNode.bind(elem, true)
 	}
 	
+	function filter_url(url) {
+		if (/^ *javascript:/i.test(url))
+			return ""
+		return url
+	}
+	
 	let CREATE = {
 		newline: 𐀶`<br>`,
 		
@@ -36,13 +42,13 @@ Markup.INJECT = Markup=>{
 		simple_link: function({url, text}) {
 			let e = this()
 			e.textContent = text
-			e.href = url
+			e.href = filter_url(url)
 			return e
 		}.bind(𐀶`<a href="">`),
 		
 		image: function({url, alt, width, height}) {
 			let e = this()
-			e.src = url
+			e.src = filter_url(url)
 			e.onerror = e.onload = e.removeAttribute.bind(e, 'data-loading')
 			if (alt!=null) e.alt = alt
 			if (width) e.width = width
@@ -54,13 +60,13 @@ Markup.INJECT = Markup=>{
 		// todo: we need a preview flag which disables these because they're very slow... invalid images are bad too.
 		audio: function({url}) {
 			let e = this()
-			e.src = url
+			e.src = filter_url(url)
 			return e
 		}.bind(𐀶`<audio controls preload=none>`),
 		
 		video: function({url}) {
 			let e = this()
-			e.src = url
+			e.src = filter_url(url)
 			return e
 		}.bind(𐀶`<video controls preload=none>`),
 		
@@ -104,7 +110,7 @@ Markup.INJECT = Markup=>{
 		
 		link: function({url}) {
 			let e = this()
-			e.href = url
+			e.href = filter_url(url)
 			return e
 		}.bind(𐀶`<a target=_blank href="">`),
 		
