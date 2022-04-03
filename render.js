@@ -5,23 +5,10 @@ Markup.INJECT = Markup=>{
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
-	// (if there are multiple elements, it returns a DocumentFragment)
+	const RANGE = document.createRange() // we just use this for the createContextualFragment method
 	function 𐀶([html]) {
-		let temp = document.createElement('template')
-		temp.innerHTML = html
-		let fragment = temp.content
-		let first = fragment.firstChild
-		// if the fragment only has 1 node in it, use that instead
-		if (!first.nextSibling && !first.firstChild)
-			fragment = first
-		
-		return fragment.cloneNode.bind(fragment, true)
-	}
-	
-	function id(elem, id) {
-		let e = elem.getElementById(id)
-		e.removeAttribute('id')
-		return e
+		let e = RANGE.createContextualFragment(html).firstChild
+		return e.cloneNode.bind(e, true)
 	}
 	
 	let CREATE = {
@@ -92,15 +79,15 @@ Markup.INJECT = Markup=>{
 			if (cite==null)
 				return this[0]()
 			let e = this[1]()
-			id(e, 'cite').textContent = cite
+			e.firstChild.textContent = cite
 			return e
-		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite id=cite>`]),
+		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite>`]),
 		
 		table: function() {
 			let e = this()
-			e.B = id(e, 'branch')
+			e.B = e.firstChild
 			return e
-		}.bind(𐀶`<table><tbody id=branch>`),
+		}.bind(𐀶`<table><tbody>`),
 		
 		table_row: 𐀶`<tr>`,
 		
@@ -118,7 +105,7 @@ Markup.INJECT = Markup=>{
 			let e = this()
 			e.href = url
 			return e
-		}.bind(𐀶`<a target=_blank href=""></a>`),
+		}.bind(𐀶`<a target=_blank href="">`),
 		
 		list: function({style}) {
 			if (style==null)
@@ -148,20 +135,16 @@ Markup.INJECT = Markup=>{
 		
 		ruby: function({text}) {
 			let e = this()
-			id(e, 'top').textContent = text
-			e.B = id(e, 'branch')
+			e.lastChild.textContent = text
+			e.B = e.firstChild
 			return e
-		}.bind(𐀶`<ruby><span id=branch></span><rp>(<rt id=top><rp>(`),
+		}.bind(𐀶`<ruby><span></span><rt>`), // I don't think we need <rp> since we're rendering for modern browsers...
 		
 		spoiler: function({label}) {
-			e = this()
-			id(e, 'btn').onclick = function() {
-				this.toggleAttribute('data-show')
-				// could toggle attribute on branch instead?
-			}
-			e.B = id(e, 'branch')
+			let e = this()
+			e.firstChild.textContent = label
 			return e
-		}.bind(𐀶`<button class=spoiler-button id=button></button><div id=branch>`),
+		}.bind(𐀶`<details><summary>`),
 		
 		background_color: function({color}) {
 			let e = this()
