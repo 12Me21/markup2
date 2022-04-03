@@ -416,7 +416,7 @@ Markup.INJECT = Markup=>{
 			} else if (c == "|") {
 				var top = stack.top()
 				// continuation
-				if (top.type == 'cell') {
+				if (top.type == 'table_cell') {
 					scan()
 					var row = top.row
 					var table = top.row.table
@@ -430,7 +430,7 @@ Markup.INJECT = Markup=>{
 							table.columns = row.cells
 						// end blocks
 						endBlock() //cell
-						if (top_is('row')) //always
+						if (top_is('table_row')) //always
 							endBlock()
 						// start row
 						// calculate number of cells in row which will be
@@ -440,7 +440,7 @@ Markup.INJECT = Markup=>{
 							cells++
 							return span-1
 						}).filter(function(span){return span > 0})
-						var row = start_block('row', null, {table:table, cells:cells}, true)
+						var row = start_block('table_row', null, {table:table, cells:cells}, true)
 						row.header = eatChar("*")
 						// start cell
 						startCell(row)
@@ -455,7 +455,7 @@ Markup.INJECT = Markup=>{
 						// TODO: fix single row tables
 						if (table.columns != null && row.cells > table.columns) {
 							endBlock() //end cell
-							if (top_is('row')) //always
+							if (top_is('table_row')) //always
 								endBlock() //row
 							if (top_is('table')) //always
 								endBlock() //table
@@ -470,7 +470,7 @@ Markup.INJECT = Markup=>{
 				} else if (startOfLine) {
 					scan()
 					table = start_block('table', null, {columns: null, rowspans: []}, true)
-					row = start_block('row', null, {table: table, cells: 0}, true)
+					row = start_block('table_row', null, {table: table, cells: 0}, true)
 					row.header = eatChar("*")
 					startCell(row)
 				} else {
@@ -529,7 +529,7 @@ Markup.INJECT = Markup=>{
 						codeText += c
 						scan()
 					}
-					add_block({type:'icode',args:{text:codeText}})
+					add_block({type:'icode', args:{text:codeText}})
 					scan()
 				}
 				//
@@ -585,7 +585,7 @@ Markup.INJECT = Markup=>{
 								scan()
 							}
 						}
-						addBlock(type, {"":url}, altText)
+						add_block(type, {url, alt:altText}, true)
 					} else {
 						if (after)
 							start_block('link', {url}, {big: true, inBrackets: true})
@@ -611,9 +611,25 @@ Markup.INJECT = Markup=>{
 				var name = readTagName()
 				var props = readProps()
 				// todo: make this better lol
-				var func = tags[name]
-				if (func && !(name=="spoiler" && stackContains("spoiler"))) {
-					startBlock(func, {}, props)
+				let arg = props[""]
+				if (name=='spoiler' && !stackContains("spoiler")) {
+					let label = arg==true ? "spoiler" : arg
+					start_block('spoiler', {label}, {}, true)
+				} else if (name=='ruby') {
+					start_block('ruby', {text: String(arg)}, {})
+				} else if (name=='align') {
+					if (!(arg=='center'||arg=='right'||arg=='left'))
+						arg = 'left'
+					start_block('align', {align: arg}, {}, true)
+				} else if (name=='anchor') {
+					start_block('anchor', {name: String(arg)}, {})
+				} else if (name=='bg') {
+					// TODO: validate
+					start_block('background_color', {color: String(arg)}, {})
+				} else if (name=='sub') {
+					start_block('subscript', null, {})
+				} else if (name=='sup') {
+					start_block('superscript', null, {})
 				} else {
 					add_block({type:'invalid', args:{text:code.substring(start, i), reason:"invalid tag"}})
 				}
@@ -630,17 +646,24 @@ Markup.INJECT = Markup=>{
 		function startCell(row) {
 			var props = {}
 			if (eatChar("#"))
-				Object.assign(props, readProps())
+				props = readProps()
 			
 			if (props.rs)
 				row.table.rowspans.push(props.rs-1)
 			if (props.cs)
 				row.cells += props.cs-1
 			
-			if (row.header)
-				props.h = true
+			let args = {
+				header: props.h || row.header,
+				colspan: props.cs, // TODO: validate
+				rowspan: props.rs,
+				align: props.align,
+				color: props.c,
+			}
+			if (props.c && props.c[0]=='#')
+				args.truecolor = props.c
 			
-			startBlock('cell', {row: row}, props)
+			start_block('table_cell', args, {row: row})
 			while (eatChar(" ")){
 			}
 		}
@@ -729,7 +752,7 @@ Markup.INJECT = Markup=>{
 						}
 						scan()
 					}
-					addBlock(type, {"":url}, altText)
+					add_block(type, {url, alt:altText}, true)
 				} else {
 					if (after)
 						start_block('link', {url}, {inBrackets: true})
@@ -979,7 +1002,7 @@ Markup.INJECT = Markup=>{
 								endBlock(point)
 							var top = stack.top()
 							if (top.type == "list")
-								start_block('item', null, {bbcode:'item'})
+								start_block('item', null, {bbcode:'item'}, true)
 							else
 								cancel()
 						} else
