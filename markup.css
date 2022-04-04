@@ -61,6 +61,11 @@
 	contain: layout paint style;
 }
 
+/* margin reset */
+.🍂 * {
+	margin: 0;
+}
+
 /* Styles */
 .🍂 sub { vertical-align: sub; }
 .🍂 sup { vertical-align: super; }
@@ -99,6 +104,18 @@
 	-moz-tab-size: 4;
 	tab-size: 4;
 	font: monospace;
+}
+.🍂 pre {
+	color: white;
+	background-color: black;
+	border: 1px solid black;
+	padding: 0.5em;
+	margin-block: 0.25em;
+	word-break: break-all;
+}
+.🍂 code {
+	background-color: rgba(0,0,0,0.1);
+	padding: 0 0.2em;
 }
 
 /*******************

@@ -166,6 +166,8 @@ Markup.INJECT = Markup=>{
 			e.textContent = text
 			return e
 		}.bind(𐀶`<span class='invalid'>`),
+		
+		key: 𐀶`<kbd>`,
 	}
 	
 	function fill_branch(branch, leaves) {

@@ -3,19 +3,19 @@ Markup.INJECT = Markup=>{
 	
 	Markup.langs = {
 		'12y2': Markup.parse,
-		bbcode: null,
+		'bbcode': null,
 		'12y': null,
-		text: null,
-		fallback: null,
+		'text': null,
+		'fallback': null,
 	}
 	
 	Markup.parse_lang = function(text, lang='fallback') {
-		if (!text)
-			return {type:'ROOT', content:[]}
 		if (typeof text != 'string')
 			throw new TypeError('non-string value passed to markup parser')
 		
 		try {
+			if (!text)
+				return {type:'ROOT', lang:null, content:[]}
 			let parser = Markup.langs[lang] || Markup.langs.fallback
 			return parser(text)
 		} catch(e) {
@@ -24,13 +24,13 @@ Markup.INJECT = Markup=>{
 				return Markup.langs.text(text)
 			} catch (e) {
 				console.error(e)
-				return {type:'ROOT', content:['ERROR!']}
+				return {type:'ROOT', lang:null, content:["ERROR!"]}
 			}
 		}
 	}
 	
 	Markup.langs.text = function(text) {
-		let tree = {type:'ROOT', content:[]}
+		let tree = {type:'ROOT', lang:'text', content:[]}
 		for (let line of text.split("\n")) {
 			if (line)
 				tree.content.push(line)
@@ -47,13 +47,26 @@ Markup.INJECT = Markup=>{
 		align:1, spoiler:1
 	}
 	
+	function convert_cell_args(props, h) {
+		let args = {
+			header: props.h || h,
+			colspan: props.cs, // TODO: validate
+			rowspan: props.rs,
+			align: props.align,
+			color: props.c,
+		}
+		if (props.c && props.c[0]=='#')
+			args.truecolor = props.c
+		return args
+	}
+	
 	/***********
 	 ** STATE **
     ***********/
 	let c, i, code
 	let skipNextLineBreak
 	let textBuffer
-	let curr, output
+	let curr, tree
 	let openBlocks
 	let stack
 	
@@ -84,7 +97,7 @@ Markup.INJECT = Markup=>{
 		startOfLine = true
 		skipNextLineBreak = false
 		textBuffer = ""
-		output = curr = {type:'ROOT', content:[]}
+		tree = curr = {type:'ROOT', content:[]}
 		stack = [{node:curr, type:'ROOT'}]
 		restore(0)
 	}
@@ -226,17 +239,6 @@ Markup.INJECT = Markup=>{
 		skipNextLineBreak = BLOCKS[type]
 	}
 	
-	// add simple block with no children
-	function addBlock(type, arg, ext1, ext2) {
-		flushText()
-		let node = BLOCKS[type].convert(arg, ext1, ext2)
-		curr.content.push(node)
-		if (BLOCKS[type].block)
-			skipNextLineBreak = true
-		else
-			skipNextLineBreak = false
-	}
-	
 	function start_block(type, args, data) {
 		if (type) {
 			let node = {type, args, content:[]}
@@ -257,26 +259,6 @@ Markup.INJECT = Markup=>{
 		return data
 	}
 	
-	function startBlock(type, data, arg) {
-		data.type = type
-		if (type) {
-			data.isBlock = BLOCKS[type].block
-			openBlocks++
-			if (openBlocks > 10)
-				throw "too deep nestted blocks"
-			
-			let node = BLOCKS[type].convert(arg)
-			data.node = node
-			if (data.isBlock)
-				skipNextLineBreak = true
-			
-			flushText()
-			curr.content.push(node)
-			curr = node
-		}
-		stack.push(data)
-		return data
-	}
 	// check for /\b(http://|https://|sbs:)/ basically
 	function isUrlStart() {
 		if (code[i-1] && /\w/.test(code[i-1]))
@@ -286,6 +268,7 @@ Markup.INJECT = Markup=>{
 	
 	Markup.langs['12y'] = function(codeInput) {
 		init(codeInput)
+		curr.lang = '12y'
 		
 		while (c) {
 			if (eatChar("\n")) {
@@ -507,7 +490,7 @@ Markup.INJECT = Markup=>{
 		}
 		// END
 		endAll()
-		return output
+		return tree
 		
 		function endAll() {
 			flushText()
@@ -579,7 +562,7 @@ Markup.INJECT = Markup=>{
 					start_block('ruby', {text: String(arg)}, {})
 				} else if (name=='align') {
 					if (!(arg=='center'||arg=='right'||arg=='left'))
-						arg = 'left'
+						arg = null
 					start_block('align', {align: arg}, {})
 				} else if (name=='anchor') {
 					start_block('anchor', {name: String(arg)}, {})
@@ -612,15 +595,7 @@ Markup.INJECT = Markup=>{
 			if (props.cs)
 				row.cells += props.cs-1
 			
-			let args = {
-				header: props.h || row.header,
-				colspan: props.cs, // TODO: validate
-				rowspan: props.rs,
-				align: props.align,
-				color: props.c,
-			}
-			if (props.c && props.c[0]=='#')
-				args.truecolor = props.c
+			let args = convert_cell_args(props, row.header)
 			
 			start_block('table_cell', args, {row: row})
 			while (eatChar(" ")){
@@ -832,15 +807,97 @@ Markup.INJECT = Markup=>{
 		
 	}
 	
-	const noNesting = {
-		spoiler: true
+	// start_block
+	const block_translate = {
+		// things without arguments
+		b: 'bold',
+		i: 'italic',
+		u: 'underline',
+		s: 'strikethrough',
+		sup: 'superscript',
+		sub: 'subscript',
+		table: 'table',
+		tr: 'table_row',
+		item: 'list_item',
+		// with args
+		td(args) {
+			return ['table_cell', convert_cell_args(args)]
+		},
+		th(args) {
+			return ['table_cell', convert_cell_args(args, true)]
+		},
+		align(args) {
+			let align = args['']
+			if (align!='left' && align!='right' && align!='center')
+				align = null
+			return ['align', {align}]
+		},
+		list(args) {
+			return ['list', {style: args['']}]
+		},
+		spoiler(args) {
+			return ['spoiler', {label: args['']}]
+		},
+		ruby(args) {
+			return ['ruby', {text: args['']}]
+		},
+		quote(args) {
+			return ['quote', {cite: args['']}]
+		},
+		anchor(args) {
+			return ['anchor', {name: args['']}]
+		},
+		h1(args) {
+			return ['heading', {level:1}]
+		},
+		h2(args) {
+			return ['heading', {level:2}]
+		},
+		h3(args) {
+			return ['heading', {level:3}]
+		},
+		url(args) {
+			return ['link', {url: args['']}]
+		},
+		code: 2,
+		youtube: 2,
+		audio: 2,
+		video: 2,
+		img: 2,
 	}
-	const blockNames = {
-		b:1,i:1,u:1,s:1,sup:1,sub:1,table:1,tr:1,td:1,align:1,list:1,spoiler:1,quote:1,anchor:1,item:1,h1:1,h2:1,h3:1,th:1,code:2,url:2,youtube:2,audio:2,video:2,img:2,ruby:1
+	// add_block
+	const block_translate_2 = {
+		code(args, contents) {
+			let inline = args[""] == 'inline'
+			if (inline)
+				return ['icode', {text:contents}]
+			else {
+				if (contents[0]=="\n")
+					contents = contents.substr(1)
+				return ['code', {text:contents, lang:args.lang||'sb'}]
+			}
+		},
+		url(args, contents) {
+			return ['simple_link', {text:contents, url: contents}]
+		},
+		youtube(args, contents) {
+			return ['youtube', {url: args['']}]
+		},
+		audio(args, contents) {
+			return ['audio', {url: args['']}]
+		},
+		video(args, contents) {
+			return ['audio', {url: args['']}]
+		},
+		img(args, contents) {
+			return ['audio', {url: args['']}]
+		},
+		
 	}
 	
 	Markup.langs.bbcode = function(codeArg) {
 		init(codeArg)
+		curr.lang = 'bbcode'
 		
 		let point = 0
 		
@@ -850,7 +907,7 @@ Markup.INJECT = Markup=>{
 			if (eatChar("[")) {
 				point = i-1
 				// [/... end tag?
-				if(eatChar("/")) {
+				if (eatChar("/")) {
 					let name = readTagName()
 					// invalid end tag
 					if (!eatChar("]") || !name) {
@@ -873,7 +930,7 @@ Markup.INJECT = Markup=>{
 				// [... start tag?
 				} else {
 					let name = readTagName()
-					if (!name || !blockNames[name]) {
+					if (!name || !block_translate[name]) {
 						// special case [*] list item
 						if (eatChar("*") && eatChar("]")) {
 							if (stack_top().type == "list_item")
@@ -911,7 +968,8 @@ Markup.INJECT = Markup=>{
 						if (arg !== true)
 							args[""] = arg
 						if (eatChar("]")) {
-							if (blockNames[name]==2 && !(name=="url" && arg!==true)) {
+							// simple tag
+							if (block_translate_2[name] && !(name=="url" && arg!==true)) {
 								let endTag = "[/"+name+"]"
 								let end = code.indexOf(endTag, i)
 								if (end < 0)
@@ -920,14 +978,20 @@ Markup.INJECT = Markup=>{
 									let contents = code.substring(i, end)
 									restore(end + endTag.length)
 									
-									let tx = blockTranslate(name, args, contents)
-									addBlock(tx[0], tx[1], tx[2])
+									let [t, a] = block_translate_2[name](args, contents)
+									add_block(t, a)
 								}
-							} else if (name!="item" && blockNames[name] && !(noNesting[name] && stackContains(name))) {
+							} else if (name!="item" && block_translate[name] && !(name=='spoiler' && stackContains(name))) {
 								if (name == 'tr' || name == 'table')
 									while (eatChar(' ')||eatChar('\n')) {}
-								let tx = blockTranslate(name, args)
-								startBlock(tx[0], {bbcode:name}, tx[1])
+								
+								let tx = block_translate[name]
+								if (typeof tx == 'string')
+									start_block(tx, null, {bbcode:name})
+								else {
+									let [t, a] = tx(args)
+									start_block(t, a, {bbcode:name})
+								}
 							} else
 								add_block('invalid', {text: code.substring(point, i), message:"invalid tag"})
 						} else
@@ -943,69 +1007,7 @@ Markup.INJECT = Markup=>{
 			}
 		}
 		endAll()
-		return output
-		
-		// this translates bbcode tag names into
-		// the standard block names, + arg, + contents for special blocks
-		// to be passed to startblock or functions to addblock
-		function blockTranslate(name, args, contents) {
-			// direct translations:
-			let name2 = {
-				b: 'bold',
-				i: 'italic',
-				u: 'underline',
-				s: 'strikethrough',
-				sup: 'superscript',
-				sub: 'subscript',
-				table: 'table',
-				tr: 'row',
-				td: 'cell',
-				align: 'align',
-				list: 'list',
-				spoiler: 'spoiler',
-				ruby: 'ruby',
-				quote: 'quote',
-				anchor: 'anchor',
-				item: 'list_item',
-			}[name]
-			if (name2)
-				return [name2, args, contents]
-			// other simple translations
-			if (name == 'h1')
-				return ['heading', 1]
-			if (name == 'h2')
-				return ['heading', 2]
-			if (name == 'h3')
-				return ['heading', 3]
-			if (name == 'th')
-				return ['cell', Object.assign({h:true}, args)]
-			
-			if (name == 'code') {
-				let inline = args[""] == 'inline'
-				if (inline)
-					return {type:'icode', args:{text:contents}}
-				if (contents[0]=="\n")
-					contents = contents.substr(1)
-				return {type:'code', args:{text:contents, lang:args.lang||'sb'}}
-			}
-			
-			//todo: maybe these should have args mapped over uh
-			if (name == 'url') {
-				if (contents != undefined)
-					return ['simpleLink', {"":contents}]
-				else
-					return ['customLink', args]
-			}
-			
-			if (name == 'youtube')
-				return ['youtube', {"":contents}, args.alt]
-			if (name == 'audio')
-				return ['audio', {"":contents}, args.alt]
-			if (name == 'video')
-				return ['video', {"":contents}, args.alt]
-			if (name == 'img')
-				return ['image', {"":contents}, args.alt]
-		}
+		return tree
 		
 		function cancel() {
 			restore(point)
