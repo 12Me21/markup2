@@ -73,6 +73,9 @@ Markup.INJECT = Markup=>{
 		i++
 		c = code.charAt(i)
 	}
+	function stack_top() {
+		return stack[stack.length-1]	
+	}
 	
 	function init(text) {
 		code = text
@@ -83,9 +86,6 @@ Markup.INJECT = Markup=>{
 		textBuffer = ""
 		output = curr = {type:'ROOT', content:[]}
 		stack = [{node:curr, type:'root'}]
-		stack.top = function() {
-			return stack[stack.length-1]
-		}
 		restore(0)
 	}
 	// move to pos
@@ -157,7 +157,7 @@ Markup.INJECT = Markup=>{
 		return false
 	}
 	function top_is(type) {
-		let top = stack.top()
+		let top = stack_top()
 		return top && top.type == type
 	}
 	
@@ -367,9 +367,9 @@ Markup.INJECT = Markup=>{
 					addText("-")
 				//==========================
 				// ] end link if inside one
-			} else if (c == "]" && stack.top().inBrackets){ //this might break if it assumes .top() exists. needs more testing
+			} else if (c == "]" && stack_top().inBrackets){ //this might break if it assumes .top() exists. needs more testing
 				scan()
-				if (stack.top().big) {
+				if (stack_top().big) {
 					if (eatChar("]"))
 						endBlock()
 					else
@@ -379,7 +379,7 @@ Markup.INJECT = Markup=>{
 				//============
 				// |... table
 			} else if (c == "|") {
-				let top = stack.top()
+				let top = stack_top()
 				// continuation
 				if (top.type == 'table_cell') {
 					scan()
@@ -718,7 +718,7 @@ Markup.INJECT = Markup=>{
 		// closeAll(false) - called at end of {} block
 		function closeAll(force) {
 			while (stack.length) {
-				let top = stack.top()
+				let top = stack_top()
 				if (top.type == 'root')
 					break
 				if (!force && top.type == null) {
@@ -732,7 +732,7 @@ Markup.INJECT = Markup=>{
 		// called at the end of a line (unescaped newline)
 		function endLine() {
 			while (1) {
-				let top = stack.top()
+				let top = stack_top()
 				if (top.type == 'heading' || top.type == 'quote') {
 					endBlock()
 				} else if (top.type == 'list_item') {
@@ -766,7 +766,7 @@ Markup.INJECT = Markup=>{
 						} else {
 							// TODO: currently this will just fail completely
 							while (1) {
-								top = stack.top()
+								top = stack_top()
 								if (top && top.type == 'list') {
 									if (top.level <= indent)
 										break
@@ -858,7 +858,7 @@ Markup.INJECT = Markup=>{
 					// valid end tag
 					} else {
 						// end last item in lists (mostly unnecessary now with greedy closing)
-						if (name == "list" && stack.top().type == "list_item")
+						if (name == "list" && stack_top().type == "list_item")
 							endBlock(point)
 						if (greedyCloseTag(name)) {
 							// eat whitespace between table cells
@@ -876,9 +876,9 @@ Markup.INJECT = Markup=>{
 					if (!name || !blockNames[name]) {
 						// special case [*] list item
 						if (eatChar("*") && eatChar("]")) {
-							if (stack.top().type == "list_item")
+							if (stack_top().type == "list_item")
 								endBlock(point)
-							let top = stack.top()
+							let top = stack_top()
 							if (top.type == "list")
 								start_block('list_item', null, {bbcode:'item'})
 							else
@@ -1016,7 +1016,7 @@ Markup.INJECT = Markup=>{
 		function greedyCloseTag(name) {
 			for (let j=0; j<stack.length; j++)
 				if (stack[j].bbcode == name) {
-					while (stack.top().bbcode != name)//scary
+					while (stack_top().bbcode != name)//scary
 						endBlock()
 					endBlock()
 					return true
