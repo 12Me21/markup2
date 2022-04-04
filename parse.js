@@ -100,8 +100,8 @@ Markup.INJECT = Markup=>{
 		}},
 	],[// 💎 HEADING 💎
 		/^#{1,4}/,
-		{argtype:ARGS_HEADING, do(tag, rargs, body) {
-			let level = /#*/.exec(tag)[0].length // hhhhh
+		{argtype:ARGS_HEADING, do(tag, rargs, body, base) {
+			let level = base.length
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
 			return OPEN('heading', tag, args, body)
@@ -167,7 +167,7 @@ Markup.INJECT = Markup=>{
 	],[// 💎 CODE BLOCK 💎
 		/^```[^]*?(?:```|$)/,
 		{do(tag) {
-			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *\n)?([^]*?)(?:```)?$/g.exec(tag)// hack...
+			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```)?$/g.exec(tag)// hack...
 			// idea: strip leading indent from code?
 			return TAG('code', tag, {text, lang})
 		}},
@@ -179,8 +179,8 @@ Markup.INJECT = Markup=>{
 	],[// 💎💎 URL
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
 		// 💎 EMBED 💎
-		{argtype:ARGS_BODYLESS, do(tag, rargs, body) {
-			let url = /^!([^[{]*)/.exec(tag)[1]
+		{argtype:ARGS_BODYLESS, do(tag, rargs, body, base) {
+			let url = base.substr(1) // ehh better
 			let type = embed_type(rargs, url)
 			let args = {
 				url: url,
@@ -197,8 +197,8 @@ Markup.INJECT = Markup=>{
 			return TAG(type, tag, args)
 		}},
 		// 💎 LINK 💎
-		{argtype:ARGS_NORMAL, do(tag, rargs, body) {
-			let url = /^([^[{]*)/.exec(tag)[1] //todo: this is a hack
+		{argtype:ARGS_NORMAL, do(tag, rargs, body, base) {
+			let url = base
 			let args = {url}
 			if (body)
 				return OPEN('link', tag, args, true)
@@ -276,15 +276,17 @@ Markup.INJECT = Markup=>{
 		if (!arglist) // note: tests for undefined (\tag) AND "" (\tag[])
 			return null_args
 		
-		let map = {}, list = []
-		for (let arg of arglist.split(";")) {
+		let list = []
+		list.named = {}
+		for (let arg of arglist.split(";")) { ///^(?:([^;=]*)=)?([^;]*)(?:$|;)/gy
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-			if (!name) // value OR =value (this is to allow values to contain =. ex: [=1=2] is "1=2"
+			// value OR =value
+			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
+			if (!name)
 				list.push(value)
 			else // name=value
-				map[name] = value
+				list.named[name] = value
 		}
-		list.named = map
 		return list
 	}
 	function embed_type(rargs, url) {
@@ -423,7 +425,7 @@ Markup.INJECT = Markup=>{
 					continue
 				}
 				body = argmatch[2]
-				thing.do(match[0]+argmatch[0], parse_args(argmatch[1]), body)
+				thing.do(match[0]+argmatch[0], parse_args(argmatch[1]), body, match[0])
 				if (argmatch[3]) {
 					let text = argmatch[3].substr(1)
 					TEXT(text.replace(/\\([^])/g,"$1")) // todo: i wonder if we could pass indexes to TEXT, and have it automatically extract from the input string, only when necessary. i.e. 2 consecutive text tokens are pulled with a single .substring()
