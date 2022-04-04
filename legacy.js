@@ -41,39 +41,10 @@ Markup.INJECT = Markup=>{
 	}
 	
 	let BLOCKS = {
-		text: {},
-		lineBreak: {},
-		line: {block: true}, // now we can remove the hack
-		invalid: {},
-		code: {block:true},
-		icode: {},
-		audio: {block:true},
-		video: {block:true},
-		youtube: {block:true},
-		bg: {},
-		root: {},
-		bold: {},
-		italic: {},
-		underline: {},
-		strikethrough: {},
-		heading: {block:true},
-		quote: {block:true},
-		list: {block:true},
-		item: {block:true},
-		simpleLink: {},
-		link: {},
-		table: {block:true},
-		row: {block:true},//not sure, only used internally so block may not matter
-		cell: {},
-		image: {block:true},
-		error: {block:true},
-		align: {block:true},
-		superscript: {},
-		subscript: {},
-		anchor: {},
-		spoiler: {block:true},
-		ruby: {},
-		bg: {},
+		line:1, code:1, audio:1, video:1, youtube:1,
+		heading:1, quote:1, list:1, item:1,
+		table:1, table_row:1, image:1, error:1,
+		align:1, spoiler:1
 	}
 	
 	/***********
@@ -237,10 +208,10 @@ Markup.INJECT = Markup=>{
 			endBlock()
 	}
 	
-	function add_block(block, snlb) {
+	function add_block(type, args) {
 		flushText()
-		curr.content.push(block)
-		skipNextLineBreak = snlb
+		curr.content.push({type, args})
+		skipNextLineBreak = BLOCKS[type]
 	}
 	
 	// add simple block with no children
@@ -254,7 +225,7 @@ Markup.INJECT = Markup=>{
 			skipNextLineBreak = false
 	}
 	
-	function start_block(type, args, data, block) {
+	function start_block(type, args, data) {
 		if (type) {
 			let node = {type, args, content:[]}
 			data.type = type
@@ -262,7 +233,7 @@ Markup.INJECT = Markup=>{
 			if (openBlocks > 10)
 				throw "too deep nestted blocks"
 			data.node = node
-			if (block) {
+			if (BLOCKS[type]) {
 				data.isBlock = true
 				skipNextLineBreak = true
 			}
@@ -348,7 +319,7 @@ Markup.INJECT = Markup=>{
 						headingLevel = 3
 					
 					if (eatChar(" "))
-						start_block('heading', {level:headingLevel}, {}, true)
+						start_block('heading', {level:headingLevel}, {})
 					else
 						addText('*'.repeat(headingLevel))
 				} else {
@@ -363,7 +334,7 @@ Markup.INJECT = Markup=>{
 				//============
 				// >... quote
 			} else if (startOfLine && eatChar(">")) {
-				start_block('quote', {cite: null}, {}, true)
+				start_block('quote', {cite: null}, {})
 				//==============
 				// -... list/hr
 			} else if (startOfLine && eatChar("-")) {
@@ -377,7 +348,7 @@ Markup.INJECT = Markup=>{
 					//-------------
 					// ---<EOL> hr
 					if (c == "\n" || !c) { //this is kind of bad
-						add_block({type:'line'}, true)
+						add_block('line', null)
 						//----------
 						// ---... normal text
 					} else {
@@ -386,8 +357,8 @@ Markup.INJECT = Markup=>{
 					//------------
 					// - ... list
 				} else if (eatChar(" ")) {
-					start_block('list', {}, {level: leadingSpaces}, true)
-					start_block('item', null, {level:leadingSpaces}, true)
+					start_block('list', {}, {level: leadingSpaces})
+					start_block('item', null, {level:leadingSpaces})
 					//---------------
 					// - normal char
 				} else
@@ -428,11 +399,11 @@ Markup.INJECT = Markup=>{
 						// calculate number of cells in row which will be
 						// already filled due to previous row-spanning cells
 						let cells = 0
-						table.rowspans = table.rowspans.map(function(span){
+						table.rowspans = table.rowspans.map((span)=>{
 							cells++
 							return span-1
-						}).filter(function(span){return span > 0})
-						row = start_block('table_row', null, {table:table, cells:cells}, true)
+						}).filter(span => span>0)
+						row = start_block('table_row', null, {table:table, cells:cells})
 						row.header = eatChar("*")
 						// start cell
 						startCell(row)
@@ -461,8 +432,8 @@ Markup.INJECT = Markup=>{
 					// start of new table (must be at beginning of line)
 				} else if (startOfLine) {
 					scan()
-					let table = start_block('table', null, {columns: null, rowspans: []}, true)
-					let row = start_block('table_row', null, {table: table, cells: 0}, true)
+					let table = start_block('table', null, {columns: null, rowspans: []})
+					let row = start_block('table_row', null, {table: table, cells: 0})
 					row.header = eatChar("*")
 					startCell(row)
 				} else {
@@ -492,13 +463,9 @@ Markup.INJECT = Markup=>{
 						}
 						
 						i = code.indexOf("```", i)
-						add_block({type:'code', args:{lang:language, text:code.substring(start, i!=-1 ? i : code.length)}}, true)
+						add_block('code', {lang:language||'sb', text:code.substring(start, i!=-1 ? i : code.length)})
 						skipNextLineBreak = eaten
-						if (i != -1) {
-							restore(i + 3)
-						} else {
-							restore(code.length)
-						}
+						restore(i==-1 ? code.length : i+3)
 						//------------
 						// `` invalid
 					} else {
@@ -511,17 +478,16 @@ Markup.INJECT = Markup=>{
 					let codeText = ""
 					while (c) {
 						if (c=="`") {
-							if (code[i+1] == "`") {
-								if (i == start+1 && codeText[0] == " ")
-									codeText = codeText.substr(1)
-								scan()
-							} else
+							if (code[i+1] != "`")
 								break
+							if (i == start+1 && codeText[0] == " ")
+								codeText = codeText.substr(1)
+							scan()
 						}
 						codeText += c
 						scan()
 					}
-					add_block({type:'icode', args:{text:codeText}})
+					add_block('icode', {text:codeText})
 					scan()
 				}
 				//
@@ -577,12 +543,12 @@ Markup.INJECT = Markup=>{
 								scan()
 							}
 						}
-						add_block(type, {url, alt:altText}, true)
+						add_block(type, {url, alt:altText})
 					} else {
 						if (after)
 							start_block('link', {url}, {big: true, inBrackets: true})
 						else
-							add_block({type:'simple_link', args:{text:url,url}})
+							add_block('simple_link', {text:url, url})
 					}
 					return true
 				} else {
@@ -606,13 +572,13 @@ Markup.INJECT = Markup=>{
 				let arg = props[""]
 				if (name=='spoiler' && !stackContains("spoiler")) {
 					let label = arg==true ? "spoiler" : arg
-					start_block('spoiler', {label}, {}, true)
+					start_block('spoiler', {label}, {})
 				} else if (name=='ruby') {
 					start_block('ruby', {text: String(arg)}, {})
 				} else if (name=='align') {
 					if (!(arg=='center'||arg=='right'||arg=='left'))
 						arg = 'left'
-					start_block('align', {align: arg}, {}, true)
+					start_block('align', {align: arg}, {})
 				} else if (name=='anchor') {
 					start_block('anchor', {name: String(arg)}, {})
 				} else if (name=='bg') {
@@ -623,7 +589,7 @@ Markup.INJECT = Markup=>{
 				} else if (name=='sup') {
 					start_block('superscript', null, {})
 				} else {
-					add_block({type:'invalid', args:{text:code.substring(start, i), reason:"invalid tag"}})
+					add_block('invalid', {text:code.substring(start, i), reason:"invalid tag"})
 				}
 				/*if (displayBlock({type:name}))
 				  skipNextLineBreak = true //what does this even do?*/
@@ -700,12 +666,12 @@ Markup.INJECT = Markup=>{
 			
 			let propst = code.substring(start, end)
 			let props = {}
-			propst.split(",").forEach(function(x){
+			for (let x of propst.split(",")) {
 				let pair = split1(x, "=")
 				if (pair[1] == null)
 					pair[1] = true
 				props[pair[0]] = pair[1]
-			})
+			}
 			return props
 		}
 		
@@ -738,12 +704,12 @@ Markup.INJECT = Markup=>{
 					}
 					scan()
 				}
-				add_block(type, {url, alt:altText}, true)
+				add_block(type, {url, alt:altText})
 			} else {
 				if (after)
 					start_block('link', {url}, {inBrackets: true})
 				else
-					add_block({type:'simple_link', args:{text:url, url:url}})
+					add_block('simple_link', {text:url, url:url})
 			}
 			return true
 		}
@@ -787,34 +753,32 @@ Markup.INJECT = Markup=>{
 						// OPTION 2:
 						// next item has same indent level; add item to list
 						if (indent == top.level) {
-							start_block('item', null, {level: indent}, true)
+							start_block('item', null, {level: indent})
 							// OPTION 3:
 							// next item has larger indent; start nested list
 						} else if (indent > top.level) {
-							start_block('list', {}, {level: indent}, true)
+							start_block('list', {}, {level: indent})
 							// then made the first item of the new list
-							start_block('item', null, {level: indent}, true)
+							start_block('item', null, {level: indent})
 							// OPTION 4:
 							// next item has less indent; try to exist 1 or more layers of nested lists
 							// if this fails, fall back to just creating a new item in the current list
 						} else {
 							// TODO: currently this will just fail completely
-							while(1) {
+							while (1) {
 								top = stack.top()
 								if (top && top.type == 'list') {
-									if (top.level <= indent) {
+									if (top.level <= indent)
 										break
-									} else {
-										endBlock()
-									}
+									endBlock()
 								} else {
 									// no suitable list was found :(
 									// so just create a new one
-									start_block('list', {}, {level: indent}, true)
+									start_block('list', {}, {level: indent})
 									break
 								}
 							}
-							start_block('item', null, {level: indent}, true)
+							start_block('item', null, {level: indent})
 						}
 						break //really?
 					}
@@ -916,12 +880,11 @@ Markup.INJECT = Markup=>{
 			
 			if (name == 'code') {
 				let inline = args[""] == 'inline'
-				args[""] = args.lang
 				if (inline)
-					return ['icode', args, contents]
+					return {type:'icode', args:{text:contents}}
 				if (contents[0]=="\n")
 					contents = contents.substr(1)
-				return ['code', args, contents]
+				return {type:'code', args:{text:contents, lang:args.lang||'sb'}}
 			}
 			
 			//todo: maybe these should have args mapped over uh
@@ -985,7 +948,7 @@ Markup.INJECT = Markup=>{
 								endBlock(point)
 							let top = stack.top()
 							if (top.type == "list")
-								start_block('item', null, {bbcode:'item'}, true)
+								start_block('item', null, {bbcode:'item'})
 							else
 								cancel()
 						} else
@@ -1034,7 +997,7 @@ Markup.INJECT = Markup=>{
 								let tx = blockTranslate(name, args)
 								startBlock(tx[0], {bbcode:name}, tx[1])
 							} else
-								add_block({type:'invalid', args:{text: code.substring(point, i), message:"invalid tag"}})
+								add_block('invalid', {text: code.substring(point, i), message:"invalid tag"})
 						} else
 							cancel()
 					}
@@ -1069,7 +1032,7 @@ Markup.INJECT = Markup=>{
 		function readPlainLink() {
 			if (isUrlStart()) {
 				let url = readUrl()
-				add_block({type:'simple_link', args:{text:url, url:url}})
+				add_block('simple_link', {text:url, url:url})
 				return true
 			}
 		}
