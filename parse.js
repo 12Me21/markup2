@@ -165,9 +165,11 @@ Markup.INJECT = Markup=>{
 			return OPEN('quote', tag, {cite: rargs[0]}, body)
 		}},
 	],[// 💎 CODE BLOCK 💎
-		/^```\n[^]*?(?:```|$)/,
+		/^```[^]*?(?:```|$)/,
 		{do(tag) {
-			return TAG('code', tag, {text: tag.replace(/^```.*\n|```$/g,"")}) // hack...
+			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *\n)?([^]*?)(?:```)?$/g.exec(tag)// hack...
+			// idea: strip leading indent from code?
+			return TAG('code', tag, {text, lang})
 		}},
 	],[// 💎 INLINE CODE 💎
 		/`[^`\n]+`?/,
