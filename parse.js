@@ -165,9 +165,9 @@ Markup.INJECT = Markup=>{
 			return OPEN('quote', tag, {cite: rargs[0]}, body)
 		}},
 	],[// 💎 CODE BLOCK 💎
-		/^```[^]*?\n(?:```|$)/,
+		/^```\n[^]*?(?:```|$)/,
 		{do(tag) {
-			return TAG('code', tag, {text: tag.replace(/^```\n?|\n?```$/g,"")}) // hack...
+			return TAG('code', tag, {text: tag.replace(/^```.*\n|```$/g,"")}) // hack...
 		}},
 	],[// 💎 INLINE CODE 💎
 		/`[^`\n]+`?/,
