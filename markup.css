@@ -1,7 +1,7 @@
 /*******************
  ** ⚠ REQUIRED! ⚠ **
  *******************/
-.MARKUP {
+.🍂 {
 	word-break: break-word; /* prevent text overflow */
 	white-space: pre-wrap; /* preserve whitespace */
 	
@@ -9,21 +9,21 @@
 	font-family: sans-serif;
 }
 /* override the defaults for these */
-.MARKUP * {
+.🍂 * {
 	word-break: inherit;
 	white-space: inherit;
 	font-family: inherit;
 }
 /* change these from inline to block: */
-.MARKUP img, .MARKUP audio, .MARKUP video {
+.🍂 img, .🍂 audio, .🍂 video {
 	display: block;
 }
 /* ruby text doesn't work if set to white-space: pre */
-.MARKUP rt {
+.🍂 rt {
 	white-space: pre-line;
 }
 /* table borders */
-.MARKUP table, .MARKUP td, .MARKUP th {
+.🍂 table, .🍂 td, .🍂 th {
 	border: 1px solid currentColor;
 	border-collapse: collapse;
 }
@@ -34,21 +34,21 @@
 /* These are the default values, just in case */
 /* You likely don't need most of these */
 
-.MARKUP, .MARKUP * { vertical-align: baseline; }
+.🍂, .🍂 * { vertical-align: baseline; }
 
-.MARKUP div, .MARKUP h2, .MARKUP h3, .MARKUP h4, .MARKUP h5, .MARKUP hr, .MARKUP pre, .MARKUP ol, .MARKUP ul, .MARKUP blockquote { display: block; }
+.🍂 div, .🍂 h2, .🍂 h3, .🍂 h4, .🍂 h5, .🍂 hr, .🍂 pre, .🍂 ol, .🍂 ul, .🍂 blockquote { display: block; }
 
-.MARKUP span, .MARKUP a, .MARKUP br, .MARKUP b, .MARKUP i, .MARKUP u, .MARKUP s, .MARKUP sub, .MARKUP sup, .MARKUP code { display: inline; }
-.MARKUP li { display: list-item; }
+.🍂 span, .🍂 a, .🍂 br, .🍂 b, .🍂 i, .🍂 u, .🍂 s, .🍂 sub, .🍂 sup, .🍂 code { display: inline; }
+.🍂 li { display: list-item; }
 
-.MARKUP table { display: table; }
-.MARKUP tbody { display: table-row-group; }
-.MARKUP tr { display: table-row; }
-.MARKUP td, .MARKUP th { display: table-cell; }
+.🍂 table { display: table; }
+.🍂 tbody { display: table-row-group; }
+.🍂 tr { display: table-row; }
+.🍂 td, .🍂 th { display: table-cell; }
 
-.MARKUP ruby { display: ruby; }
-.MARKUP rt { display: ruby-text; }
-.MARKUP rp { display: none; }
+.🍂 ruby { display: ruby; }
+.🍂 rt { display: ruby-text; }
+.🍂 rp { display: none; }
 
 /***************
  ** Suggested **
@@ -57,20 +57,20 @@
 /* prevent things from overflowing the markup element */
 /* (this isn't supported by all browsers yet, but it can't hurt) */
 /* (optional; overflow probably won't happen anyway) */
-.MARKUP {
+.🍂 {
 	contain: layout paint style;
 }
 
 /* Styles */
-.MARKUP sub { vertical-align: sub; }
-.MARKUP sup { vertical-align: super; }
-.MARKUP b { font-weight: bold; }
-.MARKUP i { font-style: italic; }
-.MARKUP u { text-decoration: underline; }
-.MARKUP s { text-decoration-line: line-through; }
+.🍂 sub { vertical-align: sub; }
+.🍂 sup { vertical-align: super; }
+.🍂 b { font-weight: bold; }
+.🍂 i { font-style: italic; }
+.🍂 u { text-decoration: underline; }
+.🍂 s { text-decoration-line: line-through; }
 
 /*** images ***/
-.MARKUP img {
+.🍂 img {
 	/* Image size limit */
 	max-width: 100%;
 	max-height: 10vh;
@@ -79,23 +79,23 @@
 }
 
 /*** Tables ***/
-.MARKUP td, .MARKUP th {
+.🍂 td, .🍂 th {
 	padding-block: 0.2em;
 	padding-inline: 0.3em;
 }
 
 /*** Background colors (for table cells etc) ***/
-.MARKUP [data-bgcolor="red"]    { background: var(--bgred); }
-.MARKUP [data-bgcolor="green"]  { background: var(--bggreen); }
-.MARKUP [data-bgcolor="yellow"] { background: var(--bgyellow); }
-.MARKUP [data-bgcolor="orange"] { background: var(--bgorange); }
-.MARKUP [data-bgcolor="blue"]   { background: var(--bgblue); }
-.MARKUP [data-bgcolor="purple"] { background: var(--bgpurple); }
-.MARKUP [data-bgcolor="gray"]   { background: var(--bggray); }
-.MARKUP table { background: var(--background); } /* reset */
+.🍂 [data-bgcolor="red"]    { background: var(--bgred); }
+.🍂 [data-bgcolor="green"]  { background: var(--bggreen); }
+.🍂 [data-bgcolor="yellow"] { background: var(--bgyellow); }
+.🍂 [data-bgcolor="orange"] { background: var(--bgorange); }
+.🍂 [data-bgcolor="blue"]   { background: var(--bgblue); }
+.🍂 [data-bgcolor="purple"] { background: var(--bgpurple); }
+.🍂 [data-bgcolor="gray"]   { background: var(--bggray); }
+.🍂 table { background: var(--background); } /* reset */
 
 /*** code and inline code ***/
-.MARKUP pre, .MARKUP code {
+.🍂 pre, .🍂 code {
 	-moz-tab-size: 4;
 	tab-size: 4;
 	font: monospace;
@@ -104,7 +104,7 @@
 /*******************
  ** Theme Example **
  *******************/
-.MARKUP {
+.🍂 {
 	--color: black;
 	--background: white;
 	
@@ -117,7 +117,7 @@
 	--bggray: #DDD;
 }
 
-.MARKUP {
+.🍂 {
 	color: var(--color);
 	background: var(--background);
 }

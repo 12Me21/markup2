@@ -85,7 +85,7 @@ Markup.INJECT = Markup=>{
 		skipNextLineBreak = false
 		textBuffer = ""
 		output = curr = {type:'ROOT', content:[]}
-		stack = [{node:curr, type:'root'}]
+		stack = [{node:curr, type:'ROOT'}]
 		restore(0)
 	}
 	// move to pos
@@ -719,7 +719,7 @@ Markup.INJECT = Markup=>{
 		function closeAll(force) {
 			while (stack.length) {
 				let top = stack_top()
-				if (top.type == 'root')
+				if (top.type == 'ROOT')
 					break
 				if (!force && top.type == null) {
 					endBlock()
