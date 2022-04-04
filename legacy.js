@@ -42,7 +42,7 @@ Markup.INJECT = Markup=>{
 	
 	let BLOCKS = {
 		line:1, code:1, audio:1, video:1, youtube:1,
-		heading:1, quote:1, list:1, item:1,
+		heading:1, quote:1, list:1, list_item:1,
 		table:1, table_row:1, image:1, error:1,
 		align:1, spoiler:1
 	}
@@ -50,18 +50,31 @@ Markup.INJECT = Markup=>{
 	/***********
 	 ** STATE **
     ***********/
-	let c,i,code
+	let c, i, code
 	let skipNextLineBreak
 	let textBuffer
 	let curr, output
 	let openBlocks
 	let stack
+	
 	let startOfLine
 	let leadingSpaces
-	let scan
+	function lineStart() {
+		startOfLine = true
+		leadingSpaces = 0
+	}
+	function scan() {	
+		if (c == "\n" || !c)
+			lineStart()
+		else if (c != " ")
+			startOfLine = false
+		else if (startOfLine)
+			leadingSpaces++
+		i++
+		c = code.charAt(i)
+	}
 	
-	function init(scanFunc, text) {
-		scan = scanFunc
+	function init(text) {
 		code = text
 		openBlocks = 0
 		leadingSpaces = 0
@@ -138,9 +151,8 @@ Markup.INJECT = Markup=>{
     ***********/
 	function stackContains(type) {
 		for (let i=0; i<stack.length; i++) {
-			if (stack[i].type == type) {
+			if (stack[i].type == type)
 				return true
-			}
 		}
 		return false
 	}
@@ -273,17 +285,7 @@ Markup.INJECT = Markup=>{
 	}
 	
 	Markup.langs['12y'] = function(codeInput) {
-		
-		init(function() {
-			if (c == "\n" || !c)
-				lineStart()
-			else if (c != " ")
-				startOfLine = false
-			else if (startOfLine)
-				leadingSpaces++
-			i++
-			c = code.charAt(i)
-		}, codeInput)
+		init(codeInput)
 		
 		while (c) {
 			if (eatChar("\n")) {
@@ -358,7 +360,7 @@ Markup.INJECT = Markup=>{
 					// - ... list
 				} else if (eatChar(" ")) {
 					start_block('list', {}, {level: leadingSpaces})
-					start_block('item', null, {level:leadingSpaces})
+					start_block('list_item', null, {level:leadingSpaces})
 					//---------------
 					// - normal char
 				} else
@@ -463,7 +465,8 @@ Markup.INJECT = Markup=>{
 						}
 						
 						i = code.indexOf("```", i)
-						add_block('code', {lang:language||'sb', text:code.substring(start, i!=-1 ? i : code.length)})
+						let text = code.substring(start, i!=-1 ? i : code.length)
+						add_block('code', {lang:language||'sb', text})
 						skipNextLineBreak = eaten
 						restore(i==-1 ? code.length : i+3)
 						//------------
@@ -508,9 +511,8 @@ Markup.INJECT = Markup=>{
 		
 		function endAll() {
 			flushText()
-			while (stack.length) {
+			while (stack.length)
 				endBlock()
-			}
 		}
 		
 		// ###################################
@@ -595,7 +597,6 @@ Markup.INJECT = Markup=>{
 				  skipNextLineBreak = true //what does this even do?*/
 			}
 			lineStart()
-			//	eatChar("\n")
 			return true
 		}
 		
@@ -645,7 +646,6 @@ Markup.INJECT = Markup=>{
 		
 		// read properties key=value,key=value... ended by a space or \n or } or {
 		// =value is optional and defaults to `true`
-		// todo: add support for escaping and quoting to the parser here. newlines should not be allowed even in quoted attribs unless escaped
 		function readProps() {
 			let start = i
 			let end = code.indexOf(" ", i)
@@ -735,8 +735,8 @@ Markup.INJECT = Markup=>{
 				let top = stack.top()
 				if (top.type == 'heading' || top.type == 'quote') {
 					endBlock()
-				} else if (top.type == 'item') {
-					if (top.type == 'item')
+				} else if (top.type == 'list_item') {
+					if (top.type == 'list_item')
 						endBlock()
 					let indent = 0
 					while (eatChar(" "))
@@ -753,13 +753,13 @@ Markup.INJECT = Markup=>{
 						// OPTION 2:
 						// next item has same indent level; add item to list
 						if (indent == top.level) {
-							start_block('item', null, {level: indent})
+							start_block('list_item', null, {level: indent})
 							// OPTION 3:
 							// next item has larger indent; start nested list
 						} else if (indent > top.level) {
 							start_block('list', {}, {level: indent})
 							// then made the first item of the new list
-							start_block('item', null, {level: indent})
+							start_block('list_item', null, {level: indent})
 							// OPTION 4:
 							// next item has less indent; try to exist 1 or more layers of nested lists
 							// if this fails, fall back to just creating a new item in the current list
@@ -778,7 +778,7 @@ Markup.INJECT = Markup=>{
 									break
 								}
 							}
-							start_block('item', null, {level: indent})
+							start_block('list_item', null, {level: indent})
 						}
 						break //really?
 					}
@@ -790,7 +790,6 @@ Markup.INJECT = Markup=>{
 		}
 		
 		// audio, video, image, youtube
-		//todo: improve this lol
 		function urlType(url) {
 			if (/(\.mp3(?!\w)|\.ogg(?!\w)|\.wav(?!\w)|#audio$)/i.test(url))
 				return "audio"
@@ -812,7 +811,7 @@ Markup.INJECT = Markup=>{
 			else
 				addText(symbol)
 		}
-		// todo: maybe have support for non-ASCII punctuation/whitespace?
+		
 		function canStartMarkup(type) {
 			return (
 				(!code[i-2] || char_in(code[i-2], " \t\n({'\"")) && //prev char is one of these (or start of text)
@@ -831,84 +830,17 @@ Markup.INJECT = Markup=>{
 			return chr && list.indexOf(chr) != -1
 		}
 		
-		function lineStart() {
-			startOfLine = true
-			leadingSpaces = 0
-		}
-		
+	}
+	
+	const noNesting = {
+		spoiler: true
+	}
+	const blockNames = {
+		b:1,i:1,u:1,s:1,sup:1,sub:1,table:1,tr:1,td:1,align:1,list:1,spoiler:1,quote:1,anchor:1,item:1,h1:1,h2:1,h3:1,th:1,code:2,url:2,youtube:2,audio:2,video:2,img:2,ruby:1
 	}
 	
 	Markup.langs.bbcode = function(codeArg) {
-		const noNesting = {
-			spoiler: true
-		}
-		// this translates bbcode tag names into
-		// the standard block names, + arg, + contents for special blocks
-		// to be passed to startblock or functions to addblock
-		const blockNames = {b:1,i:1,u:1,s:1,sup:1,sub:1,table:1,tr:1,td:1,align:1,list:1,spoiler:1,quote:1,anchor:1,item:1,h1:1,h2:1,h3:1,th:1,code:2,url:2,youtube:2,audio:2,video:2,img:2,ruby:1}
-		function blockTranslate(name, args, contents) {
-			// direct translations:
-			let name2 = {
-				b: 'bold',
-				i: 'italic',
-				u: 'underline',
-				s: 'strikethrough',
-				sup: 'superscript',
-				sub: 'subscript',
-				table: 'table',
-				tr: 'row',
-				td: 'cell',
-				align: 'align',
-				list: 'list',
-				spoiler: 'spoiler',
-				ruby: 'ruby',
-				quote: 'quote',
-				anchor: 'anchor',
-				item: 'item',
-			}[name]
-			if (name2)
-				return [name2, args, contents]
-			// other simple translations
-			if (name == 'h1')
-				return ['heading', 1]
-			if (name == 'h2')
-				return ['heading', 2]
-			if (name == 'h3')
-				return ['heading', 3]
-			if (name == 'th')
-				return ['cell', Object.assign({h:true}, args)]
-			
-			if (name == 'code') {
-				let inline = args[""] == 'inline'
-				if (inline)
-					return {type:'icode', args:{text:contents}}
-				if (contents[0]=="\n")
-					contents = contents.substr(1)
-				return {type:'code', args:{text:contents, lang:args.lang||'sb'}}
-			}
-			
-			//todo: maybe these should have args mapped over uh
-			if (name == 'url') {
-				if (contents != undefined)
-					return ['simpleLink', {"":contents}]
-				else
-					return ['customLink', args]
-			}
-			
-			if (name == 'youtube')
-				return ['youtube', {"":contents}, args.alt]
-			if (name == 'audio')
-				return ['audio', {"":contents}, args.alt]
-			if (name == 'video')
-				return ['video', {"":contents}, args.alt]
-			if (name == 'img')
-				return ['image', {"":contents}, args.alt]
-		}
-		
-		init(function() {
-			i++
-			c = code.charAt(i)
-		}, codeArg)
+		init(codeArg)
 		
 		let point = 0
 		
@@ -926,7 +858,7 @@ Markup.INJECT = Markup=>{
 					// valid end tag
 					} else {
 						// end last item in lists (mostly unnecessary now with greedy closing)
-						if (name == "list" && stack.top().type == "item")
+						if (name == "list" && stack.top().type == "list_item")
 							endBlock(point)
 						if (greedyCloseTag(name)) {
 							// eat whitespace between table cells
@@ -944,11 +876,11 @@ Markup.INJECT = Markup=>{
 					if (!name || !blockNames[name]) {
 						// special case [*] list item
 						if (eatChar("*") && eatChar("]")) {
-							if (stack.top().type == "item")
+							if (stack.top().type == "list_item")
 								endBlock(point)
 							let top = stack.top()
 							if (top.type == "list")
-								start_block('item', null, {bbcode:'item'})
+								start_block('list_item', null, {bbcode:'item'})
 							else
 								cancel()
 						} else
@@ -1012,6 +944,68 @@ Markup.INJECT = Markup=>{
 		}
 		endAll()
 		return output
+		
+		// this translates bbcode tag names into
+		// the standard block names, + arg, + contents for special blocks
+		// to be passed to startblock or functions to addblock
+		function blockTranslate(name, args, contents) {
+			// direct translations:
+			let name2 = {
+				b: 'bold',
+				i: 'italic',
+				u: 'underline',
+				s: 'strikethrough',
+				sup: 'superscript',
+				sub: 'subscript',
+				table: 'table',
+				tr: 'row',
+				td: 'cell',
+				align: 'align',
+				list: 'list',
+				spoiler: 'spoiler',
+				ruby: 'ruby',
+				quote: 'quote',
+				anchor: 'anchor',
+				item: 'list_item',
+			}[name]
+			if (name2)
+				return [name2, args, contents]
+			// other simple translations
+			if (name == 'h1')
+				return ['heading', 1]
+			if (name == 'h2')
+				return ['heading', 2]
+			if (name == 'h3')
+				return ['heading', 3]
+			if (name == 'th')
+				return ['cell', Object.assign({h:true}, args)]
+			
+			if (name == 'code') {
+				let inline = args[""] == 'inline'
+				if (inline)
+					return {type:'icode', args:{text:contents}}
+				if (contents[0]=="\n")
+					contents = contents.substr(1)
+				return {type:'code', args:{text:contents, lang:args.lang||'sb'}}
+			}
+			
+			//todo: maybe these should have args mapped over uh
+			if (name == 'url') {
+				if (contents != undefined)
+					return ['simpleLink', {"":contents}]
+				else
+					return ['customLink', args]
+			}
+			
+			if (name == 'youtube')
+				return ['youtube', {"":contents}, args.alt]
+			if (name == 'audio')
+				return ['audio', {"":contents}, args.alt]
+			if (name == 'video')
+				return ['video', {"":contents}, args.alt]
+			if (name == 'img')
+				return ['image', {"":contents}, args.alt]
+		}
 		
 		function cancel() {
 			restore(point)
@@ -1090,7 +1084,7 @@ Markup.INJECT = Markup=>{
 		}
 		
 		function isTagChar(c) {
-			return c>="a" && c<="z" || c>="A"&&c<="Z" || c>="0"&&c<="9"
+			return c>="a"&&c<="z" || c>="A"&&c<="Z" || c>="0"&&c<="9"
 		}
 	}
 	
