@@ -23,12 +23,13 @@ Markup.INJECT = Markup=>{
 	
 	Markup.IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
-	const envs_body_type = {
-		// either
-		// - must be \env
-		// - must be \env{ or \env word
-		// - must be \env{ maybe
-		// etc.
+	// elements which can be cancelled rather than being closed
+	const CAN_CANCEL = {
+		style:1, table_cell:1
+	}
+	// elements which can survive an eol (without a body)
+	const SURVIVE_EOL = {
+		ROOT:1, table_cell:1
 	}
 	
 	// argtype
@@ -94,9 +95,8 @@ Markup.INJECT = Markup=>{
 		// 💎 NEWLINE 💎
 		/\n/,
 		{newline:true, do(tag) {
-			while (!current.body && current.type!='table_cell' && current.type!='ROOT') {
-				CANCEL()
-			}
+			while (!current.body && !SURVIVE_EOL[current.type])
+				CLOSE(true)
 			return TEXT(true)
 		}},
 	],[// 💎 HEADING 💎
@@ -131,7 +131,7 @@ Markup.INJECT = Markup=>{
 					}[current.tag]
 					return CLOSE()
 				}
-				CANCEL() // different style (kill)
+				CLOSE(true) // different style (kill)
 			}
 			return TEXT(tag)
 		}},
@@ -148,8 +148,9 @@ Markup.INJECT = Markup=>{
 		{do(tag) {
 			if (brackets<=0)
 				return TEXT(tag)
+			// only runs if at least 1 element has a body, so this won't fail:
 			while (!current.body)
-				CANCEL()
+				CLOSE(true)
 			return CLOSE()
 		}},
 	],[// 💎 NULL ENV 💎 (maybe can be in the envs table now? todo)
@@ -360,32 +361,26 @@ Markup.INJECT = Markup=>{
 		return o
 	}
 	// complete current block
-	function CLOSE() {
+	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
-		if (o.type=='null_env') // special case: merge
+		if (cancel && !o.body && CAN_CANCEL[o.type]) {
+			// if we just cancelled a table cell,
+			if (o.type=='table_cell') {
+				// close table row (or cancel if empty)
+				current.content.length ? CLOSE() : pop() // row (don't need TEXT() - table rows never have .tag set)
+				// close table (or cancel if empty)
+				current.content.length ? CLOSE() : TEXT(pop().tag) // table
+			}
+			TEXT(o.tag) // todo: merge with surrounding text nodes?
+			// push the contents of the block
 			current.content.push(...o.content)
-		else {
+		} else if (o.type=='null_env') {
+			current.content.push(...o.content)
+		} else {
 			delete o.parent // remove cyclical reference before adding to tree
 			current.content.push(o)
 		}
-	}
-	// cancel current block (flatten)
-	function CANCEL() {
-		if (current.body || (current.type!='style' && current.type!='table_cell' && current.type!='table_row' && current.type!='table'))
-			return CLOSE()
-		let o = pop()
-		// if we just cancelled a table cell,
-		// we don't want to insert text into the table row/body,
-		// so we close the table/row first.
-		if (o.type=='table_cell') {
-			current.content.length ? CLOSE() : CANCEL() // row
-			current.content.length ? CLOSE() : CANCEL() // table
-		}
-		// push the start tag (as text)
-		TEXT(o.tag) // todo: merge with surrounding text nodes?
-		// push the contents of the block
-		current.content.push(...o.content)
 	}
 	// push text
 	function TEXT(text) {
@@ -398,7 +393,7 @@ Markup.INJECT = Markup=>{
 	}
 	function kill_weak() {
 		while (current.type=='style')
-			CANCEL()
+			CLOSE(true)
 	}
 	
 	Markup.parse = function(text) {
@@ -451,11 +446,8 @@ Markup.INJECT = Markup=>{
 		}
 		TEXT(text.substring(last)) // text after last token
 		
-		while (current.type!='ROOT') {
-			CANCEL()
-			//if (END_AT_EOL[current.type])
-		}
-		//CANCEL()
+		while (current.type!='ROOT')
+			CLOSE(true)
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
