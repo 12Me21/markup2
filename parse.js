@@ -23,12 +23,8 @@ Markup.INJECT = Markup=>{
 	
 	Markup.IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
-	// if cancelled, will be completed instead:
-	const AUTO_CLOSE = {heading:1, quote:1, ROOT:1, invalid:1}
-	// will be cancelled at the end of a block, if open:
 	const WEAK = {style:1}
-	// cancelled at end of a line (or completed if auto_close is set):
-	const END_AT_EOL = {heading:1, style:1, quote:1}
+	const SURVIVE_EOL = {table_cell:1, ROOT:1}
 	
 	const envs_body_type = {
 		// either
@@ -41,7 +37,8 @@ Markup.INJECT = Markup=>{
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
 	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
-	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?({| ?(.*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
+	//const ARGS_LINE     = /(?:\[([^\]\n]*)\])?({| )/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
+	const ARGS_LINE   = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{?
 	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
@@ -101,8 +98,9 @@ Markup.INJECT = Markup=>{
 		// 💎 NEWLINE 💎
 		/\n/,
 		{newline:true, do(tag) {
-			while (!current.body && END_AT_EOL[current.type])
+			while (!current.body && !SURVIVE_EOL[current.type]) {
 				CANCEL()
+			}
 			return TEXT(true)
 		}},
 	],[// 💎 HEADING 💎
@@ -145,6 +143,10 @@ Markup.INJECT = Markup=>{
 		/[\\]\w+/,
 		false,
 	],[// 💎 BLOCK END 💎
+		// todo: outside the end of a block/table, 
+		// eat whitespace + newline ?
+		// ex \spoiler{abc}  <spaces> ← those
+		// also inside the {} of course,
 		//[/{/, {token:''}], // maybe
 		/}/,
 		{do(tag) {
@@ -374,7 +376,7 @@ Markup.INJECT = Markup=>{
 	}
 	// cancel current block (flatten)
 	function CANCEL() {
-		if (current.body || AUTO_CLOSE[current.type])
+		if (current.body || (current.type!='style' && current.type!='table_cell' && current.type!='table_row' && current.type!='table'))
 			return CLOSE()
 		let o = pop()
 		// if we just cancelled a table cell,
@@ -453,8 +455,11 @@ Markup.INJECT = Markup=>{
 		}
 		TEXT(text.substring(last)) // text after last token
 		
-		while (current.type!='ROOT')
+		while (current.type!='ROOT') {
 			CANCEL()
+			//if (END_AT_EOL[current.type])
+		}
+		//CANCEL()
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
