@@ -18,12 +18,12 @@
 		$output.replaceChildren(Test.draw_results())
 	}
 	window.onload = function() {
-		Test.load_text($data.nextSibling.textContent)
+		Test.load_text($data.textContent)
 		run()
 	}
 </script>
 
-<meta id=$data><![CDATA[
+<script type=text/plain id=$data>
 🟩 text
 abc
 🟩 {"type":"ROOT","tag":"","content":["abc"]}
@@ -84,3 +84,237 @@ https://example.com[=]
 🟩 link with blank label 2
 https://example.com[;]
 🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"https://example.com[;]","args":{"url":"https://example.com","text":""}}]}
+
+🟩 123
+### heading
+the `sand` can /be/ eaten
+```
+code block
+```
+🟩 {"type":"ROOT","tag":"","content":[{"type":"heading","tag":"### ","content":["heading"],"args":{"level":3}},true,"the ",{"type":"icode","tag":"`sand`","args":{"text":"sand"}}," can ",{"type":"italic","tag":"/","content":["be"]}," eaten",true,{"type":"code","tag":"```code block```","args":{"text":"code block\n"}}]}
+
+🟩 123
+|table|
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|","content":["table"],"args":{}}]}]}]}
+
+🟩 123
+|[red] hack|
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|[red] ","content":["hack"],"args":{"color":"red"}}]}]}]}
+
+🟩 123
+|[red] hack|a
+bcdefa
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|[red] ","content":["hack"],"args":{"color":"red"}}]}]},"a",true,"bcdefa"]}
+
+🟩 unclosed icode
+`eabcn
+🟩 {"type":"ROOT","tag":"","content":[{"type":"icode","tag":"`eabcn","args":{"text":"eabcn"}}]}
+
+🟩 image embed
+!https://example.com
+🟩 {"type":"ROOT","tag":"","content":[{"type":"image","tag":"!https://example.com","args":{"url":"https://example.com"}}]}
+
+🟩 audio embed
+!https://example.com[audio]
+🟩 {"type":"ROOT","tag":"","content":[{"type":"audio","tag":"!https://example.com[audio]","args":{"url":"https://example.com"}}]}
+
+🟩 video embed
+!https://example.mp4
+🟩 {"type":"ROOT","tag":"","content":[{"type":"video","tag":"!https://example.mp4","args":{"url":"https://example.mp4"}}]}
+
+🟩 fake header
+##### test
+🟩 {"type":"ROOT","tag":"","content":["##### test"]}
+
+🟩 h2
+## test
+🟩 {"type":"ROOT","tag":"","content":[{"type":"heading","tag":"## ","content":["test"],"args":{"level":2}}]}
+
+🟩 table in env
+\{|table|}
+🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|","content":["table"],"args":{}}]}]}]}
+
+🟩 not table
+a |table|
+🟩 {"type":"ROOT","tag":"","content":["a"," |","table","|"]}
+
+🟩 single bar
+|
+a|
+🟩 {"type":"ROOT","tag":"","content":["|",true,"a","|"]}
+
+
+🟩 single backslash
+\
+🟩 {"type":"ROOT","tag":"","content":["\\"]}
+
+🟩 esc newline
+\
+
+🟩 {"type":"ROOT","tag":"","content":[true]}
+
+🟩 esc newline no table
+\
+|table|
+🟩 {"type":"ROOT","tag":"","content":[true,"|","table","|"]}
+
+🟩 random escapes
+\\ \@ \~
+🟩 {"type":"ROOT","tag":"","content":["\\"," ","@"," ","~"]}
+
+🟩 env with body
+\sub{
+abc
+\sub[a]{
+abc}
+}
+🟩 {"type":"ROOT","tag":"","content":[{"type":"subscript","tag":"\\env{","content":[true,"abc",true,{"type":"subscript","tag":"\\env[a]{","content":[true,"abc"],"body":true},true],"body":true}]}
+
+🟩 curly brackets
+}
+{}}{]{_}{}{}{}{
+🟩 {"type":"ROOT","tag":"","content":["}",true,"{","}","}","{]{_","}","{","}","{","}","{","}","{"]}
+
+🟩 empty
+
+🟩 {"type":"ROOT","tag":"","content":[]}
+
+🟩 newline
+
+
+🟩 {"type":"ROOT","tag":"","content":[true]}
+
+🟩 quotes
+> hecko
+>[] uuw
+>{haa}
+🟩 {"type":"ROOT","tag":"","content":[{"type":"quote","tag":"> ","content":["hecko"],"args":{}},true,{"type":"quote","tag":">[] ","content":["uuw"],"args":{}},true,{"type":"quote","tag":">{","content":["haa"],"body":true,"args":{}}]}
+
+🟩 not quotes
+>:(
+>abc
+heck > abc
+aa >{dwz}
+>[]abc
+🟩 {"type":"ROOT","tag":"","content":[">:(",true,">abc",true,"heck > abc",true,"aa >{dwz","}",true,">[]abc"]}
+
+🟩 weird url args
+http://example.com[]
+http://example.com[
+http://example.com[a]
+http://example.com[=]
+http://example.com[;]
+http://example.com[a=1]
+🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"http://example.com[]","args":{"url":"http://example.com","text":"http://example.com"}},true,{"type":"simple_link","tag":"http://example.com","args":{"url":"http://example.com","text":"http://example.com"}},"[",true,{"type":"simple_link","tag":"http://example.com[a]","args":{"url":"http://example.com","text":"a"}},true,{"type":"simple_link","tag":"http://example.com[=]","args":{"url":"http://example.com","text":""}},true,{"type":"simple_link","tag":"http://example.com[;]","args":{"url":"http://example.com","text":""}},true,{"type":"simple_link","tag":"http://example.com[a=1]","args":{"url":"http://example.com","text":"http://example.com"}}]}
+
+🟩 dividers
+---
+
+--
+-------
+ ---
+--- 
+---\
+----
+- --- 
+a
+\{---
+^ is that correct?
+🟩 {"type":"ROOT","tag":"","content":[{"type":"divider","tag":"---"},true,true,"--",true,{"type":"divider","tag":"-------"},true," ---",true,"--- ",true,"---",true,"----",true,"- --- ",true,"a",true,{"type":"divider","tag":"---"},true,"^ is that correct?"]}
+
+🟩 env missing body
+\sup
+\sup[]a
+\sup.
+🟩 {"type":"ROOT","tag":"","content":["\\sup",true,"\\sup[]a",true,"\\sup."]}
+
+🟩 env word
+abc\sup abc
+abc\sup 
+abc\sup qwe\{}rty
+🟩 {"type":"ROOT","tag":"","content":["abc",{"type":"superscript","tag":"\\sup abc","content":["abc"],"body":true},true,"abc",{"type":"superscript","tag":"\\sup ","content":[],"body":true},true,"abc",{"type":"superscript","tag":"\\sup qwe","content":["qwe"],"body":true},"rty"]}
+
+🟩 ``` code blocks
+```
+normal
+codeblock
+abc
+```
+``` c++ 11 
+lang
+aaa
+```
+```inline```
+```js
+no lb```
+```
+
+blank lines
+
+```
+not at start ```abc```
+```
+end not at start
+heck```abc
+```
+unclosed
+
+🟩 {"type":"ROOT","tag":"","content":[{"type":"code","tag":"```\nnormal\ncodeblock\nabc\n```","args":{"text":"normal\ncodeblock\nabc\n"}},true,{"type":"code","tag":"``` c++ 11 \nlang\naaa\n```","args":{"text":"lang\naaa\n","lang":"c++ 11"}},true,{"type":"code","tag":"```inline```","args":{"text":"inline"}},true,{"type":"code","tag":"```js\nno lb```","args":{"text":"no lb","lang":"js"}},true,{"type":"code","tag":"```\n\nblank lines\n\n```","args":{"text":"\nblank lines\n\n"}},true,"not at start ``",{"type":"icode","tag":"`abc`","args":{"text":"abc"}},"``",true,{"type":"code","tag":"```\nend not at start\nheck```","args":{"text":"end not at start\nheck"}},"abc",true,{"type":"code","tag":"```\nunclosed\n","args":{"text":"unclosed\n"}}]}
+
+🟩 paragraphs
+paragraph1
+
+paragraph2
+🟩 {"type":"ROOT","tag":"","content":["paragraph1",true,true,"paragraph2"]}
+
+🟩 heading spacing
+some text idk
+
+# heading
+
+some more text
+## heading
+yeah
+🟩 {"type":"ROOT","tag":"","content":["some text idk",true,true,{"type":"heading","tag":"# ","content":["heading"],"args":{"level":1}},true,true,"some more text",true,{"type":"heading","tag":"## ","content":["heading"],"args":{"level":2}},true,"yeah"]}
+
+🟩 keys
+\key abc
+\key a b
+\key c\key c \key c
+🟩 {"type":"ROOT","tag":"","content":[{"type":"key","tag":"\\key abc","content":["abc"],"body":true},true,{"type":"key","tag":"\\key a ","content":["a"],"body":true},"b",true,{"type":"key","tag":"\\key c","content":["c"],"body":true},{"type":"key","tag":"\\key c ","content":["c"],"body":true},{"type":"key","tag":"\\key c","content":["c"],"body":true}]}
+
+🟩 align
+\align[right] test
+\align heck
+\align[
+\align[]
+\align[] d
+\align[] ddd
+\align[aaa
+\align[aaa{}
+🟩 {"type":"ROOT","tag":"","content":[{"type":"align","tag":"\\align[right] test","content":["test"],"body":true,"args":{"align":"right"}},true,{"type":"align","tag":"\\align heck","content":["heck"],"body":true,"args":{"align":"center"}},true,{"type":"align","tag":"\\align[","content":["["],"body":true,"args":{"align":"center"}},true,{"type":"align","tag":"\\align[]","content":[],"args":{"align":"center"}},true,{"type":"align","tag":"\\align[] d","content":["d"],"body":true,"args":{"align":"center"}},true,{"type":"align","tag":"\\align[] ddd","content":["ddd"],"body":true,"args":{"align":"center"}},true,{"type":"align","tag":"\\align[aaa","content":["[aaa"],"body":true,"args":{"align":"center"}},true,{"type":"align","tag":"\\align[aaa{}","content":["[aaa{","}"],"body":true,"args":{"align":"center"}}]}
+
+🟩 stuff
+
+
+|[gray] abc |[blue] abc | `test` 
+!https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true
+the sand can be eatena
+	abc
+\spoiler abc defaaaa \spoiler a
+aaaaaa
+\align[right] heck
+\align | table |
+---
+\key{\key a\key b
+\key ctrl\abcdef[aaa]{ ha}
+\key shift
+\key ctrl+\key shift+\key M}
+\spoiler abc
+/test
+a/
+`abc
+def`
+
+🟩 {"type":"ROOT","tag":"","content":[true,true,{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|[gray] ","content":["abc"],"args":{"color":"gray"}},{"type":"table_cell","tag":"[blue] ","content":["abc"],"args":{"color":"blue"}}]}]}," ",{"type":"icode","tag":"`test`","args":{"text":"test"}}," ",true,{"type":"image","tag":"!https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true","args":{"url":"https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true"}},true,"the sand can be eatena",true,"\tabc",true,{"type":"spoiler","tag":"\\spoiler","content":["abc defaaaa ",{"type":"spoiler","tag":"\\spoiler","content":["a"],"args":{"label":"spoiler"}}],"args":{"label":"spoiler"}},true,"aaaaaa",true,{"type":"align","tag":"\\align[right]","content":["heck"],"args":{"align":"right"}},true,{"type":"align","tag":"\\align","content":["| ","table"," |"],"args":{"align":"center"}},true,{"type":"divider","tag":"---"},true,{"type":"key","tag":"\\key{","content":[{"type":"key","tag":"\\key a","content":["a"],"body":true},{"type":"key","tag":"\\key b","content":["b"],"body":true},true,{"type":"key","tag":"\\key ctrl","content":["ctrl"],"body":true},{"type":"invalid","tag":"\\abcdef[aaa]{","content":[" ha"],"body":true,"args":{"text":"\\abcdef[aaa]{","reason":"invalid tag"}},true,{"type":"key","tag":"\\key shift","content":["shift"],"body":true},true,{"type":"key","tag":"\\key ctrl","content":["ctrl"],"body":true},"+",{"type":"key","tag":"\\key shift","content":["shift"],"body":true},"+",{"type":"key","tag":"\\key M","content":["M"],"body":true}],"body":true},true,{"type":"spoiler","tag":"\\spoiler","content":["abc"],"args":{"label":"spoiler"}},true,"/","test",true,"a","/",true,{"type":"icode","tag":"`abc","args":{"text":"abc"}},true,"def`",true]}
+</script>
