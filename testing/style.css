@@ -1,5 +1,5 @@
 html {
-	white-space: pre-wrap;
+	/*white-space: pre-wrap;*/
 	word-wrap: break-all;
 }
 
@@ -14,6 +14,7 @@ html {
 }
 
 test- {
+	white-space: pre-wrap;
 	border: 2px solid black;
 	background: magenta;
 	margin: 3px;
