@@ -19,7 +19,7 @@
 	<option>12y</option>
 	<option>bbcode</option>
 	<option>text</option>
-	<option>fallback</option>
+	<option value=plaintext>(fallback)</option>
 </select>
 <textarea-container>
 	<textarea id=$input></textarea>
@@ -28,8 +28,8 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='🍂'></div>
 
 <script>
-	$input.oninput = function() {
-		let t = this.value
+	function update() {
+		let t = $input.value
 		
 		~Δ
 		let tree = Markup.langs[$lang.value](t)
@@ -43,6 +43,10 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 		
 		$output.replaceChildren(e)
 	}
+	
+	$input.oninput = update
+	$lang.onchange = update
+	window.onload = update
 	
 	// Timer	
 	let tₛ = 0
