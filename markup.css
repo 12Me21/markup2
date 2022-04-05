@@ -1,48 +1,67 @@
 L + ratio {}
 
-/*******************
- ** ⚠ REQUIRED! ⚠ **
- *******************/
 .🍂 {
-	word-break: break-word; /* prevent text overflow */
-	white-space: pre-wrap; /* preserve whitespace */
+	font-family: sans-serif; /* set your font here: */
 	
-	/* set your font here: */
-	font-family: sans-serif;
+	/* control text rendering */
+	word-break: break-word;
+	white-space: pre-wrap;
+	-moz-tab-size: 3.5; tab-size: 3.5;
+	
+	contain: content; /* optional */
+	
+	--bg: var(--mainbg, white);
+	color: var(--maincolor, black);
+	background: var(--bg);
 }
-/* override the defaults for these */
+
+/*** everything ***/
 .🍂 * {
+	/* (override the defaults) */
+	font-family: inherit;
 	word-break: inherit;
 	white-space: inherit;
-	font-family: inherit;
+	
+	margin: 0;
 }
-/* change these from inline to block: */
-.🍂 img, .🍂 video, .🍂 audio {
+
+/************/
+/** Embeds **/
+/************/
+.🍂 img, .🍂 video, .🍂 audio, .🍂 youtube-embed {
 	display: block;
 }
+.🍂 img, .🍂 video, .🍂 youtube-embed figure {
+	max-width: 100%;
+	height: 10vh;
+	object-fit: scale-down;
+	border: 1px solid gray;
+}
+
+.🍂 youtube-embed figure {
+	width: 320px;
+	background-size: contain;
+	cursor: pointer;
+}
+.🍂 youtube-embed button {
+	vertical-align: top;
+}
+
+/*.🍂 img[data-loading] {
+	height: 10vh;
+}*/
+
 /* ruby text doesn't work if set to white-space: pre */
 .🍂 rt {
 	white-space: pre-line;
 }
 
-/* image/video sizing: */
-.🍂 img, .🍂 video {
-	max-width: 100%;
-	height: 10vh;
-	object-fit: scale-down;
-}
-/*.🍂 img[data-loading] {
-	height: 10vh;
-}*/
-/* table borders */
-.🍂 table, .🍂 td, .🍂 th {
-	border: 1px solid currentColor;
-	border-collapse: collapse;
-}
+/*** invalid tag ***/
 .🍂 .invalid {
 	background: #F888;
 }
 
+/*** keyboard key ***/
 .🍂 kbd {
 	display: inline-block;
 	border: 1px solid gray;
@@ -52,67 +71,14 @@ L + ratio {}
 	font-family: monospace;
 }
 
-/*𐇵*𐇵*𔓘𐇵**𐇵𖠇𔓘*𖠇
- 𐇵𔓘 DEFAULTS *𔓘
- *𔓘𐇵**𔓘𖠇**𐇵*𖠇𐇵*/
-/* These are the default values, just in case */
-/* You likely don't need most of these */
-
-.🍂, .🍂 * { vertical-align: baseline; }
-
-.🍂 div, .🍂 h2, .🍂 h3, .🍂 h4, .🍂 h5, .🍂 hr, .🍂 pre, .🍂 ol, .🍂 ul, .🍂 blockquote { display: block; }
-
-.🍂 span, .🍂 a, .🍂 br, .🍂 b, .🍂 i, .🍂 u, .🍂 s, .🍂 sub, .🍂 sup, .🍂 code { display: inline; }
-.🍂 li { display: list-item; }
-
-.🍂 table { display: table; }
-.🍂 tbody { display: table-row-group; }
-.🍂 tr { display: table-row; }
-.🍂 td, .🍂 th { display: table-cell; }
-
-.🍂 ruby { display: ruby; }
-.🍂 rt { display: ruby-text; }
-.🍂 rp { display: none; }
-
-.🍂 sub { vertical-align: sub; }
-.🍂 sup { vertical-align: super; }
-.🍂 b { font-weight: bold; }
-.🍂 i { font-style: italic; }
-.🍂 u { text-decoration: underline; }
-.🍂 s { text-decoration-line: line-through; }
-
-/***************
- ** Suggested **
- ***************/
-
-.🍂 {
-	/* prevent things from overflowing the markup element */
-	/* (this isn't supported by all browsers yet, but it can't hurt) */
-	/* (optional; overflow probably won't happen anyway) */
-	contain: content;
-	/* colors */
-	--color: var(--maincolor, black);
-	--bg: var(--mainbg, white);
-	color: var(--color);
-	background: var(--bg);
-	/* tab width */
-	-moz-tab-size: 3.5; tab-size: 3.5;
-}
-
-.🍂 * {
-	/* damn margins */
-	margin: 0;
-}
-
+/*** divider ***/
 .🍂 hr {
 	margin-block: 0.5rem;
 }
 
-.🍂 img {
-	border: 1px solid gray;
-}
-
-/*** code and inline code ***/
+/**********/
+/** Code **/
+/**********/
 .🍂 pre, .🍂 code {
 	font-family: monospace; /* code font here */
 }
@@ -126,10 +92,12 @@ L + ratio {}
 }
 .🍂 code {
 	background: rgba(192,192,192,0.5);
-p	padding-inline: 0.2em;
+	padding-inline: 0.2em;
 }
 
-/*** Spoiler ***/
+/*************/
+/** Spoiler **/
+/*************/
 .🍂 summary {
 	padding-inline: 0.3em;
 	background: white;
@@ -153,7 +121,9 @@ p	padding-inline: 0.2em;
 .🍂 summary::before { content: "Show "; }
 .🍂 details[open] > summary::before { content: "Hide "; }
 
-/*** quote ***/
+/***********/
+/** Quote **/
+/***********/
 .🍂 blockquote {
 	border: 2px solid gray;
 	padding: 0.3rem;
@@ -167,11 +137,21 @@ p	padding-inline: 0.2em;
 	margin-left: 0.5rem;
 }
 
-/*** tables and bg colors ***/
+/***********/
+/** Table **/
+/***********/
+.🍂 table, .🍂 td, .🍂 th {
+	border: 1px solid currentColor;
+	border-collapse: collapse;
+}
 .🍂 td, .🍂 th {
 	padding-block: 0.2em;
 	padding-inline: 0.3em;
 }
+
+/**********************/
+/** Background Color **/
+/**********************/
 .🍂 [data-bgcolor="red"]    { background: var(--bgred, #F888); }
 .🍂 [data-bgcolor="orange"]  { background: var(--bggreen, #FA08); }
 .🍂 [data-bgcolor="yellow"] { background: var(--bgyellow, #FF08); }

@@ -23,7 +23,7 @@ Markup.INJECT = Markup=>{
 		
 		divider: 𐀶`<hr>`,
 		
-		code: function({text, lang}) {
+		code: function({text, lang}) { // <tt>?
 			let e = this()
 			e.textContent = text
 			return e
@@ -42,7 +42,7 @@ Markup.INJECT = Markup=>{
 			e.textContent = text
 			e.href = filter_url(url)
 			return e
-		}.bind(𐀶`<a href="">`),
+		}.bind(𐀶`<a href="" target=_blank>`),
 		
 		image: function({url, alt, width, height}) {
 			let e = this()
@@ -106,6 +106,44 @@ Markup.INJECT = Markup=>{
 			if (align) e.style.textAlign = align
 			return e
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
+		
+		youtube: function({id, url}) {
+			let e = this[0]()
+			
+			let close = e.lastChild
+			let iframe
+			let link = e.firstChild.firstChild.firstChild
+			let create = this[1]
+			let figure = e.firstChild
+			figure.style.background = `no-repeat center/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
+			
+			link.href = url
+			link.textContent = url
+			
+			close.onclick = (event)=>{
+				if (!iframe) return
+				close.hidden = true
+				iframe.src = 'about:blank'
+				iframe.replaceWith(figure)
+				iframe = null
+			}
+			
+			figure.onclick = (event)=>{
+				event.preventDefault()
+				if (iframe)
+					return
+				close.hidden = false
+				iframe = create()
+				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
+				figure.replaceWith(iframe)
+			}
+			
+			return e
+		}.bind([
+			𐀶`<youtube-embed><figure><figcaption><a target=_blank></a></figcaption></figure><button hidden>❌</button>`,
+			𐀶`<iframe referrerpolicy=no-referrer allowfullscreen>`,
+		]),
+		x:	``,
 		
 		link: function({url}) {
 			let e = this()

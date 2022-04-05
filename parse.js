@@ -198,7 +198,9 @@ Markup.INJECT = Markup=>{
 		// 💎 EMBED 💎
 		{argtype:ARGS_BODYLESS, do(tag, rargs, body, base) {
 			let url = base.substr(1) // ehh better
-			let type = embed_type(rargs, url)
+			let [type, yt] = embed_type(rargs, url)
+			if (type=='youtube')
+				return TAG('youtube', tag, yt)
 			let args = {
 				url: url,
 				alt: rargs.named.alt,
@@ -311,15 +313,19 @@ Markup.INJECT = Markup=>{
 		for (let arg of rargs)
 			if (arg=='video' || arg=='audio' || arg=='image')
 				type = arg
+		// todo: improve this
 		if (type)
-			return type
-		if (/[.](mp3|ogg|wav)(?!\w)/i.test(url))
-			return 'audio'
+			return [type]
+		if (/[.](mp3|ogg|wav|m4a)(?!\w)/i.test(url))
+			return ['audio']
 		if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
-			return 'video'
-		if (/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(url)) // ew
-			return 'youtube' // todo: accept a [start-end] times arg on youtube tag
-		return 'image'
+			return ['video']
+		// youtube
+		let m = /^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.exec(url) // ew
+		if (m)
+			return ['youtube', {id: m[1], url: url}] // todo: accept a [start-end] times arg on youtube tag
+		// default
+		return ['image']
 	}
 	// ugly...
 	function match_args(rargs, defs) {

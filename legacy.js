@@ -44,8 +44,8 @@ Markup.INJECT = Markup=>{
 		let d = document.createElement('pre')
 		d.textContent = `ERROR: ${err ? err.message : "unknown error"}`
 		d.style.border = "4px inset red"
-		f.appendChild(d)
-		f.appendChild(text)
+		f.append(d)
+		f.append(text)
 		return f
 	}
 	
