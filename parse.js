@@ -307,7 +307,7 @@ Markup.INJECT = Markup=>{
 		if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
 			return 'video'
 		if (/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(url)) // ew
-			return 'youtube'
+			return 'youtube' // todo: accept a [start-end] times arg on youtube tag
 		return 'image'
 	}
 	// ugly...
