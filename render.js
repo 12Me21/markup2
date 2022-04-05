@@ -150,8 +150,9 @@ Markup.INJECT = Markup=>{
 		spoiler: function({label}) {
 			let e = this()
 			e.firstChild.textContent = label
+			e.B = e.lastChild
 			return e
-		}.bind(𐀶`<details><summary>`),
+		}.bind(𐀶`<details><summary></summary><div>`),
 		
 		background_color: function({color}) {
 			let e = this()

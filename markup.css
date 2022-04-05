@@ -45,7 +45,9 @@
 	display: inline-block;
 	border: 1px solid gray;
 	border-radius: 3px;
-	padding: 0.3rem;
+	padding-block: 0.2rem;
+	padding-inline: 0.4rem;
+	font-family: monospace;
 }
 
 /*𐇵*𐇵*𔓘𐇵**𐇵𖠇𔓘*𖠇
@@ -108,7 +110,7 @@
 .🍂 pre, .🍂 code {
 	-moz-tab-size: 4;
 	tab-size: 4;
-	font: monospace;
+	font-family: monospace;
 }
 .🍂 pre {
 	color: white;
@@ -122,6 +124,29 @@
 	background-color: rgba(192,192,192,0.5);
 	padding-inline: 0.2em;
 }
+
+/* Spoiler */
+.🍂 summary {
+	padding-inline: 0.3em;
+	background: white;
+	border: 2px outset gray;
+	margin-inline: 0.2em;
+	margin-top: 1px;
+	display: table;
+	cursor: pointer;
+}
+.🍂 details[open] summary {
+	border-style: inset;
+}
+.🍂 details > div {
+	padding: 0.5em;
+	border: 1px solid gray;
+	border-left-width: 4px;
+	background: var(--spoiler-bg);
+	margin-bottom: 1px;
+}
+.🍂 summary::before { content: "Show "; }
+.🍂 details[open] > summary::before { content: "Hide "; }
 
 /* bg colors */
 .🍂 [data-bgcolor="red"]    { background: var(--bgred, #F888); }
