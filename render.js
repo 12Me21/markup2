@@ -85,14 +85,12 @@ Markup.INJECT = Markup=>{
 				return this[0]()
 			let e = this[1]()
 			e.firstChild.textContent = cite
-			e.B = e.lastChild
-			return e
+			return e.lastChild
 		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite></cite>:<div>`]),
 		
 		table: function() {
 			let e = this()
-			e.B = e.firstChild
-			return e
+			return e.firstChild
 		}.bind(𐀶`<table><tbody>`),
 		
 		table_row: 𐀶`<tr>`,
@@ -185,15 +183,13 @@ Markup.INJECT = Markup=>{
 		ruby: function({text}) {
 			let e = this()
 			e.lastChild.textContent = text
-			e.B = e.firstChild
-			return e
+			return e.firstChild
 		}.bind(𐀶`<ruby><span></span><rt>`), // I don't think we need <rp> since we're rendering for modern browsers...
 		
 		spoiler: function({label}) {
 			let e = this()
 			e.firstChild.textContent = label
-			e.B = e.lastChild
-			return e
+			return e.lastChild
 		}.bind(𐀶`<details><summary></summary><div>`),
 		
 		background_color: function({color}) {
@@ -232,10 +228,9 @@ Markup.INJECT = Markup=>{
 				if (!create)
 					throw new RangeError("Unknown node type: "+leaf.type)
 				let node = create(leaf.args)
-				let new_branch = node.B || node
-				branch.append(node)
+				branch.append(node.getRootNode())
 				if (leaf.content)
-					prev = fill_branch(new_branch, leaf.content)
+					prev = fill_branch(node, leaf.content)
 				else
 					prev = 'text'
 				prev = Markup.IS_BLOCK[leaf.type] ? 'block' : prev
