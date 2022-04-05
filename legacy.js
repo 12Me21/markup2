@@ -5,28 +5,48 @@ Markup.INJECT = Markup=>{
 		'12y2': Markup.parse,
 		'bbcode': null,
 		'12y': null,
-		'text': null,
-		'fallback': null,
+		'text': null, // new fallback parser
+		'plaintext': null, // legacy fallback parser (autolinker)
 	}
 	
-	Markup.parse_lang = function(text, lang='fallback') {
+	Markup.css_class = "🍂"
+	
+	Markup.message = function({text, values:{m:lang='plaintext'}}, element) {
 		if (typeof text != 'string')
-			throw new TypeError('non-string value passed to markup parser')
+			throw new TypeError("Markup.message: msg.text is not a string")
+		if (element!==undefined) {
+			if (!(element instanceof Element))
+				throw new TypeError("Markup.message: element is not an Element")
+			element.classList.add(Markup.css_class)
+		}
 		
+		let tree, err
 		try {
-			if (!text)
-				return {type:'ROOT', lang:null, content:[]}
-			let parser = Markup.langs[lang] || Markup.langs.fallback
-			return parser(text)
-		} catch(e) {
-			console.error(e)
-			try { // todo
-				return Markup.langs.text(text)
+			let parser = Markup.langs[lang] || Markup.langs.plaintext
+			tree = parser(text)
+			return Markup.render(tree, element)
+		} catch (e) {
+			err = e
+		}
+		if (!tree) {
+			console.error("Error during markup parsing:", err)
+			try {
+				return Markup.render({type:'ROOT', lang:'error', content:[
+					{type:'error', args: {error: err, text: text}, content: [text]}
+				]}, element)
 			} catch (e) {
-				console.error(e)
-				return {type:'ROOT', lang:null, content:["ERROR!"]}
+				err = e
 			}
 		}
+		console.error("Error during markup rendering:", err)
+		// last resort output format
+		let f = element || document.createDocumentFragment()
+		let d = document.createElement('pre')
+		d.textContent = `ERROR: ${err ? err.message : "unknown error"}`
+		d.style.border = "4px inset red"
+		f.appendChild(d)
+		f.appendChild(text)
+		return f
 	}
 	
 	Markup.langs.text = function(text) {
@@ -269,6 +289,8 @@ Markup.INJECT = Markup=>{
 	Markup.langs['12y'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = '12y'
+		if (!codeInput)
+			return tree
 		
 		while (c) {
 			if (eatChar("\n")) {
@@ -895,9 +917,11 @@ Markup.INJECT = Markup=>{
 		
 	}
 	
-	Markup.langs.bbcode = function(codeArg) {
-		init(codeArg)
+	Markup.langs['bbcode'] = function(codeInput) {
+		init(codeInput)
 		curr.lang = 'bbcode'
+		if (!codeInput)
+			return tree
 		
 		let point = 0
 		
@@ -1091,7 +1115,7 @@ Markup.INJECT = Markup=>{
 	}
 	
 	// "plain text" (with autolinker)
-	Markup.langs.fallback = function(text) {
+	Markup.langs.plaintext = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
 		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g

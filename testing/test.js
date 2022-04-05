@@ -233,7 +233,6 @@ function compare_node(correct, got) {
 	compare_node_types(correct, got)
 	
 	if (!compare_object(correct.args, got.args)) {
-		console.info(correct.args, got.args)
 		throw new Mismatch("arg mismatch", JSON.stringify(correct.args), safe_string(got.args))
 	}
 	

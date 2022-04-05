@@ -9,7 +9,6 @@ let RESULT = 𐀶`<test- class=row><div class=col><name-></name-><result- class=
 
 Test.prototype.draw_result = function() {
 	let d = RESULT()
-	console.log(d)
 	if (this.status < 0)
 		d.classList.add('failed')
 	else if (this.status > 0)

@@ -32,7 +32,7 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 		let t = this.value
 		
 		~Δ
-		let tree = Markup.parse_lang(t, $lang.value)
+		let tree = Markup.langs[$lang.value](t)
 		$time1.value = Δ
 		
 		window.tree = tree

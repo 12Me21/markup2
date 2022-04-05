@@ -2,9 +2,9 @@ const Markup = {
 	set INJECT(fn) { fn(this) },
 	parse: null,
 	render: null,
-	convert(text) {
+	convert(text, node) {
 		let tree = this.parse(text)
-		return this.render(tree)
+		return this.render(tree, node)
 	},
 }
 

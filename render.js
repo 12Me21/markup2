@@ -201,10 +201,9 @@ Markup.INJECT = Markup=>{
 		return prev
 	}
 	
-	Markup.render = function(tree) {
-		let root = document.createDocumentFragment()
-		fill_branch(root, tree.content)
-		return root
+	Markup.render = function(tree, node=document.createDocumentFragment()) {
+		fill_branch(node, tree.content)
+		return node
 	}
 	
 	Markup.create = CREATE

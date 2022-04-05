@@ -50,23 +50,6 @@
 .🍂 rt { display: ruby-text; }
 .🍂 rp { display: none; }
 
-/***************
- ** Suggested **
- ***************/
-
-/* prevent things from overflowing the markup element */
-/* (this isn't supported by all browsers yet, but it can't hurt) */
-/* (optional; overflow probably won't happen anyway) */
-.🍂 {
-	contain: layout paint style;
-}
-
-/* margin reset */
-.🍂 * {
-	margin: 0;
-}
-
-/* Styles */
 .🍂 sub { vertical-align: sub; }
 .🍂 sup { vertical-align: super; }
 .🍂 b { font-weight: bold; }
@@ -74,8 +57,27 @@
 .🍂 u { text-decoration: underline; }
 .🍂 s { text-decoration-line: line-through; }
 
+/***************
+ ** Suggested **
+ ***************/
+
+.🍂 {
+	/* prevent things from overflowing the markup element */
+	/* (this isn't supported by all browsers yet, but it can't hurt) */
+	/* (optional; overflow probably won't happen anyway) */
+	contain: content;
+	/* damn margins */
+	margin: 0;
+	/* colors */
+	--color: var(--maincolor, black);
+	--background: var(--mainbg, white);
+	color: var(--color);
+	background: var(--background);
+}
+
 /*** images ***/
 .🍂 img {
+	border: 1px solid gray;
 	/* Image size limit */
 	max-width: 100%;
 	max-height: 10vh;
@@ -88,16 +90,6 @@
 	padding-block: 0.2em;
 	padding-inline: 0.3em;
 }
-
-/*** Background colors (for table cells etc) ***/
-.🍂 [data-bgcolor="red"]    { background: var(--bgred); }
-.🍂 [data-bgcolor="green"]  { background: var(--bggreen); }
-.🍂 [data-bgcolor="yellow"] { background: var(--bgyellow); }
-.🍂 [data-bgcolor="orange"] { background: var(--bgorange); }
-.🍂 [data-bgcolor="blue"]   { background: var(--bgblue); }
-.🍂 [data-bgcolor="purple"] { background: var(--bgpurple); }
-.🍂 [data-bgcolor="gray"]   { background: var(--bggray); }
-.🍂 table { background: var(--background); } /* reset */
 
 /*** code and inline code ***/
 .🍂 pre, .🍂 code {
@@ -114,16 +106,25 @@
 	word-break: break-all;
 }
 .🍂 code {
-	background-color: rgba(0,0,0,0.1);
+	background-color: rgba(192,192,192,0.5);
 	padding: 0 0.2em;
 }
+
+.🍂 [data-bgcolor="red"]    { background: var(--bgred, #F888); }
+.🍂 [data-bgcolor="orange"]  { background: var(--bggreen, #FA08); }
+.🍂 [data-bgcolor="yellow"] { background: var(--bgyellow, #FF08); }
+.🍂 [data-bgcolor="green"] { background: var(--bgorange, #0F08); }
+.🍂 [data-bgcolor="blue"]   { background: var(--bgblue, #08F8); }
+.🍂 [data-bgcolor="purple"] { background: var(--bgpurple, #C0F8); }
+.🍂 [data-bgcolor="gray"]   { background: var(--bggray, #AAA8); }
+.🍂 table { background: var(--background); } /* reset */
 
 /*******************
  ** Theme Example **
  *******************/
 .🍂 {
-	--color: black;
-	--background: white;
+/*	--color: var(--maincolor, black);
+	--background: var(--mainbg, white);
 	
 	--bgred: #FCC;
 	--bgorange: #FEA;
@@ -131,10 +132,5 @@
 	--bggreen: #CFC;
 	--bgblue: #CEF;
 	--bgpurple: #ECF;
-	--bggray: #DDD;
-}
-
-.🍂 {
-	color: var(--color);
-	background: var(--background);
+	--bggray: #DDD;*/
 }
