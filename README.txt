@@ -44,6 +44,10 @@ element.classList.add('whatever')
 
 🔸🔶🟧 FUNCTIONS 🟧🔶🔸
 
+‹tree› = {type:‹String›, ?args:‹Object›, ?content:[‹branch›...]}
+
+‹branch› = ‹tree› OR ‹String› OR `true`
+
 📒❲parse.js❳
  ┃
  ┣📑❲Markup.parse(text‹String›) ⤑ ‹tree›❳
