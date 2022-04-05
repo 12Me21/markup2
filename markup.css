@@ -88,59 +88,62 @@
 	/* (this isn't supported by all browsers yet, but it can't hurt) */
 	/* (optional; overflow probably won't happen anyway) */
 	contain: content;
-	/* damn margins */
-	margin: 0;
 	/* colors */
 	--color: var(--maincolor, black);
 	--bg: var(--mainbg, white);
 	color: var(--color);
 	background: var(--bg);
+	/* tab width */
+	-moz-tab-size: 3.5; tab-size: 3.5;
+}
+
+.🍂 * {
+	/* damn margins */
+	margin: 0;
+}
+
+.🍂 hr {
+	margin-block: 0.5rem;
 }
 
 .🍂 img {
 	border: 1px solid gray;
 }
 
-.🍂 td, .🍂 th {
-	padding-block: 0.2em;
-	padding-inline: 0.3em;
-}
-
 /*** code and inline code ***/
 .🍂 pre, .🍂 code {
-	-moz-tab-size: 4;
-	tab-size: 4;
-	font-family: monospace;
+	font-family: monospace; /* code font here */
 }
 .🍂 pre {
 	color: white;
-	background-color: black;
+	background: black;
 	border: 1px solid black;
 	padding: 0.5em;
 	margin-block: 0.25em;
 	word-break: break-all;
 }
 .🍂 code {
-	background-color: rgba(192,192,192,0.5);
+	background: rgba(192,192,192,0.5);
 	padding-inline: 0.2em;
 }
 
-/* Spoiler */
+/*** Spoiler ***/
 .🍂 summary {
 	padding-inline: 0.3em;
 	background: white;
 	border: 2px outset gray;
-	margin-inline: 0.2em;
+	border-left-width: 4px;
 	margin-top: 1px;
 	display: table;
 	cursor: pointer;
 }
-.🍂 details[open] summary {
+.🍂 details[open] > summary {
 	border-style: inset;
+	border-bottom: none;
 }
 .🍂 details > div {
-	padding: 0.5em;
-	border: 1px solid gray;
+	padding: 0.4em;
+	border: 2px solid gray;
 	border-left-width: 4px;
 	background: var(--spoiler-bg);
 	margin-bottom: 1px;
@@ -148,7 +151,11 @@
 .🍂 summary::before { content: "Show "; }
 .🍂 details[open] > summary::before { content: "Hide "; }
 
-/* bg colors */
+/*** tables and bg colors ***/
+.🍂 td, .🍂 th {
+	padding-block: 0.2em;
+	padding-inline: 0.3em;
+}
 .🍂 [data-bgcolor="red"]    { background: var(--bgred, #F888); }
 .🍂 [data-bgcolor="orange"]  { background: var(--bggreen, #FA08); }
 .🍂 [data-bgcolor="yellow"] { background: var(--bgyellow, #FF08); }
