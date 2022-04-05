@@ -35,7 +35,7 @@ Markup.INJECT = Markup=>{
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
 	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
-	const ARGS_LINE   = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
+	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
 	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
@@ -58,12 +58,23 @@ Markup.INJECT = Markup=>{
 		return rargs[0]
 	}
 	
+	function simple_word_tag(name) {
+		// nnnnn closure
+		return {argtype:ARGS_WORD, do(tag, rargs, body) {
+			return OPEN(name, tag, null, body)
+		}}
+	}
+	
 	const ENVS = {
-		sub: {argtype:ARGS_WORD, do(tag, rargs, body) {
-			return OPEN('subscript', tag, null, body)
-		}},
-		sup: {argtype:ARGS_WORD, do(tag, rargs, body) {
-			return OPEN('superscript', tag, null, body)
+		sub: simple_word_tag('subscript'),
+		sup: simple_word_tag('superscript'),
+		b: simple_word_tag('bold'),
+		i: simple_word_tag('italic'),
+		u: simple_word_tag('underline'),
+		s: simple_word_tag('strikethrough'),
+		quote: {argtype:ARGS_LINE,do(tag, rargs, body) {
+			// todo: this feels very repetitive...
+			return OPEN('quote', tag, {cite: rargs[0]}, body)
 		}},
 		align: {argtype:ARGS_LINE, do(tag, rargs, body) {
 			let a = rargs[0]
