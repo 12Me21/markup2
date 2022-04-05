@@ -11,7 +11,7 @@ Markup.INJECT = Markup=>{
 	
 	Markup.css_class = "🍂"
 	
-	Markup.message = function({text, values:{m:lang='plaintext'}}, element) {
+	Markup.convert_lang = function(text, lang='plaintext', element, options) {
 		if (typeof text != 'string')
 			throw new TypeError("Markup.message: msg.text is not a string")
 		if (element!==undefined) {

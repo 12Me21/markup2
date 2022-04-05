@@ -26,17 +26,18 @@ element.append(fragment)
 <script src=legacy.js></script>
 ═[JS]═══════════════════════════════════════════════
 let element = document.createElement('div')
+document.body.append(element)
 
-let messageData = {
-	text: "/test/ 123",
-	values: {m: '12y2'}
+let message = {
+	text: "[i]test[/i] 123",
+	values: {m: 'bbcode'}
 }
 
-Markup.render_message(messageData, element)
+Markup.convert_lang(message.text, message.values.m, element)
 // result: <div class='🍂'><i>test</i> 123</div>
 // (set Markup.css_class to change the class name)
 /* OR: */
-let fragment = Markup.render_message(messageData)
+let fragment = convert_lang(message.text, message.values.m)
 element.append(fragment)
 element.classList.add('whatever')
 ════════════════════════════════════════════════════
@@ -45,34 +46,39 @@ element.classList.add('whatever')
 
 📒❲parse.js❳
  ┃
- ┣📑❲Markup.parse(‹String›) ⤑ ‹tree›❳
+ ┣📑❲Markup.parse(text‹String›) ⤑ ‹tree›❳
  ┃    ⎝parser, outputs a tree
  ┃
- ┗📑❲Markup.convert(‹String›, ?‹ParentNode›) ⤑ ‹ParentNode›❳
+ ┗📑❲Markup.convert(text‹String›, ?parent‹ParentNode›) ⤑ ‹ParentNode›❳
       ⎝equivalent to Markup.render(Markup.parse(...))
 
 📒❲render.js❳
  ┃
- ┗📑❲Markup.render(‹tree›, ?‹ParentNode›) ⤑ ‹ParentNode›❳
-      ⎜renderer, converts the parser's tree into html
-	   ⎝returns the input node, or a new ‹DocumentFragment›
+ ┗📑❲Markup.render(tree‹tree›, ?parent‹ParentNode›) ⤑ ‹ParentNode›❳
+      ⎜renderer, converts the parser's tree into html.
+		⎜if `parent` is passed, the output is inserted into that element.
+	   ⎝otherwise, it creates and returns a new ‹DocumentFragment›
 
 📒❲legacy.js❳
  ┃
- ┣📑❲Markup.render_message(‹message›, ?‹Element›) ⤑ ‹ParentNode›❳
- ┃    ⎜renders a sbs contentapi message, based on .text and .values.m
- ┃    ⎜‹message› is {text: ‹String›, values: {m: ?‹String›}}
- ┃    ⎜if an element is passed, adds `Markup.css_class` to its class list
+ ┣📑❲Markup.convert_lang(text‹String›, ?lang‹String›, ?parent‹Element›, ?settings) ⤑ ‹ParentNode›❳
+ ┃    ⎜similar to Markup.convert, but supports other markup languages
+ ┃    ⎜(see `Markup.langs`) if `lang` is invalid, 'plaintext' is used.
+ ┃    ⎜`Markup.css_class` is added to `parent`'s class list, if passed.
  ┃    ⎝otherwise, creates and returns a new ‹DocumentFragment›
+ ┃
+ ┣📑❲Markup.css_class ‹String›❳
+ ┃    ⎜The css class used by `Markup.convert_lang`
+ ┃    ⎝default value: "🍂"
  ┃
  ┗📑❲Markup.langs[‹String›] ⤑ ❲‹Function›(‹String›) ⤑ ‹tree›❳❳
    ┃  ⎜table of parser functions for different markup languages
 	┃  ⎝(all output the same AST format)
 	┃
    ┣ Markup.langs['12y2']
-   ┃  ⎝current 12y2 parser (Markup.parse)
+   ┃  ⎝12y2 parser (Markup.parse)
    ┣ Markup.langs['text']
-	┃  ⎝plaintext
+	┃  ⎝new plaintext parser
    ┣ Markup.langs['12y']
 	┃  ⎝old 12y parser
    ┣ Markup.langs['bbcode']

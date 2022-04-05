@@ -15,12 +15,19 @@
 	font-family: inherit;
 }
 /* change these from inline to block: */
-.🍂 img, .🍂 audio, .🍂 video {
+.🍂 img, .🍂 video, .🍂 audio {
 	display: block;
 }
 /* ruby text doesn't work if set to white-space: pre */
 .🍂 rt {
 	white-space: pre-line;
+}
+
+/* image/video sizing: */
+.🍂 img, .🍂 video {
+	max-width: 100%;
+	max-height: 10vh;
+	object-fit: contain;
 }
 /* table borders */
 .🍂 table, .🍂 td, .🍂 th {
@@ -75,17 +82,10 @@
 	background: var(--background);
 }
 
-/*** images ***/
 .🍂 img {
 	border: 1px solid gray;
-	/* Image size limit */
-	max-width: 100%;
-	max-height: 10vh;
-	/* display images at correct aspect ratio, just in case */
-	object-fit: contain;
 }
 
-/*** Tables ***/
 .🍂 td, .🍂 th {
 	padding-block: 0.2em;
 	padding-inline: 0.3em;
@@ -110,6 +110,7 @@
 	padding: 0 0.2em;
 }
 
+/* bg colors */
 .🍂 [data-bgcolor="red"]    { background: var(--bgred, #F888); }
 .🍂 [data-bgcolor="orange"]  { background: var(--bggreen, #FA08); }
 .🍂 [data-bgcolor="yellow"] { background: var(--bgyellow, #FF08); }
@@ -118,19 +119,3 @@
 .🍂 [data-bgcolor="purple"] { background: var(--bgpurple, #C0F8); }
 .🍂 [data-bgcolor="gray"]   { background: var(--bggray, #AAA8); }
 .🍂 table { background: var(--background); } /* reset */
-
-/*******************
- ** Theme Example **
- *******************/
-.🍂 {
-/*	--color: var(--maincolor, black);
-	--background: var(--mainbg, white);
-	
-	--bgred: #FCC;
-	--bgorange: #FEA;
-	--bgyellow: #FF8;
-	--bggreen: #CFC;
-	--bgblue: #CEF;
-	--bgpurple: #ECF;
-	--bggray: #DDD;*/
-}
