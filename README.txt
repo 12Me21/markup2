@@ -103,34 +103,26 @@ element.classList.add('whatever')
  ┃    parsing (text -> tree)
  ┣📒❲render.js❳
  ┃    rendering (tree -> html (DocumentFragment))
+ ┣📒❲legacy.js❳
+ ┃    parsers for old sbs markup formats
  ┃
  ┣📘❲markup.css❳
  ┃    example styles for markup
  ┃
- ┣📚❲testing/❳
- ┃ ┃  tests
- ┃ ┃
- ┃ ┣📕❲index.html❳
- ┃ ┃    run tests
- ┃ ┣📕❲editor.html❳
- ┃ ┃    test editing tool
- ┃ ┃
- ┃ ┣📘❲style.css❳
- ┃ ┃    common styles for test pages
- ┃ ┣📒❲test.js❳
- ┃ ┃    test system
- ┃ ┗📒❲draw.js❳
- ┃      test output rendering
- ┃
- ┗📚❲legacy/❳
-   ┃  old markup system
+ ┗📚❲testing/❳
+   ┃  tests
    ┃
-   ┣📒❲legacy.js❳
-   ┃    old markup parser
-   ┣📒❲old-render2.js❳
-   ┃    old renderer
-   ┗📒❲highlight.js❳
-        old syntax highlighter
+   ┣📕❲index.html❳
+   ┃    run tests
+   ┣📕❲editor.html❳
+   ┃    test editing tool
+   ┃
+   ┣📘❲style.css❳
+   ┃    common styles for test pages
+   ┣📒❲test.js❳
+   ┃    test system
+   ┗📒❲draw.js❳
+        test output rendering
 
 
 🔸🔶🟧 CREDITS 🟧🔶🔸
