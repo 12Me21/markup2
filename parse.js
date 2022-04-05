@@ -82,6 +82,9 @@ Markup.INJECT = Markup=>{
 			let text = arg0(rargs, "true")
 			return OPEN('ruby', tag, {text}, body)
 		}},
+		key: {argtype:ARGS_WORD, do(tag, rargs, body) {
+			return OPEN('key', tag, null, body)
+		}},
 	}
 	
 	/* NOTE:

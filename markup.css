@@ -37,6 +37,16 @@
 	border: 1px solid currentColor;
 	border-collapse: collapse;
 }
+.🍂 .invalid {
+	background: #F888;
+}
+
+.🍂 kbd {
+	display: inline-block;
+	border: 1px solid gray;
+	border-radius: 3px;
+	padding: 0.3rem;
+}
 
 /*𐇵*𐇵*𔓘𐇵**𐇵𖠇𔓘*𖠇
  𐇵𔓘 DEFAULTS *𔓘
