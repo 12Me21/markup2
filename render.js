@@ -185,7 +185,10 @@ Markup.INJECT = Markup=>{
 				prev = 'newline'
 			} else {
 				all_newline = false
-				let node = CREATE[leaf.type](leaf.args)
+				let create = CREATE[leaf.type]
+				if (!create)
+					throw new RangeError("Unknown node type: "+leaf.type)
+				let node = create(leaf.args)
 				let new_branch = node.B || node
 				branch.append(node)
 				if (leaf.content)
