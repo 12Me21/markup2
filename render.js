@@ -85,8 +85,9 @@ Markup.INJECT = Markup=>{
 				return this[0]()
 			let e = this[1]()
 			e.firstChild.textContent = cite
+			e.B = e.lastChild
 			return e
-		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite>`]),
+		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite></cite>:<div>`]),
 		
 		table: function() {
 			let e = this()

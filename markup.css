@@ -1,3 +1,5 @@
+L + ratio {}
+
 /*******************
  ** ⚠ REQUIRED! ⚠ **
  *******************/
@@ -124,7 +126,7 @@
 }
 .🍂 code {
 	background: rgba(192,192,192,0.5);
-	padding-inline: 0.2em;
+p	padding-inline: 0.2em;
 }
 
 /*** Spoiler ***/
@@ -142,7 +144,7 @@
 	border-bottom: none;
 }
 .🍂 details > div {
-	padding: 0.4em;
+	padding: 0.4rem;
 	border: 2px solid gray;
 	border-left-width: 4px;
 	background: var(--spoiler-bg);
@@ -150,6 +152,20 @@
 }
 .🍂 summary::before { content: "Show "; }
 .🍂 details[open] > summary::before { content: "Hide "; }
+
+/*** quote ***/
+.🍂 blockquote {
+	border: 2px solid gray;
+	padding: 0.3rem;
+}
+.🍂 cite {
+	unicode-bidi: embed;
+	font-weight: bold;
+	font-style: normal;
+}
+.🍂 cite + div {
+	margin-left: 0.5rem;
+}
 
 /*** tables and bg colors ***/
 .🍂 td, .🍂 th {
@@ -164,3 +180,5 @@
 .🍂 [data-bgcolor="purple"] { background: var(--bgpurple, #C0F8); }
 .🍂 [data-bgcolor="gray"]   { background: var(--bggray, #AAA8); }
 .🍂 table { background: var(--bg); } /* reset */
+
+
