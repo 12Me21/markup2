@@ -218,16 +218,13 @@ Markup.INJECT = Markup=>{
 				all_newline = false
 				branch.append(leaf)
 				prev = 'text'
-			} else if (leaf == true) {
+			} else if (leaf === true) {
 				if (prev!='block')
 					branch.append(CREATE.newline())
 				prev = 'newline'
 			} else {
 				all_newline = false
-				let create = CREATE[leaf.type]
-				if (!create)
-					throw new RangeError("Unknown node type: "+leaf.type)
-				let node = create(leaf.args)
+				let node = CREATE[leaf.type](leaf.args)
 				branch.append(node.getRootNode())
 				if (leaf.content)
 					prev = fill_branch(node, leaf.content)
