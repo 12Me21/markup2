@@ -23,9 +23,6 @@ Markup.INJECT = Markup=>{
 	
 	Markup.IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
-	const WEAK = {style:1}
-	const SURVIVE_EOL = {table_cell:1, ROOT:1}
-	
 	const envs_body_type = {
 		// either
 		// - must be \env
@@ -37,8 +34,7 @@ Markup.INJECT = Markup=>{
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
 	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
-	//const ARGS_LINE     = /(?:\[([^\]\n]*)\])?({| )/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
-	const ARGS_LINE   = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{?
+	const ARGS_LINE   = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
 	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
@@ -98,7 +94,7 @@ Markup.INJECT = Markup=>{
 		// 💎 NEWLINE 💎
 		/\n/,
 		{newline:true, do(tag) {
-			while (!current.body && !SURVIVE_EOL[current.type]) {
+			while (!current.body && current.type!='table_cell' && current.type!='ROOT') {
 				CANCEL()
 			}
 			return TEXT(true)
@@ -401,7 +397,7 @@ Markup.INJECT = Markup=>{
 		current.content.push({type, tag, args})
 	}
 	function kill_weak() {
-		while (WEAK[current.type])
+		while (current.type=='style')
 			CANCEL()
 	}
 	
