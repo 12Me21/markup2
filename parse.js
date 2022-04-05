@@ -40,7 +40,8 @@ Markup.INJECT = Markup=>{
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
-	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({|( \w*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
+	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
+	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?({| ?(.*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing
 	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
@@ -49,8 +50,8 @@ Markup.INJECT = Markup=>{
 	// rather than just ignoring it, so in the future,
 	// we can add a new tag without changing the parsing (much)
 	const ENV_INVALID = {
-		argtype:ARGS_WORD, do(tag, rargs, body) {
-			return OPEN('invalid', tag, {tag:tag}, body)
+		argtype:ARGS_NORMAL, do(tag, rargs, body) {
+			return OPEN('invalid', tag, {text: tag, reason:"invalid tag"}, body)
 		}
 	}
 	
@@ -67,13 +68,13 @@ Markup.INJECT = Markup=>{
 		sup: {argtype:ARGS_WORD, do(tag, rargs, body) {
 			return OPEN('superscript', tag, null, body)
 		}},
-		align: {argtype:ARGS_WORD, do(tag, rargs, body) {
+		align: {argtype:ARGS_LINE, do(tag, rargs, body) {
 			let a = rargs[0]
 			if (!(a=='left' || a=='right' || a=='center'))
 				a = 'center'
 			return OPEN('align', tag, {align: a}, body)
 		}},
-		spoiler: {argtype:ARGS_WORD, do(tag, rargs, body) {
+		spoiler: {argtype:ARGS_LINE, do(tag, rargs, body) {
 			let label = arg0(rargs, "spoiler")
 			return OPEN('spoiler', tag, {label}, body)
 		}},
@@ -426,8 +427,8 @@ Markup.INJECT = Markup=>{
 				}
 				body = argmatch[2]
 				thing.do(match[0]+argmatch[0], parse_args(argmatch[1]), body, match[0])
-				if (argmatch[3]) {
-					let text = argmatch[3].substr(1)
+				if (argmatch[3]!==undefined) {
+					let text = argmatch[3]
 					TEXT(text.replace(/\\([^])/g,"$1")) // todo: i wonder if we could pass indexes to TEXT, and have it automatically extract from the input string, only when necessary. i.e. 2 consecutive text tokens are pulled with a single .substring()
 					CLOSE()
 					body = false
