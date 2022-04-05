@@ -56,8 +56,8 @@ element.classList.add('whatever')
  ┃
  ┗📑❲Markup.render(tree‹tree›, ?parent‹ParentNode›) ⤑ ‹ParentNode›❳
       ⎜renderer, converts the parser's tree into html.
-		⎜if `parent` is passed, the output is inserted into that element.
-	   ⎝otherwise, it creates and returns a new ‹DocumentFragment›
+      ⎜if `parent` is passed, the output is inserted into that element.
+      ⎝otherwise, it creates and returns a new ‹DocumentFragment›
 
 📒❲legacy.js❳
  ┃
@@ -73,16 +73,16 @@ element.classList.add('whatever')
  ┃
  ┗📑❲Markup.langs[‹String›] ⤑ ❲‹Function›(‹String›) ⤑ ‹tree›❳❳
    ┃  ⎜table of parser functions for different markup languages
-	┃  ⎝(all output the same AST format)
-	┃
+   ┃  ⎝(all output the same AST format)
+   ┃
    ┣ Markup.langs['12y2']
    ┃  ⎝12y2 parser (Markup.parse)
    ┣ Markup.langs['text']
-	┃  ⎝new plaintext parser
+   ┃  ⎝new plaintext parser
    ┣ Markup.langs['12y']
-	┃  ⎝old 12y parser
+   ┃  ⎝old 12y parser
    ┣ Markup.langs['bbcode']
-	┃  ⎝old bbcode parser
+   ┃  ⎝old bbcode parser
    ┗ Markup.langs['plaintext']
       ⎝old plaintext parser (autolinker)
 
