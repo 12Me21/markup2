@@ -23,8 +23,6 @@ Markup.INJECT = Markup=>{
 		
 		divider: 𐀶`<hr>`,
 		
-		env: 𐀶`<hr>`,
-		
 		code: function({text, lang}) {
 			let e = this()
 			e.textContent = text
