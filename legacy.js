@@ -61,7 +61,7 @@ Markup.INJECT = Markup=>{
 	}
 	
 	let BLOCKS = {
-		line:1, code:1, audio:1, video:1, youtube:1,
+		divider:1, code:1, audio:1, video:1, youtube:1,
 		heading:1, quote:1, list:1, list_item:1,
 		table:1, table_row:1, image:1, error:1,
 		align:1, spoiler:1
@@ -355,7 +355,7 @@ Markup.INJECT = Markup=>{
 					//-------------
 					// ---<EOL> hr
 					if (c == "\n" || !c) { //this is kind of bad
-						add_block('line', null)
+						add_block('divider', null)
 						//----------
 						// ---... normal text
 					} else {
