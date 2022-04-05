@@ -24,7 +24,7 @@ Markup.INJECT = Markup=>{
 	Markup.IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
 	// if cancelled, will be completed instead:
-	const AUTO_CLOSE = {heading:1, quote:1, ROOT:1}
+	const AUTO_CLOSE = {heading:1, quote:1, ROOT:1, invalid:1}
 	// will be cancelled at the end of a block, if open:
 	const WEAK = {style:1}
 	// cancelled at end of a line (or completed if auto_close is set):
@@ -51,7 +51,10 @@ Markup.INJECT = Markup=>{
 	// we can add a new tag without changing the parsing (much)
 	const ENV_INVALID = {
 		argtype:ARGS_NORMAL, do(tag, rargs, body) {
-			return OPEN('invalid', tag, {text: tag, reason:"invalid tag"}, body)
+			if (body)
+				return OPEN('invalid', tag, {text: tag, reason:"invalid tag"}, body)
+			else
+				return TAG('invalid', tag, {text: tag, reason:"invalid tag"})
 		}
 	}
 	
