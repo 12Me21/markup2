@@ -111,36 +111,41 @@ Markup.INJECT = Markup=>{
 			let e = this[0]()
 			
 			let close = e.lastChild
-			let iframe
-			let link = e.firstChild.firstChild.firstChild
-			let create = this[1]
-			let figure = e.firstChild
+			let preview = e.firstChild
+			
+			let link = preview
+			link.href = url
+			
+			let figure = preview.firstChild
 			figure.style.background = `no-repeat center/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
 			
-			link.href = url
-			link.textContent = url
+			let caption = figure.firstChild
+			caption.textContent = url
+			
+			let create = this[1]
+			let iframe
 			
 			close.onclick = (event)=>{
 				if (!iframe) return
 				close.hidden = true
 				iframe.src = 'about:blank'
-				iframe.replaceWith(figure)
+				iframe.replaceWith(preview)
 				iframe = null
 			}
 			
-			figure.onclick = (event)=>{
+			preview.onclick = (event)=>{
 				event.preventDefault()
 				if (iframe)
 					return
 				close.hidden = false
 				iframe = create()
 				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
-				figure.replaceWith(iframe)
+				preview.replaceWith(iframe)
 			}
 			
 			return e
 		}.bind([
-			𐀶`<youtube-embed><figure><figcaption><a target=_blank></a></figcaption></figure><button hidden>❌</button>`,
+			𐀶`<youtube-embed><a target=_blank><figure><figcaption></figcaption></figure></a><button hidden>❌</button>`,
 			𐀶`<iframe referrerpolicy=no-referrer allowfullscreen>`,
 		]),
 		x:	``,
