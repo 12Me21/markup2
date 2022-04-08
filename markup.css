@@ -13,6 +13,7 @@ L + ratio {}
 	--bg: var(--mainbg, white);
 	color: var(--maincolor, black);
 	background: var(--bg);
+	--image-height: 10vh;
 }
 
 /*** everything ***/
@@ -31,12 +32,15 @@ L + ratio {}
 .🍂 img, .🍂 video, .🍂 audio {
 	display: block;
 }
-.🍂 img, .🍂 video, .🍂 youtube-embed figure {
+.🍂 img, .🍂 video {
 	max-width: 100%;
-	height: 10vh;
-	max-height: 10vh;
+	height: var(--image-height); /* ↫ remove this line if you want small images to take up less space */
+	max-height: var(--image-height);
 	object-fit: scale-down;
 	border: 1px solid gray;
+}
+.🍂 img[data-loading] {
+	height: var(--image-height);
 }
 
 .🍂 youtube-embed {
@@ -50,10 +54,6 @@ L + ratio {}
 .🍂 youtube-embed button {
 	vertical-align: top;
 }
-
-/*.🍂 img[data-loading] {
-	height: 10vh;
-}*/
 
 /* ruby text doesn't work if set to white-space: pre */
 .🍂 rt {

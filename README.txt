@@ -17,6 +17,8 @@ let fragment = Markup.convert(text)
 element.append(fragment)
 ═════════════════════════════════════════════
 
+See ❲markup.css❳ for example styles
+
 🔸🔶🟧 SBS CONTENTAPI EXAMPLE 🟧🔶🔸
 
 ═[HTML]═════════════════════════════════════════════
@@ -44,7 +46,7 @@ element.classList.add('whatever')
 
 🔸🔶🟧 FUNCTIONS 🟧🔶🔸
 
-‹tree› = {type:‹String›, ?args:‹Object›, ?content:[‹branch›...]}
+‹tree› = {type:ENUM(...), ?args:‹Object›, ?content:LIST(‹branch›)}
 
 ‹branch› = ‹tree› OR ‹String› OR `true`
 
