@@ -5,17 +5,35 @@ Markup.INJECT = Markup=>{
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
-	function 𐀶([html]) {
+	
+	function 𐀶([html/*‹String›*/])/*‹Node›*/ {
 		let temp = document.createElement('template')
 		temp.innerHTML = html
 		let elem = temp.content.firstChild
 		return elem.cloneNode.bind(elem, true)
 	}
 	
+	Markup.url_scheme = {
+		"sbs:"(url) {
+			return "?"+url.pathname+url.search+url.hash
+		},
+		"no-scheme:"(url) {
+			url.protocol = "https:"
+			return url.href
+		},
+		"javascript:"(url) {
+			return "about:blank"
+		}
+	}
+	
 	function filter_url(url) {
-		if (/^ *javascript:/i.test(url))
-			return ""
-		return url
+		try {
+			let u = new URL(url, "no-scheme:/")
+			let f = Markup.url_scheme[u.protocol]
+			return f ? f(u) : u.href
+		} catch(e) {
+			return "about:blank"
+		}
 	}
 	
 	let CREATE = {
@@ -209,7 +227,7 @@ Markup.INJECT = Markup=>{
 		key: 𐀶`<kbd>`,
 	}
 	
-	function fill_branch(branch, leaves) {
+	function fill_branch(branch/*‹ParentNode›*/, leaves/*LIST(‹branch›)*/)/*ENUM(newline,block,text)*/ {
 		// children
 		let prev = 'newline'
 		let all_newline = true
