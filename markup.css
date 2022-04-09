@@ -1,8 +1,6 @@
 L + ratio {}
 
 .🍂 {
-	font-family: sans-serif; /* set your font here: */
-	
 	/* control text rendering */
 	word-break: break-word;
 	white-space: pre-wrap;
@@ -12,7 +10,6 @@ L + ratio {}
 	
 	--bg: var(--mainbg, white);
 	color: var(--maincolor, black);
-	background: var(--bg);
 	--image-height: 10vh;
 }
 
