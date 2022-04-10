@@ -535,7 +535,7 @@ Markup.INJECT = Markup=>{
 							after = true
 					}
 					if (embed) {
-						let type = urlType(url)
+						let [type, id] = urlType(url)
 						let altText = null
 						if (after) {
 							altText = ""
@@ -550,7 +550,7 @@ Markup.INJECT = Markup=>{
 								scan()
 							}
 						}
-						add_block(type, {url, alt:altText})
+						add_block(type, {url, id, alt:altText})
 					} else {
 						if (after)
 							start_block('link', {url}, {big: true, inBrackets: true})
@@ -690,7 +690,7 @@ Markup.INJECT = Markup=>{
 			let after = eatChar("[")
 			
 			if (embed) {
-				let type = urlType(url)
+				let [type, id] = urlType(url)
 				let altText = null
 				if (after) {
 					altText = ""
@@ -701,7 +701,7 @@ Markup.INJECT = Markup=>{
 					}
 					scan()
 				}
-				add_block(type, {url, alt:altText})
+				add_block(type, {url, id, alt:altText})
 			} else {
 				if (after)
 					start_block('link', {url}, {inBrackets: true})
@@ -789,12 +789,13 @@ Markup.INJECT = Markup=>{
 		// audio, video, image, youtube
 		function urlType(url) {
 			if (/(\.mp3(?!\w)|\.ogg(?!\w)|\.wav(?!\w)|#audio$)/i.test(url))
-				return "audio"
+				return ["audio"]
 			if (/(\.mp4(?!\w)|\.mkv(?!\w)|\.mov(?!\w)|#video$)/i.test(url))
-				return "video"
-			if (/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(url))
-				return "youtube"
-			return "image"
+				return ["video"]
+			let m = /^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.exec(url)
+			if (m)
+				return ["youtube", m[1]]
+			return ["image"]
 		}
 		
 		// common code for all text styling tags (bold etc.)
@@ -903,7 +904,7 @@ Markup.INJECT = Markup=>{
 			return ['simple_link', {text:contents, url: contents}]
 		},
 		youtube(args, contents) {
-			return ['youtube', {url: args['']}]
+			return ['youtube', {url: args['']}] // TODO: set id here
 		},
 		audio(args, contents) {
 			return ['audio', {url: args['']}]
