@@ -6,8 +6,6 @@ L + ratio {}
 	white-space: pre-wrap;
 	-moz-tab-size: 3.5; tab-size: 3.5;
 	
-	contain: content; /* optional */
-	
 	--bg: var(--mainbg, white);
 	color: var(--maincolor, black);
 	--image-height: 10vh;
