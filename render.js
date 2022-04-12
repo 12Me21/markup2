@@ -73,18 +73,34 @@ Markup.INJECT = Markup=>{
 		}.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
+		
 		// todo: we need a preview flag which disables these because they're very slow... invalid images are bad too.
 		audio: function({url}) {
-			let e = this()
+			let e = document.createElement('audio')
+			e.controls = true
+			e.preload = 'none'
+			
 			e.src = filter_url(url)
 			return e
-		}.bind(𐀶`<audio controls preload=none>`),
+		},
 		
 		video: function({url}) {
-			let e = this()
+			let e = document.createElement('video')
+			e.controls = true
+			e.preload = 'none'
+			e.dataset.shrink = ""
+			
 			e.src = filter_url(url)
+			// for clients that expand images/video when clicked:
+			// mousedown events don't happen on <video>,
+			// so instead I throw a fake event when the video plays
+			// todo: maybe use a custom event instead?
+			e.onplaying = (event)=>{
+				let e2 = new MouseEvent('mousedown', {bubbles:true, cancellable:true})
+				event.target.dispatchEvent(e2)
+			}
 			return e
-		}.bind(𐀶`<video controls preload=none>`),
+		},
 		
 		italic: 𐀶`<i>`,
 		
