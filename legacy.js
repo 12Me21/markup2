@@ -349,7 +349,8 @@ Markup.INJECT = Markup=>{
 				//==============
 				// -... list/hr
 			} else if (startOfLine && eatChar("-")) {
-				textBuffer = "" //hack:
+				//textBuffer = "" //hack:   /// what the heck why did i do this  *travelling to 2019 and sneaking up behind myself and pushing myself down the stairs*
+				textBuffer = textBuffer.replace(/ +$/, "")
 				//----------
 				// --... hr
 				if (eatChar("-")) {
