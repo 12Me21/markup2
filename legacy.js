@@ -11,7 +11,7 @@ Markup.INJECT = Markup=>{
 	
 	Markup.css_class = "🍂"
 	
-	Markup.convert_lang = function(text, lang='plaintext', element, options) {
+	Markup.convert_lang = function(text, lang, element, options) {
 		if (typeof text != 'string')
 			throw new TypeError("Markup.message: msg.text is not a string")
 		if (element!==undefined) {
@@ -22,7 +22,11 @@ Markup.INJECT = Markup=>{
 		
 		let tree, err
 		try {
-			let parser = Markup.langs[lang] || Markup.langs.plaintext
+			let parser
+			if ('string'==typeof lang)
+				parser = Markup.langs[lang]
+			parser = parser || Markup.langs.plaintext
+			
 			tree = parser(text)
 			return Markup.render(tree, element)
 		} catch (e) {
