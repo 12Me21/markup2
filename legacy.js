@@ -1097,6 +1097,45 @@ class Markup_Langs {constructor(){
 	}
 }}
 
+class SbsLocation {
+	// todo: way to construct this from fields
+	constructor(url_str) {
+		if (!url_str) {
+			this.type = ""
+			return
+		}
+		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(url_str)
+		if (id) {
+			this.id = decodeURIComponent(id.substr(1))
+			if (/^-?\d+$/.test(this.id))
+				this.id = +this.id
+		}
+		this.query = Object.create(null)
+		if (query_str)
+			for (let pair of query_str.match(/[^?&]+/g)) {
+				let [k, v] = pair.match(/[^=]*(?==?(.*))/)
+				this.query[decodeURIComponent(k)] = decodeURIComponent(v)
+			}
+		
+		if (fragment)
+			this.fragment = decodeURIComponent(fragment.substr(1))
+		
+		this.type = decodeURIComponent(type)
+	}
+	toString() {
+		let url = encodeURIComponent(this.type)
+		if (this.id != null)
+			url += "/"+encodeURIComponent(""+this.id)
+		let query = new URLSearchParams(this.query).toString()
+		if (query)
+			url += "?"+query
+		if (this.fragment != null)
+			url += "#"+encodeURIComponent(this.fragment)
+		
+		return url
+	}
+}
+
 let Markup = new (Object.values({[`
 🟨🟨🟨🟨
 🟨🟨🟨🟨
@@ -1108,39 +1147,6 @@ let Markup = new (Object.values({[`
 		super()
 		this.langs = new Markup_Langs()
 		this.css_class = "🍂"
-	}
-	unparse_sbs_url(location) {
-		let url = encodeURIComponent(location.type)
-		if (location.id != null)
-			url += "/"+encodeURIComponent(""+location.id)
-		let query = new URLSearchParams(location.query).toString()
-		if (query)
-			url += "?"+query
-		if (location.fragment != null)
-			url += "#"+encodeURIComponent(location.fragment)
-		
-		return url
-	}
-	parse_sbs_url(url_str) {
-		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(url_str)
-		if (id) {
-			id = decodeURIComponent(id.substr(1))
-			if (/^-?\d+$/.test(id))
-				id = +id
-		}
-		
-		let query = Object.create(null)
-		if (query_str)
-			for (let pair of query_str.substr(1).split(/[?&]/g)) {
-				let [, key, value] = /^([^=]*)=?(.*)$/.exec(pair)
-				if (key)
-					query[decodeURIComponent(key)] = decodeURIComponent(value)
-			}
-		
-		if (fragment)
-			fragment = decodeURIComponent(fragment.substr(1))
-		
-		return {type:decodeURIComponent(type), id, query, fragment}
 	}
 	parse(text, lang) {
 		"use strict"
