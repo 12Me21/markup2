@@ -1097,8 +1097,12 @@ class Markup_Langs {constructor(){
 	}
 }}
 
-
-class Markup extends Markup_Render {
+let Markup = new (Object.values({[`
+🟨🟨🟨🟨
+🟨🟨🟨🟨
+🟨🟨🟨🟨
+🟨🟨🟨🟨
+`]:class extends Markup_Render {
 	constructor() {
 		"use strict"
 		super()
@@ -1112,7 +1116,7 @@ class Markup extends Markup_Render {
 		let parser = ('string'==typeof lang && this.langs[lang]) || this.langs.plaintext
 		return parser(text)
 	}
-	convert(text, lang, element, options) {
+	convert_lang(text, lang, element, options) {
 		"use strict"
 		if (element instanceof Element)
 			element.classList.add(this.css_class)
@@ -1135,4 +1139,4 @@ class Markup extends Markup_Render {
 			return element
 		}
 	}
-}
+}})[0])
