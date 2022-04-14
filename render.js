@@ -1,4 +1,4 @@
-Markup.INJECT = Markup=>{
+class Markup_Render {constructor(){
 	"use strict"
 	
 	// This tag-function parses an HTML string, and returns a function
@@ -13,9 +13,11 @@ Markup.INJECT = Markup=>{
 		return elem.cloneNode.bind(elem, true)
 	}
 	
-	Markup.url_scheme = {
+	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
+	
+	let URL_SCHEME = {
 		"sbs:"(url) {
-			return "?"+url.pathname+url.search+url.hash
+			return "#"+url.pathname+url.search+url.hash
 		},
 		"no-scheme:"(url) {
 			url.protocol = "https:"
@@ -29,7 +31,7 @@ Markup.INJECT = Markup=>{
 	function filter_url(url) {
 		try {
 			let u = new URL(url, "no-scheme:/")
-			let f = Markup.url_scheme[u.protocol]
+			let f = URL_SCHEME[u.protocol]
 			return f ? f(u) : u.href
 		} catch(e) {
 			return "about:blank"
@@ -264,7 +266,7 @@ Markup.INJECT = Markup=>{
 					prev = fill_branch(node, leaf.content)
 				else
 					prev = 'text'
-				prev = Markup.IS_BLOCK[leaf.type] ? 'block' : prev
+				prev = IS_BLOCK[leaf.type] ? 'block' : prev
 			}
 		}
 		if (prev=='newline' && !all_newline)
@@ -273,10 +275,12 @@ Markup.INJECT = Markup=>{
 		return prev
 	}
 	
-	Markup.render = function({args, content}, node=document.createDocumentFragment()) {
+	this.render = function({args, content}, node=document.createDocumentFragment()) {
 		fill_branch(node, content)
 		return node
 	}
 	
-	Markup.create = CREATE
-}
+	this.create = CREATE
+	
+	this.url_scheme = URL_SCHEME
+}}

@@ -1,3 +1,5 @@
+let parse = new Markup_Parse().parse
+
 class Test {
 	constructor({name}, input, correct) {
 		Object.defineProperties(this, {
@@ -23,7 +25,7 @@ class Test {
 		let t, p
 		try {
 			p = performance.now()
-			t = Markup.parse(this.input)
+			t = parse(this.input)
 			this.parse_time = performance.now() - p
 		} catch (e) {
 			this.parse_time = performance.now() - p

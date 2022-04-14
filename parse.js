@@ -1,14 +1,4 @@
-const Markup = {
-	set INJECT(fn) { fn(this) },
-	parse: null,
-	render: null,
-	convert(text, node) {
-		let tree = this.parse(text)
-		return this.render(tree, node)
-	},
-}
-
-Markup.INJECT = Markup=>{
+class Markup_Parse {constructor(){
 	"use strict"
 	
 	let current, brackets
@@ -20,8 +10,6 @@ Markup.INJECT = Markup=>{
 	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 	
 
-	
-	Markup.IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
 	// elements which can be cancelled rather than being closed
 	const CAN_CANCEL = {
@@ -413,7 +401,7 @@ Markup.INJECT = Markup=>{
 			CLOSE(true)
 	}
 	
-	Markup.parse = function(text) {
+	this.parse = function(text) {
 		let tree = {type:'ROOT', tag:"", content:[]}
 		current = tree
 		brackets = 0
@@ -475,4 +463,4 @@ Markup.INJECT = Markup=>{
 	// or match paired {}s :  
 	// \tag{ ...  {heck} ... } <- closes here
 	
-}
+}}

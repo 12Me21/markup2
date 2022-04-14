@@ -1,59 +1,9 @@
-Markup.INJECT = Markup=>{
+class Markup_Langs {constructor(){
 	"use strict"
 	
-	Markup.langs = {
-		'12y2': Markup.parse,
-		'bbcode': null,
-		'12y': null,
-		'text': null, // new fallback parser
-		'plaintext': null, // legacy fallback parser (autolinker)
-	}
+	this['12y2'] = new Markup_Parse().parse
 	
-	Markup.css_class = "🍂"
-	
-	Markup.convert_lang = function(text, lang, element, options) {
-		if (typeof text != 'string')
-			throw new TypeError("Markup.message: msg.text is not a string")
-		if (element!==undefined) {
-			if (!(element instanceof Element))
-				throw new TypeError("Markup.message: element is not an Element")
-			element.classList.add(Markup.css_class)
-		}
-		
-		let tree, err
-		try {
-			let parser
-			if ('string'==typeof lang)
-				parser = Markup.langs[lang]
-			parser = parser || Markup.langs.plaintext
-			
-			tree = parser(text)
-			return Markup.render(tree, element)
-		} catch (e) {
-			err = e
-		}
-		if (!tree) {
-			console.error("Error during markup parsing:", err)
-			try {
-				return Markup.render({type:'ROOT', lang:'error', content:[
-					{type:'error', args: {error: err, text: text}, content: [text]}
-				]}, element)
-			} catch (e) {
-				err = e
-			}
-		}
-		console.error("Error during markup rendering:", err)
-		// last resort output format
-		let f = element || document.createDocumentFragment()
-		let d = document.createElement('pre')
-		d.textContent = `ERROR: ${err ? err.message : "unknown error"}`
-		d.style.border = "4px inset red"
-		f.append(d)
-		f.append(text)
-		return f
-	}
-	
-	Markup.langs.text = function(text) {
+	this.text = function(text) {
 		let tree = {type:'ROOT', lang:'text', content:[]}
 		for (let line of text.split("\n")) {
 			if (line)
@@ -290,7 +240,7 @@ Markup.INJECT = Markup=>{
 		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
 	}
 	
-	Markup.langs['12y'] = function(codeInput) {
+	this['12y'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = '12y'
 		if (!codeInput)
@@ -924,7 +874,7 @@ Markup.INJECT = Markup=>{
 		
 	}
 	
-	Markup.langs['bbcode'] = function(codeInput) {
+	this['bbcode'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = 'bbcode'
 		if (!codeInput)
@@ -1122,7 +1072,7 @@ Markup.INJECT = Markup=>{
 	}
 	
 	// "plain text" (with autolinker)
-	Markup.langs.plaintext = function(text) {
+	this.plaintext = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
 		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
@@ -1144,5 +1094,45 @@ Markup.INJECT = Markup=>{
 			root.content.push(after)
 		
 		return root
+	}
+}}
+
+
+class Markup extends Markup_Render {
+	constructor() {
+		"use strict"
+		super()
+		this.langs = new Markup_Langs()
+		this.css_class = "🍂"
+	}
+	parse(text, lang) {
+		"use strict"
+		if (typeof text != 'string')
+			throw new TypeError("Markup.parse: text is not a string")
+		let parser = ('string'==typeof lang && this.langs[lang]) || this.langs.plaintext
+		return parser(text)
+	}
+	convert(text, lang, element, options) {
+		"use strict"
+		if (element instanceof Element)
+			element.classList.add(this.css_class)
+		else if (element!=undefined)
+			throw new TypeError("Markup.message: element is not an Element")
+		
+		let tree, err
+		try {
+			tree = this.parse(text, lang)
+			element = this.render(tree, element)
+		} catch (error) {
+			if (!element)
+				element = document.createDocumentFragment()
+			let d = document.createElement('pre')
+			let type = !tree ? "PARSE ERROR" : "RENDER ERROR"
+			d.textContent = `${type}: ${error ? error.message : "unknown error"}`
+			d.style.border = "4px inset red"
+			element.append(d, text)
+		} finally {
+			return element
+		}
 	}
 }

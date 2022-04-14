@@ -28,17 +28,19 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='🍂'></div>
 
 <script>
+	markup = new Markup
+	
 	function update() {
 		let t = $input.value
 		
 		~Δ
-		let tree = Markup.langs[$lang.value](t)
+		let tree = markup.parse(t, $lang.value)
 		$time1.value = Δ
 		
 		window.tree = tree
 		
 		~Δ
-		let e = Markup.render(tree)
+		let e = markup.render(tree)
 		$time2.value = Δ
 		
 		$output.replaceChildren(e)
