@@ -1109,6 +1109,39 @@ let Markup = new (Object.values({[`
 		this.langs = new Markup_Langs()
 		this.css_class = "🍂"
 	}
+	unparse_sbs_url(location) {
+		let url = encodeURIComponent(location.type)
+		if (location.id != null)
+			url += "/"+encodeURIComponent(""+location.id)
+		let query = new URLSearchParams(location.query).toString()
+		if (query)
+			url += "?"+query
+		if (location.fragment != null)
+			url += "#"+encodeURIComponent(location.fragment)
+		
+		return url
+	}
+	parse_sbs_url(url_str) {
+		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(url_str)
+		if (id) {
+			id = decodeURIComponent(id.substr(1))
+			if (/^-?\d+$/.test(id))
+				id = +id
+		}
+		
+		let query = Object.create(null)
+		if (query_str)
+			for (let pair of query_str.substr(1).split(/[?&]/g)) {
+				let [, key, value] = /^([^=]*)=?(.*)$/.exec(pair)
+				if (key)
+					query[decodeURIComponent(key)] = decodeURIComponent(value)
+			}
+		
+		if (fragment)
+			fragment = decodeURIComponent(fragment.substr(1))
+		
+		return {type:decodeURIComponent(type), id, query, fragment}
+	}
 	parse(text, lang) {
 		"use strict"
 		if (typeof text != 'string')
