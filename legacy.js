@@ -1097,14 +1097,24 @@ class Markup_Langs {constructor(){
 	}
 }}
 
+// nicer replacement for encodeURIComponent
+// TEMP here; todo: put this somewhere!!
+function url_escape(s) {
+	s = s.replace(/[^\w$.+!*',;/:@~-]|[,.?!:]$/gu, x=>encodeURIComponent(x))
+	return s
+} // todo make sure this does infact match the url parsing we use here!
+
 class SbsLocation {
-	// todo: way to construct this from fields
-	constructor(url_str) {
-		if (!url_str) {
+	constructor(source) {
+		if (source==undefined) {
 			this.type = ""
 			return
 		}
-		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(url_str)
+		if (typeof source.type == 'string') {
+			Object.assign(this, source)
+			return
+		}
+		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(source)
 		if (id) {
 			this.id = decodeURIComponent(id.substr(1))
 			if (/^-?\d+$/.test(this.id))
@@ -1123,14 +1133,23 @@ class SbsLocation {
 		this.type = decodeURIComponent(type)
 	}
 	toString() {
-		let url = encodeURIComponent(this.type)
+		let url = url_escape(this.type)
 		if (this.id != null)
-			url += "/"+encodeURIComponent(""+this.id)
-		let query = new URLSearchParams(this.query).toString()
-		if (query)
-			url += "?"+query
+			url += "/"+url_escape(""+this.id)
+		let params = []
+		for (let key in this.query) {
+			let value = this.query[key]
+			key = url_escape(key)
+			if (value=="")
+				params.push(key)
+			else
+				params.push(key+"="+url_escape(value))
+		}
+		if (params.length)
+			url += "?"+params.join("&")
+		
 		if (this.fragment != null)
-			url += "#"+encodeURIComponent(this.fragment)
+			url += "#"+url_escape(this.fragment)
 		
 		return url
 	}
