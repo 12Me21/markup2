@@ -1097,6 +1097,8 @@ class Markup_Langs {constructor(){
 	}
 }}
 
+//let urlsegments = ["/", "?&", "#"]
+
 class SbsLocation {
 	constructor(source) {
 		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(source)
@@ -1116,20 +1118,26 @@ class SbsLocation {
 		
 	}
 	toString() {
-		function esc(str, ) {
+		function esc(str, regex) {
 			// allow: \w - . ! * ' ~ $ + , : ; @
 			// technically we could be more lenient depending on which part of the url it is
 			// ex: the fragment can contain / and ? etc.
 			// maybe do this laater...
-			return encodeURI(str).replace(/[?=&#()]+/g, escape).replace(/[/]/g, "%2F")
+			str = encodeURI(str).replace(/[)(]+/g, escape)
+			if (regex)
+				str = str.replace(regex, encodeURIComponent)
+			return str
 		} // todo make sure this does infact match the url parsing we use here!
 		
-		let url = esc(this.type)
+		let url = esc(this.type, /[/?&#]+/g)
 		
 		if (this.id != null)
-			url += "/"+esc(this.id)
+			url += "/"+esc(this.id, /[/?&#]+/g)
 		
-		let query = Object.entries(this.query).map(([k,v])=>v ? esc(k)+"="+esc(v) : esc(k)).join("&")
+		let query = Object.entries(this.query).map(([k,v])=>{
+			k = esc(k, /[?=&#]+/g)
+			return v ? k+"="+esc(v, /[?&#]+/g) : k
+		}).join("&")
 		if (query)
 			url += "?"+query
 		
