@@ -1097,59 +1097,47 @@ class Markup_Langs {constructor(){
 	}
 }}
 
-// nicer replacement for encodeURIComponent
-// TEMP here; todo: put this somewhere!!
-function url_escape(s) {
-	s = s.replace(/[^\w$.+!*',;/:@~-]|[,.?!:]$/gu, x=>encodeURIComponent(x))
-	return s
-} // todo make sure this does infact match the url parsing we use here!
-
 class SbsLocation {
 	constructor(source) {
-		if (source==undefined) {
-			this.type = ""
-			return
-		}
-		if (typeof source.type == 'string') {
-			Object.assign(this, source)
-			return
-		}
 		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(source)
+		
+		this.type = decodeURIComponent(type)
+		
 		if (id) {
 			this.id = decodeURIComponent(id.substr(1))
 			if (/^-?\d+$/.test(this.id))
 				this.id = +this.id
 		}
-		this.query = Object.create(null)
-		if (query_str)
-			for (let pair of query_str.match(/[^?&]+/g)) {
-				let [k, v] = pair.match(/[^=]*(?==?(.*))/)
-				this.query[decodeURIComponent(k)] = decodeURIComponent(v)
-			}
+		
+		this.query = query_str ? Object.fromEntries(query_str.match(/[^?&]+/g).map(pair=>pair.match(/[^=]*(?==?(.*))/).map(decodeURIComponent))) : {}
 		
 		if (fragment)
 			this.fragment = decodeURIComponent(fragment.substr(1))
 		
-		this.type = decodeURIComponent(type)
 	}
 	toString() {
-		let url = url_escape(this.type)
+		function esc(str, ) {
+			// allow: \w - . ! * ' ~ $ + , : ; @
+			// technically we could be more lenient depending on which part of the url it is
+			// ex: the fragment can contain / and ? etc.
+			// maybe do this laater...
+			return encodeURI(str).replace(/[?=&#()]+/g, escape).replace(/[/]/g, "%2F")
+		} // todo make sure this does infact match the url parsing we use here!
+		
+		let url = esc(this.type)
+		
 		if (this.id != null)
-			url += "/"+url_escape(""+this.id)
-		let params = []
-		for (let key in this.query) {
-			let value = this.query[key]
-			key = url_escape(key)
-			if (value=="")
-				params.push(key)
-			else
-				params.push(key+"="+url_escape(value))
-		}
-		if (params.length)
-			url += "?"+params.join("&")
+			url += "/"+esc(this.id)
+		
+		let query = Object.entries(this.query).map(([k,v])=>v ? esc(k)+"="+esc(v) : esc(k)).join("&")
+		if (query)
+			url += "?"+query
 		
 		if (this.fragment != null)
-			url += "#"+url_escape(this.fragment)
+			url += "#"+esc(this.fragment)
+		
+		// don't allow , ! : . as final char
+		url = url.replace(/[,!:.]$/, x=>"%"+x.charCodeAt().toString(16))
 		
 		return url
 	}
