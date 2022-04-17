@@ -5,6 +5,7 @@
 <script src=parse.js></script>
 <script src=render.js></script>
 <script src=legacy.js></script>
+<script src=helpers.js></script>
 
 <link rel=stylesheet href=markup.css>
 <style>
@@ -28,19 +29,17 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='🍂'></div>
 
 <script>
-	markup = new Markup
-	
 	function update() {
 		let t = $input.value
 		
 		~Δ
-		let tree = markup.parse(t, $lang.value)
+		let tree = Markup.parse(t, $lang.value)
 		$time1.value = Δ
 		
 		window.tree = tree
 		
 		~Δ
-		let e = markup.render(tree)
+		let e = Markup.render(tree)
 		$time2.value = Δ
 		
 		$output.replaceChildren(e)

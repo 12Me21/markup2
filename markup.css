@@ -8,7 +8,9 @@ L + ratio {}
 	
 	--bg: var(--mainbg, white);
 	color: var(--maincolor, black);
-	--image-height: 10vh;
+	--image-max-height: 10vh;
+	--image-height: var(--image-max-height);
+	/* unset --image-height if you want small images to shrink */
 }
 
 /*** everything ***/
@@ -27,23 +29,21 @@ L + ratio {}
 .🍂 img, .🍂 video, .🍂 audio {
 	display: block;
 }
-.🍂 img, .🍂 video {
+.🍂 img, .🍂 video, .🍂 youtube-embed figure {
 	max-width: 100%;
-	height: var(--image-height); /* ↫ remove this line if you want small images to take up less space */
-	max-height: var(--image-height);
+	height: var(--image-height);
+	max-height: var(--image-max-height);
 	object-fit: scale-down;
 	border: 1px solid gray;
 }
 .🍂 img[data-loading] {
-	height: var(--image-height);
+	height: var(--image-max-height);
 }
 
 .🍂 youtube-embed {
 	display: table;
 }
 .🍂 youtube-embed figure {
-	width: 300px;
-	height: 150px;
 	background-size: cover;
 }
 .🍂 youtube-embed button {

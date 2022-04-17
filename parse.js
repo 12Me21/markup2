@@ -12,13 +12,9 @@ class Markup_Parse {constructor(){
 
 	
 	// elements which can be cancelled rather than being closed
-	const CAN_CANCEL = {
-		style:1, table_cell:1
-	}
+	const CAN_CANCEL = { style:1, table_cell:1 }
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = {
-		ROOT:1, table_cell:1
-	}
+	const SURVIVE_EOL = { ROOT:1, table_cell:1 }
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
@@ -309,12 +305,22 @@ class Markup_Parse {constructor(){
 		if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
 			return ['video']
 		// youtube
-		let m = /^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.exec(url) // ew
-		if (m)
-			return ['youtube', {id: m[1], url: url}] // todo: accept a [start-end] times arg on youtube tag
+		let m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)
+		if (m) {
+			let [, id, query] = m
+			// todo: use query here to extract start/end times
+			// also, accept [start-end] args maybe?
+			return ['youtube', {id, url}]
+		}
 		// default
 		return ['image']
 	}
+	// youtu.be/([\w-]+)
+	// 
+	// (?:www[.])?youtu[.]?be(?:[.]com)
+	// www.youtu.be
+	// www.youtube.com
+	// youtube.com
 	// ugly...
 	function match_args(rargs, defs) {
 		for (let arg of rargs)
