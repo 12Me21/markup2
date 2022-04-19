@@ -98,7 +98,7 @@ class Markup_Render {constructor(){
 			// so instead I throw a fake event when the video plays
 			// todo: maybe use a custom event instead?
 			e.onplaying = (event)=>{
-				let e2 = new MouseEvent('mousedown', {bubbles:true, cancellable:true})
+				let e2 = new Event('videoclicked', {bubbles:true, cancellable:true})
 				event.target.dispatchEvent(e2)
 			}
 			return e
