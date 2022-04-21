@@ -1,4 +1,4 @@
-class Markup_Render {constructor(){
+class Markup_Render_Html {constructor(){
 	"use strict"
 	
 	// This tag-function parses an HTML string, and returns a function

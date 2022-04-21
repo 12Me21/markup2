@@ -1,4 +1,4 @@
-let parse = new Markup_Parse().parse
+let PARSER = new Markup_Parse_12y2()
 
 class Test {
 	constructor({name}, input, correct) {
@@ -25,7 +25,7 @@ class Test {
 		let t, p
 		try {
 			p = performance.now()
-			t = parse(this.input)
+			t = PARSER.parse(this.input)
 			this.parse_time = performance.now() - p
 		} catch (e) {
 			this.parse_time = performance.now() - p

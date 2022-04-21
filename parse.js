@@ -1,4 +1,4 @@
-class Markup_Parse {constructor(){
+class Markup_Parse_12y2 {constructor(){
 	"use strict"
 	
 	let current, brackets

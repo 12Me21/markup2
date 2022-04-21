@@ -4,8 +4,7 @@
 
 <script src=parse.js></script>
 <script src=render.js></script>
-<script src=legacy.js></script>
-<script src=helpers.js></script>
+<script src=langs.js></script>
 
 <link rel=stylesheet href=markup.css>
 <style>
@@ -29,17 +28,21 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='🍂'></div>
 
 <script>
+	let parse12y2 = new Markup_Parse_12y2()
+	let langs = new Markup_Langs({'12y2': parse12y2.parse})
+	let render = new Markup_Render_Html()
+	
 	function update() {
 		let t = $input.value
 		
 		~Δ
-		let tree = Markup.parse(t, $lang.value)
+		let tree = langs.parse(t, $lang.value)
 		$time1.value = Δ
 		
 		window.tree = tree
 		
 		~Δ
-		let e = Markup.render(tree)
+		let e = render.render(tree)
 		$time2.value = Δ
 		
 		$output.replaceChildren(e)

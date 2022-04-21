@@ -53,6 +53,9 @@
 </div>
 
 <script>
+	let parser = new Markup_Parse_12y2()
+	let renderer = new Markup_Render_Html()
+	
 	$show_entries.value = localStorage.tests || `🟩 text
 abc
 🟩 {"type":"ROOT","tag":"","content":["abc"]}`
@@ -61,8 +64,8 @@ abc
 	run()
 	
 	$input.oninput = function() {
-		let tree = Markup.parse(this.value)
-		let e = Markup.render(tree)
+		let tree = parser.parse(this.value)
+		let e = renderer.render(tree)
 		$preview.replaceChildren(e)
 	}
 	
@@ -84,7 +87,7 @@ abc
 		// todo: insert the output results element right away
 		
 		input = input.replace(/🟩/g, "")
-		let tree = Markup.parse(input)
+		let tree = parser.parse(input)
 		JSON.stringify(tree)
 		
 		let t = new Test({name: title}, input, tree)
