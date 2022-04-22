@@ -6,4 +6,5 @@ type Parsers = {
 
 export class Markup_Langs {
 	constructor(langs: Parsers);
+	parse(text: string, lang: string): MarkupAST;
 }
