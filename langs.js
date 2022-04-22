@@ -1,4 +1,4 @@
-class Markup_Langs {
+export class Markup_Langs {
 	constructor(langs) {
 		"use strict"
 		
