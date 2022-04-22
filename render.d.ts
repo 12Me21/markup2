@@ -1,6 +1,8 @@
+import type { MarkupAST } from "./langs";
+
 type RenderArgs = {
 	args: any,
-	content: string,
+	content: MarkupAST,
 }
 
 export class Markup_Render_Html {
