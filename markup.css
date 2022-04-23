@@ -44,10 +44,25 @@ L + ratio {}
 	display: table;
 }
 .🍂 youtube-embed figure {
+	overflow: hidden;
 	background-size: cover;
+}
+.🍂 youtube-embed iframe {
+	width: 480px;
+	height: 270px;
+	max-height: unset;
+	max-width: 100%;
+	display: inline-block;
+	overflow: hidden;
 }
 .🍂 youtube-embed button {
 	vertical-align: top;
+}
+.🍂 youtube-embed figcaption {
+	color: white;
+	background-color: rgba(0,0,0,0.3);
+	padding: 0 0.2em;
+	display: inline-block;
 }
 
 /* ruby text doesn't work if set to white-space: pre */

@@ -36,6 +36,14 @@ class Markup_Render_Dom {constructor(){
 		}
 	}
 	
+	function get_youtube(id, callback) {
+		let x = new XMLHttpRequest()
+		x.responseType = 'json'
+		x.open('GET', `https://www.youtube.com/oembed?url=https%3A//youtube.com/watch%3Fv%3D${id}&format=json`)
+		x.onload = ()=>{callback(x.response)}
+		x.send()
+	}
+	
 	let CREATE = {
 		newline: 𐀶`<br>`,
 		
@@ -148,7 +156,7 @@ class Markup_Render_Dom {constructor(){
 			link.href = url
 			
 			let figure = preview.firstChild
-			figure.style.background = `no-repeat center/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
+			figure.style.background = `no-repeat left/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
 			
 			let caption = figure.firstChild
 			caption.textContent = url
@@ -173,6 +181,10 @@ class Markup_Render_Dom {constructor(){
 				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
 				preview.replaceWith(iframe)
 			}
+			
+			get_youtube(id, data=>{
+				caption.textContent = data.title+"\n"+data.author_name
+			})
 			
 			return e
 		}.bind([
