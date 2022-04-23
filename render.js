@@ -242,34 +242,21 @@ class Markup_Render_Dom {constructor(){
 		key: 𐀶`<kbd>`,
 	}
 	
-	function fill_branch(branch/*‹ParentNode›*/, leaves/*LIST(‹branch›)*/) {
-		// children
-		//let prev = 'newline'
-		//let all_newline = true
+	function fill_branch(branch, leaves) {
 		for (let leaf of leaves) {
-			if (typeof leaf == 'string') {
-				//all_newline = false
-				branch.append(leaf)
-				//prev = 'text'
-			} else if (leaf === true) {
-				//if (prev!='block')
-				branch.append(CREATE.newline())
-				//prev = 'newline'
+			let item
+			if ('string'==typeof leaf) {
+				item = leaf
+			} else if (leaf===true) {
+				item = CREATE.newline()
 			} else {
-				//all_newline = false
 				let node = CREATE[leaf.type](leaf.args)
-				branch.append(node.getRootNode())
 				if (leaf.content)
-					/*prev = */fill_branch(node, leaf.content)
-				//else
-				//	prev = 'text'
-				//prev = IS_BLOCK[leaf.type] ? 'block' : prev
+					fill_branch(node, leaf.content)
+				item = node.getRootNode()
 			}
+			branch.append(item)
 		}
-		//if (prev=='newline' && !all_newline)
-			//branch.append(CREATE.newline())
-		
-		//return prev
 	}
 	
 	this.render = function({args, content}, node=document.createDocumentFragment()) {
