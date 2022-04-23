@@ -1,9 +1,10 @@
 class Markup_Parse_12y2 {constructor(){
 	"use strict"
 	
+	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
-	// maybe instead of this separate parse step, we should just do something like
+	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
 	// have either
 	// - custom post-processing regex for each token (ex /[\\](\w+)(<args>)?({)?/ )
@@ -280,10 +281,9 @@ class Markup_Parse_12y2 {constructor(){
 	function parse_args(arglist) {
 		if (!arglist) // note: tests for undefined (\tag) AND "" (\tag[])
 			return null_args
-		
 		let list = []
 		list.named = {}
-		for (let arg of arglist.split(";")) { ///^(?:([^;=]*)=)?([^;]*)(?:$|;)/gy
+		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
 			// value OR =value
 			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
