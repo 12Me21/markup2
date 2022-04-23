@@ -374,56 +374,58 @@ class Markup_Parse_12y2 {constructor(){
 		current = current.parent
 		return o
 	}
-	function add1(item) {
-		current.content.push(item)
-	}
-	function add2(block) {
-		if (current.prev=='block' && block.content[0]===true)
-			block.content
-		current.content.push(...block.content)
-		current.prev = block.prev
+	// sketchy...
+	function merge(o) {
+		if (o.tag) {
+			current.content.push(o.tag)
+			current.prev = 'text'
+		} else if (current.prev=='o' && o.content[0]===true)
+			o.content.shift() // strip newline
+		
+		current.content.push(...o.content)
+		current.prev = o.prev
 	}
 	// complete current block
 	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
 		
-		if (cancel && !o.body && CAN_CANCEL[o.type]) {
-			// if we just cancelled a table cell,
-			if (o.type=='table_cell') {
-				// close table row (or cancel if empty)
-				current.content.length ? CLOSE() : pop() // row (don't need TEXT() - table rows never have .tag set)
-				// close table (or cancel if empty)
-				current.content.length ? CLOSE() : TEXT(pop().tag) // table
-			}
-			TEXT(o.tag) // todo: merge with surrounding text nodes?
-			// push the contents of the block
-			add2(o)
+		if (o.type=='table_cell' && cancel && !o.body) {
+			// close table row (cancel if empty)
+			current.content.length ? CLOSE() : pop()
+			// close table (cancel if empty)
+			current.content.length ? CLOSE() : TEXT(pop().tag)
+			merge(o)
+		} else if (o.type=='style' && cancel && !o.body) {
+			merge(o)
 		} else if (o.type=='null_env') {
-			add2(o)
+			o.tag = null
+			merge(o)
 		} else {
+			// otherwise, we have a normal block:
 			if (o.prev=='newline')
 				o.content.push(true)
 			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
-			add1(o)
+			current.content.push(o)
 			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
+			return
 		}
 	}
 	// push text
 	function TEXT(text) {
 		if (text) {
+			current.content.push(text) // todo: merge with surrounding textnodes?
 			current.prev = 'text'
-			add1(text)
 		}
 	}
 	// push empty tag
 	function TAG(type, tag, args) {
+		current.content.push({type, tag, args})
 		current.prev = IS_BLOCK[type] ? 'block' : 'text'
-		add1({type, tag, args})
 	}
 	function NEWLINE() {
 		if (current.prev != 'block')
-			add1(true)
+			current.content.push(true)
 		if (current.prev != 'all_newline')
 			current.prev = 'newline'
 	}
@@ -485,7 +487,7 @@ class Markup_Parse_12y2 {constructor(){
 		while (current.type!='ROOT')
 			CLOSE(true)
 		if (current.prev=='newline')
-			add1(true)
+			current.content.push(true)
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
