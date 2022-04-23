@@ -30,7 +30,7 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <script>
 	let parse12y2 = new Markup_Parse_12y2()
 	let langs = new Markup_Langs({'12y2': parse12y2.parse})
-	let render = new Markup_Render_Html()
+	let render = new Markup_Render_Dom()
 	
 	function update() {
 		let t = $input.value
@@ -43,9 +43,10 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 		
 		~Δ
 		let e = render.render(tree)
+		$output.replaceChildren(e)
 		$time2.value = Δ
 		
-		$output.replaceChildren(e)
+		
 	}
 	
 	$input.oninput = update
