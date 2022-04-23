@@ -11,10 +11,9 @@ class Markup_Parse_12y2 {constructor(){
 	
 
 	
-	// elements which can be cancelled rather than being closed
-	const CAN_CANCEL = { style:1, table_cell:1 }
+	const CAN_CANCEL = {style:1, table_cell:1}
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = { ROOT:1, table_cell:1 }
+	const SURVIVE_EOL = {ROOT:1, table_cell:1}
 	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1}
 	
 	// argtype
@@ -375,32 +374,30 @@ class Markup_Parse_12y2 {constructor(){
 		return o
 	}
 	// sketchy...
-	function merge(o) {
-		if (o.tag) {
-			current.content.push(o.tag)
-			current.prev = 'text'
-		} else if (current.prev=='o' && o.content[0]===true)
-			o.content.shift() // strip newline
+	function merge(content, prev, tag) {
+		if (tag)
+			current.content.push(tag)
+		else if (current.prev=='block' && content[0]===true)
+			content.shift() // strip newline
 		
-		current.content.push(...o.content)
-		current.prev = o.prev
+		current.content.push(...content)
+		current.prev = prev
 	}
 	// complete current block
 	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
 		
-		if (o.type=='table_cell' && cancel && !o.body) {
-			// close table row (cancel if empty)
-			current.content.length ? CLOSE() : pop()
-			// close table (cancel if empty)
-			current.content.length ? CLOSE() : TEXT(pop().tag)
-			merge(o)
-		} else if (o.type=='style' && cancel && !o.body) {
-			merge(o)
+		if (cancel && !o.body && CAN_CANCEL[o.type]) {
+			if (o.type=='table_cell') {
+				// close table row (cancel if empty)
+				current.content.length ? CLOSE() : pop()
+				// close table (cancel if empty)
+				current.content.length ? CLOSE() : TEXT(pop().tag)
+			}
+			merge(o.content, o.prev, o.tag)
 		} else if (o.type=='null_env') {
-			o.tag = null
-			merge(o)
+			merge(o.content, o.prev)
 		} else {
 			// otherwise, we have a normal block:
 			if (o.prev=='newline')
@@ -408,7 +405,6 @@ class Markup_Parse_12y2 {constructor(){
 			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
 			current.content.push(o)
 			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
-			return
 		}
 	}
 	// push text
