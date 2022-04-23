@@ -1,7 +1,7 @@
 let Markup = {
 	css_class: "🍂",
 	langs: new Markup_Langs({'12y2': new Markup_Parse_12y2().parse}),
-	renderer: new Markup_Render_Html(),
+	renderer: new Markup_Render_Dom(),
 	convert_lang(text, lang, element, options) {
 		if (element instanceof Element)
 			element.classList.add(this.css_class)
