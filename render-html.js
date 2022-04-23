@@ -1,8 +1,6 @@
 class Markup_Render_Html {constructor(){
 	"use strict"
 	
-	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
-	
 	let URL_SCHEME = {
 		"sbs:"(url) {
 			return "#"+url.pathname+url.search+url.hash
@@ -156,40 +154,26 @@ class Markup_Render_Html {constructor(){
 		key(a, inner_html) { return "<kbd>"+inner_html+"</kbd>" },
 	}
 	
-	function fill_branch(leaves) {
+	function draw_branch(leaves) {
 		let html = ""
 		// children
-		let prev = 'newline'
-		let all_newline = true
 		for (let leaf of leaves) {
-			if (typeof leaf == 'string') {
-				all_newline = false
-				html += leaf.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")
-				prev = 'text'
-			} else if (leaf === true) {
-				if (prev!='block')
-					html += CREATE.newline()
-				prev = 'newline'
+			let str
+			if ('string'==typeof leaf) {
+				str = leaf.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")
+			} else if (leaf===true) {
+				str = CREATE.newline()
 			} else {
-				all_newline = false
-				let inner_html = ""
-				if (leaf.content)
-					[prev, inner_html] = fill_branch(leaf.content)
-				else
-					prev = 'text'
-				html += CREATE[leaf.type](leaf.args, inner_html)
-				prev = IS_BLOCK[leaf.type] ? 'block' : prev
+				let inner_html = leaf.content ? draw_branch(leaf.content) : ""
+				str = CREATE[leaf.type](leaf.args, inner_html)
 			}
+			html += str
 		}
-		if (prev=='newline' && !all_newline)
-			html += CREATE.newline()
-		
-		return [prev, html]
+		return html
 	}
 	
 	this.render = function({args, content}) {
-		let [prev, html] = fill_branch(content)
-		return html
+		return draw_branch(content)
 	}
 	
 	this.create = CREATE
