@@ -72,7 +72,7 @@ export class Markup_Render_Html {constructor(){
 			if (width) e.width = width
 			if (height) e.height = height
 			return e
-		}.bind(𐀶`<img data-loading decoding=async loading=lazy data-shrink tabindex=-1>`),
+		}.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
 		
