@@ -15,7 +15,7 @@ class Markup_Parse_12y2 {constructor(){
 	const CAN_CANCEL = { style:1, table_cell:1 }
 	// elements which can survive an eol (without a body)
 	const SURVIVE_EOL = { ROOT:1, table_cell:1 }
-	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
+	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1}
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
@@ -147,6 +147,8 @@ class Markup_Parse_12y2 {constructor(){
 			// only runs if at least 1 element has a body, so this won't fail:
 			while (!current.body)
 				CLOSE(true)
+			if (current.type=='invalid')
+				TEXT("}")
 			return CLOSE()
 		}},
 	],[// 💎 NULL ENV 💎 (maybe can be in the envs table now? todo)
@@ -368,8 +370,6 @@ class Markup_Parse_12y2 {constructor(){
 	function pop() {
 		if (current.body)
 			brackets--
-		if (current.prev=='newline')
-			current.content.push(true)
 		let o = current
 		current = current.parent
 		return o
@@ -377,10 +377,11 @@ class Markup_Parse_12y2 {constructor(){
 	function add1(item) {
 		current.content.push(item)
 	}
-	function add2(list) {
-		if (current.prev=='block' && list[0]===true)
-			list.shift()
-		current.content.push(...list)
+	function add2(block) {
+		if (current.prev=='block' && block.content[0]===true)
+			block.content
+		current.content.push(...block.content)
+		current.prev = block.prev
 	}
 	// complete current block
 	function CLOSE(cancel) {
@@ -397,12 +398,12 @@ class Markup_Parse_12y2 {constructor(){
 			}
 			TEXT(o.tag) // todo: merge with surrounding text nodes?
 			// push the contents of the block
-			add2(o.content)
-			current.prev = o.prev
+			add2(o)
 		} else if (o.type=='null_env') {
-			add2(o.content)
-			current.prev = o.prev
+			add2(o)
 		} else {
+			if (o.prev=='newline')
+				o.content.push(true)
 			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
 			add1(o)
 			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
@@ -417,7 +418,7 @@ class Markup_Parse_12y2 {constructor(){
 	}
 	// push empty tag
 	function TAG(type, tag, args) {
-		current.prev = IS_BLOCK[tag] ? 'block' : 'text'
+		current.prev = IS_BLOCK[type] ? 'block' : 'text'
 		add1({type, tag, args})
 	}
 	function NEWLINE() {
@@ -483,7 +484,8 @@ class Markup_Parse_12y2 {constructor(){
 		
 		while (current.type!='ROOT')
 			CLOSE(true)
-		pop() // mostly to set newline
+		if (current.prev=='newline')
+			add1(true)
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}

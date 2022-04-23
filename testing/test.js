@@ -1,7 +1,46 @@
 let PARSER = new Markup_Parse_12y2()
 
+const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
+
+function fill_branch(node) {
+	let content = []
+	// children
+	let prev = 'all_newline'
+	for (let leaf of node.content) {
+		if (typeof leaf == 'string') {
+			content.push(leaf)
+			prev = 'text'
+		} else if (leaf === true) {
+			if (prev!='block')
+				content.push(leaf)
+			if (prev!='all_newline')
+				prev = 'newline'
+		} else {
+			if (leaf.content)
+				prev = fill_branch(leaf)
+			else
+				prev = 'text'
+			content.push(leaf)
+			prev = IS_BLOCK[leaf.type] ? 'block' : prev
+		}
+	}
+	if (prev=='newline')
+		content.push(true)
+	
+	node.content = content
+	
+	return prev
+}
+
+function fix_tree(tree) {
+	fill_branch(tree)
+}
+
+
 class Test {
 	constructor({name}, input, correct) {
+		fix_tree(correct)
+		
 		Object.defineProperties(this, {
 			name: {value: name},
 			input: {value: input},
