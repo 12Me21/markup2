@@ -1,4 +1,4 @@
-class Markup_Render_Html {constructor(){
+class Markup_Render_Dom {constructor(){
 	"use strict"
 	
 	// This tag-function parses an HTML string, and returns a function
@@ -12,8 +12,6 @@ class Markup_Render_Html {constructor(){
 		let elem = temp.content.firstChild
 		return elem.cloneNode.bind(elem, true)
 	}
-	
-	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
 	let URL_SCHEME = {
 		"sbs:"(url) {
@@ -96,7 +94,6 @@ class Markup_Render_Html {constructor(){
 			// for clients that expand images/video when clicked:
 			// mousedown events don't happen on <video>,
 			// so instead I throw a fake event when the video plays
-			// todo: maybe use a custom event instead?
 			e.onplaying = (event)=>{
 				let e2 = new Event('videoclicked', {bubbles:true, cancellable:true})
 				event.target.dispatchEvent(e2)
@@ -245,34 +242,34 @@ class Markup_Render_Html {constructor(){
 		key: 𐀶`<kbd>`,
 	}
 	
-	function fill_branch(branch/*‹ParentNode›*/, leaves/*LIST(‹branch›)*/)/*ENUM(newline,block,text)*/ {
+	function fill_branch(branch/*‹ParentNode›*/, leaves/*LIST(‹branch›)*/) {
 		// children
-		let prev = 'newline'
-		let all_newline = true
+		//let prev = 'newline'
+		//let all_newline = true
 		for (let leaf of leaves) {
 			if (typeof leaf == 'string') {
-				all_newline = false
+				//all_newline = false
 				branch.append(leaf)
-				prev = 'text'
+				//prev = 'text'
 			} else if (leaf === true) {
-				if (prev!='block')
-					branch.append(CREATE.newline())
-				prev = 'newline'
+				//if (prev!='block')
+				branch.append(CREATE.newline())
+				//prev = 'newline'
 			} else {
-				all_newline = false
+				//all_newline = false
 				let node = CREATE[leaf.type](leaf.args)
 				branch.append(node.getRootNode())
 				if (leaf.content)
-					prev = fill_branch(node, leaf.content)
-				else
-					prev = 'text'
-				prev = IS_BLOCK[leaf.type] ? 'block' : prev
+					/*prev = */fill_branch(node, leaf.content)
+				//else
+				//	prev = 'text'
+				//prev = IS_BLOCK[leaf.type] ? 'block' : prev
 			}
 		}
-		if (prev=='newline' && !all_newline)
-			branch.append(CREATE.newline())
+		//if (prev=='newline' && !all_newline)
+			//branch.append(CREATE.newline())
 		
-		return prev
+		//return prev
 	}
 	
 	this.render = function({args, content}, node=document.createDocumentFragment()) {

@@ -15,6 +15,7 @@ class Markup_Parse_12y2 {constructor(){
 	const CAN_CANCEL = { style:1, table_cell:1 }
 	// elements which can survive an eol (without a body)
 	const SURVIVE_EOL = { ROOT:1, table_cell:1 }
+	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1}
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
@@ -92,7 +93,7 @@ class Markup_Parse_12y2 {constructor(){
 		{newline:true, do(tag) {
 			while (!current.body && !SURVIVE_EOL[current.type])
 				CLOSE(true)
-			return TEXT(true)
+			return NEWLINE()
 		}},
 	],[// 💎 HEADING 💎
 		/^#{1,4}/,
@@ -157,7 +158,7 @@ class Markup_Parse_12y2 {constructor(){
 		/[\\][^]/, //todo: match surrogate pairs
 		{do(tag) {
 			if (tag=="\\\n")
-				return TEXT(true)
+				return NEWLINE()
 			return TEXT(tag.substr(1))
 		}},
 	],[// 💎 QUOTE 💎
@@ -355,7 +356,7 @@ class Markup_Parse_12y2 {constructor(){
 		// todo: anything with a body doesn't need a tag, i think
 		// since body items can never be cancelled.
 		// so perhaps we can specify the body flag by setting tag = true
-		current = {type, tag, content: [], parent: current}
+		current = {type, tag, content: [], parent: current, prev: 'all_newline'}
 		if (body) {
 			brackets++
 			current.body = true
@@ -367,14 +368,25 @@ class Markup_Parse_12y2 {constructor(){
 	function pop() {
 		if (current.body)
 			brackets--
+		if (current.prev=='newline')
+			current.content.push(true)
 		let o = current
 		current = current.parent
 		return o
+	}
+	function add1(item) {
+		current.content.push(item)
+	}
+	function add2(list) {
+		if (current.prev=='block' && list[0]===true)
+			list.shift()
+		current.content.push(...list)
 	}
 	// complete current block
 	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
+		
 		if (cancel && !o.body && CAN_CANCEL[o.type]) {
 			// if we just cancelled a table cell,
 			if (o.type=='table_cell') {
@@ -385,22 +397,34 @@ class Markup_Parse_12y2 {constructor(){
 			}
 			TEXT(o.tag) // todo: merge with surrounding text nodes?
 			// push the contents of the block
-			current.content.push(...o.content)
+			add2(o.content)
+			current.prev = o.prev
 		} else if (o.type=='null_env') {
-			current.content.push(...o.content)
+			add2(o.content)
+			current.prev = o.prev
 		} else {
-			delete o.parent // remove cyclical reference before adding to tree
-			current.content.push(o)
+			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
+			add1(o)
+			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
 		}
 	}
 	// push text
 	function TEXT(text) {
-		if (text)
-			current.content.push(text)
+		if (text) {
+			current.prev = 'text'
+			add1(text)
+		}
 	}
 	// push empty tag
 	function TAG(type, tag, args) {
-		current.content.push({type, tag, args})
+		current.prev = IS_BLOCK[tag] ? 'block' : 'text'
+		add1({type, tag, args})
+	}
+	function NEWLINE() {
+		if (current.prev != 'block')
+			add1(true)
+		if (current.prev != 'all_newline')
+			current.prev = 'newline'
 	}
 	function kill_weak() {
 		while (current.type=='style')
@@ -408,7 +432,7 @@ class Markup_Parse_12y2 {constructor(){
 	}
 	
 	this.parse = function(text) {
-		let tree = {type:'ROOT', tag:"", content:[]}
+		let tree = {type:'ROOT', tag:"", content:[], prev:'all_newline'}
 		current = tree
 		brackets = 0
 		
@@ -459,6 +483,8 @@ class Markup_Parse_12y2 {constructor(){
 		
 		while (current.type!='ROOT')
 			CLOSE(true)
+		pop() // mostly to set newline
+		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
@@ -470,3 +496,5 @@ class Markup_Parse_12y2 {constructor(){
 	// \tag{ ...  {heck} ... } <- closes here
 	
 }}
+
+if ('object'==typeof module) module.exports = Markup_Parse_12y2
