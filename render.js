@@ -147,7 +147,7 @@ class Markup_Render_Dom {constructor(){
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
 		
 		youtube: function({id, url}) {
-			let e = this[0]()
+			let e = this()
 			
 			let close = e.lastChild
 			let preview = e.firstChild
@@ -161,7 +161,6 @@ class Markup_Render_Dom {constructor(){
 			let caption = figure.firstChild
 			caption.textContent = url
 			
-			let create = this[1]
 			let iframe
 			
 			close.onclick = (event)=>{
@@ -177,7 +176,9 @@ class Markup_Render_Dom {constructor(){
 				if (iframe)
 					return
 				close.hidden = false
-				iframe = create()
+				iframe = document.createElement('iframe')
+				iframe.setAttribute('allowfullscreen', "")
+				iframe.setAttribute('referrerpolicy', "no-referrer")
 				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
 				preview.replaceWith(iframe)
 			}
@@ -187,11 +188,9 @@ class Markup_Render_Dom {constructor(){
 			})
 			
 			return e
-		}.bind([
+		}.bind(
 			𐀶`<youtube-embed><a target=_blank><figure><figcaption></figcaption></figure></a><button hidden>❌</button>`,
-			𐀶`<iframe referrerpolicy=no-referrer allowfullscreen>`,
-		]),
-		x:	``,
+		),
 		
 		link: function({url}) {
 			let e = this()
