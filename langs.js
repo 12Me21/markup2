@@ -2,14 +2,16 @@ class Markup_Langs {
 	constructor(langs) {
 		"use strict"
 		
-		this.langs = {}
+		const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
 		
-		let BLOCKS = {
+		this.langs = Object.create(null)
+		
+		let BLOCKS = MAP({
 			divider:1, code:1, audio:1, video:1, youtube:1,
 			heading:1, quote:1, list:1, list_item:1,
 			table:1, table_row:1, image:1, error:1,
 			align:1, spoiler:1
-		}
+		})
 		
 		function convert_cell_args(props, h) {
 			let args = {
@@ -775,7 +777,7 @@ class Markup_Langs {
 		}
 		
 		// start_block
-		const block_translate = {
+		const block_translate = MAP({
 			// things without arguments
 			b: 'bold',
 			i: 'italic',
@@ -831,9 +833,9 @@ class Markup_Langs {
 			audio: 2,
 			video: 2,
 			img: 2,
-		}
+		})
 		// add_block
-		const block_translate_2 = {
+		const block_translate_2 = MAP({
 			code(args, contents) {
 				let inline = args[""] == 'inline'
 				if (inline)
@@ -858,9 +860,8 @@ class Markup_Langs {
 			},
 			img(args, contents) {
 				return ['audio', {url: args['']}]
-			},
-			
-		}
+			},	
+		})
 		
 		this.langs['bbcode'] = function(codeInput) {
 			init(codeInput)
