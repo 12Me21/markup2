@@ -50,7 +50,7 @@ class Markup_Parse_12y2 {constructor(){
 		}}
 	}
 	
-	const ENVS = {
+	const ENVS = Object.assign(Object.create(null), {
 		sub: simple_word_tag('subscript'),
 		sup: simple_word_tag('superscript'),
 		b: simple_word_tag('bold'),
@@ -78,7 +78,7 @@ class Markup_Parse_12y2 {constructor(){
 		key: {argtype:ARGS_WORD, do(tag, rargs, body) {
 			return OPEN('key', tag, null, body)
 		}},
-	}
+	})
 	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
@@ -446,6 +446,7 @@ class Markup_Parse_12y2 {constructor(){
 			if (thing===false) {
 				let name = match[0].substr(1)
 				thing = ENVS[name] || ENV_INVALID
+				console.log('env', name, thing)
 			}
 			// parse args and {
 			let body
