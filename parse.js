@@ -12,10 +12,12 @@ class Markup_Parse_12y2 {constructor(){
 	
 
 	
-	const CAN_CANCEL = {style:1, table_cell:1}
+	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
+	
+	const CAN_CANCEL = MAP({style:1, table_cell:1})
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = {ROOT:1, table_cell:1}
-	const IS_BLOCK = {code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1}
+	const SURVIVE_EOL = MAP({ROOT:1, table_cell:1})
+	const IS_BLOCK = MAP({code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1})
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
@@ -50,7 +52,7 @@ class Markup_Parse_12y2 {constructor(){
 		}}
 	}
 	
-	const ENVS = Object.assign(Object.create(null), {
+	const ENVS = MAP({
 		sub: simple_word_tag('subscript'),
 		sup: simple_word_tag('superscript'),
 		b: simple_word_tag('bold'),
@@ -446,7 +448,6 @@ class Markup_Parse_12y2 {constructor(){
 			if (thing===false) {
 				let name = match[0].substr(1)
 				thing = ENVS[name] || ENV_INVALID
-				console.log('env', name, thing)
 			}
 			// parse args and {
 			let body
