@@ -423,7 +423,7 @@ class Markup_Parse_12y2 {constructor(){
 	}
 	function NEWLINE() {
 		if (current.prev != 'block')
-			current.content.push(true)
+			current.content.push("\n")
 		if (current.prev != 'all_newline')
 			current.prev = 'newline'
 	}

@@ -156,18 +156,13 @@ class Markup_Render_Html {constructor(){
 	
 	function draw_branch(leaves) {
 		let html = ""
-		// children
 		for (let leaf of leaves) {
-			let str
 			if ('string'==typeof leaf) {
-				str = leaf.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")
-			} else if (leaf===true) {
-				str = CREATE.newline()
+				html += leaf.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")
 			} else {
 				let inner_html = leaf.content ? draw_branch(leaf.content) : ""
-				str = CREATE[leaf.type](leaf.args, inner_html)
+				html += CREATE[leaf.type](leaf.args, inner_html)
 			}
-			html += str
 		}
 		return html
 	}

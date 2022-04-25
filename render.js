@@ -255,18 +255,14 @@ class Markup_Render_Dom {constructor(){
 	
 	function fill_branch(branch, leaves) {
 		for (let leaf of leaves) {
-			let item
 			if ('string'==typeof leaf) {
-				item = leaf
-			} else if (leaf===true) {
-				item = CREATE.newline()
+				branch.append(leaf)
 			} else {
 				let node = CREATE[leaf.type](leaf.args)
 				if (leaf.content)
 					fill_branch(node, leaf.content)
-				item = node.getRootNode()
+				branch.append(node.getRootNode())
 			}
-			branch.append(item)
 		}
 	}
 	
