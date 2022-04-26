@@ -284,10 +284,12 @@ class Markup_Parse_12y2 {constructor(){
 	const null_args = []
 	null_args.named = Object.freeze({})
 	Object.freeze(null_args)
-	// todo: args class? and then have arg0() etc as methods
+	// todo: do we even need named args?
 	function parse_args(arglist) {
-		if (!arglist) // note: tests for undefined (\tag) AND "" (\tag[])
+		// note: checks undefined AND "" (\tag AND \tag[])
+		if (!arglist) 
 			return null_args
+		
 		let list = []
 		list.named = {}
 		for (let arg of arglist.split(";")) {
