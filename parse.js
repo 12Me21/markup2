@@ -39,7 +39,7 @@ class Markup_Parse_12y2 {constructor(){
 			if (body)
 				return OPEN('invalid', tag, {text: tag, reason:"invalid tag"}, body)
 			else
-				return TAG('invalid', tag, {text: tag, reason:"invalid tag"})
+				return TAG('invalid', {text: tag, reason:"invalid tag"})
 		}
 	}
 	
@@ -112,7 +112,7 @@ class Markup_Parse_12y2 {constructor(){
 	],[// 💎 DIVIDER 💎
 		/^---+(?![^\n])/,
 		{do(tag) {
-			return TAG('divider', tag)
+			return TAG('divider')
 		}},
 	],[// 💎💎 STYLE
 		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve start/end detect
@@ -179,12 +179,12 @@ class Markup_Parse_12y2 {constructor(){
 		{do(tag) {
 			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```)?$/g.exec(tag)// hack...
 			// idea: strip leading indent from code?
-			return TAG('code', tag, {text, lang})
+			return TAG('code', {text, lang})
 		}},
 	],[// 💎 INLINE CODE 💎
 		/`[^`\n]+`?/,
 		{do(tag) {
-			return TAG('icode', tag, {text: tag.replace(/^`|`$/g,"")})
+			return TAG('icode', {text: tag.replace(/^`|`$/g,"")})
 		}},
 	],[// 💎💎 URL
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
@@ -193,7 +193,7 @@ class Markup_Parse_12y2 {constructor(){
 			let url = base.substr(1) // ehh better
 			let [type, yt] = embed_type(rargs, url)
 			if (type=='youtube')
-				return TAG('youtube', tag, yt)
+				return TAG('youtube', yt)
 			let args = {
 				url: url,
 				alt: rargs.named.alt,
@@ -207,7 +207,7 @@ class Markup_Parse_12y2 {constructor(){
 					}
 				}
 			}
-			return TAG(type, tag, args)
+			return TAG(type, args)
 		}},
 		// 💎 LINK 💎
 		{argtype:ARGS_NORMAL, do(tag, rargs, body, base) {
@@ -216,7 +216,7 @@ class Markup_Parse_12y2 {constructor(){
 			if (body)
 				return OPEN('link', tag, args, true)
 			args.text = arg0(rargs, url)
-			return TAG('simple_link', tag, args)
+			return TAG('simple_link', args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
 		/ *[|] *\n[|]/,
@@ -406,8 +406,8 @@ class Markup_Parse_12y2 {constructor(){
 		}
 	}
 	// push empty tag
-	function TAG(type, tag, args) {
-		current.content.push({type, tag, args})
+	function TAG(type, args) {
+		current.content.push({type, args})
 		current.prev = IS_BLOCK[type] ? 'block' : 'text'
 	}
 	function NEWLINE() {
