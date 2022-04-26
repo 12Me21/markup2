@@ -1,3 +1,7 @@
+/**
+	12y2 parser
+	@implements Parser
+*/
 class Markup_Parse_12y2 {constructor(){
 	"use strict"
 	
@@ -59,7 +63,7 @@ class Markup_Parse_12y2 {constructor(){
 		i: simple_word_tag('italic'),
 		u: simple_word_tag('underline'),
 		s: simple_word_tag('strikethrough'),
-		quote: {argtype:ARGS_LINE,do(tag, rargs, body) {
+		quote: {argtype:ARGS_LINE, do(tag, rargs, body) {
 			// todo: this feels very repetitive...
 			return OPEN('quote', tag, {cite: rargs[0]}, body)
 		}},
@@ -195,12 +199,13 @@ class Markup_Parse_12y2 {constructor(){
 				alt: rargs.named.alt,
 			}
 			if (type=='image' || type=='video') {
-				match_args(rargs, [
-					[/^(\d+)x(\d+)$/, ([,x,y])=>{
-						args.width = +x
-						args.height = +y
-					}]
-				])
+				for (let arg of rargs) {
+					let m
+					if (m = /^(\d+)x(\d+)$/.exec(arg)) {
+						args.width = +m[1]
+						args.height = +m[2]
+					}
+				}
 			}
 			return TAG(type, tag, args)
 		}},
@@ -319,38 +324,20 @@ class Markup_Parse_12y2 {constructor(){
 		// default
 		return ['image']
 	}
-	// youtu.be/([\w-]+)
-	// 
-	// (?:www[.])?youtu[.]?be(?:[.]com)
-	// www.youtu.be
-	// www.youtube.com
-	// youtube.com
-	// ugly...
-	function match_args(rargs, defs) {
-		for (let arg of rargs)
-			for (let [regex, func] of defs) {
-				let m = regex.exec(arg)
-				if (m) {
-					func(m)
-					break
-				}
-			}
-	}
 	function table_args(rargs) {
 		let ret = {}
-		match_args(rargs, [
-			// should this be * or # or h ?  // perhaps # = heading applied to entire row?
-			[/^[*]$/, ()=>{
+		for (let arg of rargs) {
+			let m
+			if (arg=="*")
 				ret.header = true
-			}],
-			[/^(?:red|orange|yellow|green|blue|purple|gray)$/, ([color])=>{
-				ret.color = color
-			}],
-			[/^(\d*)x(\d*)$/, ([,w,h])=>{
+			else if (['red','orange','yellow','green','blue','purple','gray'].includes(arg))
+				ret.color = arg
+			else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
+				let [, w, h] = m
 				if (+w > 1) ret.colspan = +w
 				if (+h > 1) ret.rowspan = +h
-			}]
-		])
+			}
+		}
 		return ret
 	}
 	
