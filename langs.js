@@ -7,10 +7,6 @@
 */
 
 /**
-	@typedef {(Element|DocumentFragment|Document)} ParentNode
-*/
-
-/**
 	parser function
 	@typedef {function} Parser_Function
 	@param {string} text - text to parse

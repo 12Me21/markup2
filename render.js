@@ -1,4 +1,8 @@
 /**
+	@typedef {(Element|DocumentFragment|Document)} ParentNode
+*/
+
+/**
 	AST -> HTML DOM Node renderer
 */
 class Markup_Render_Dom { constructor() {
