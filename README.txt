@@ -1,3 +1,7 @@
+
+THIS FILE IS OUTDATED, DO NOT READ
+
+
 🔸🔶🟧 EXAMPLE 🟧🔶🔸
 
 ═[HTML]══════════════════════════════════════
@@ -56,7 +60,7 @@ element.classList.add('whatever')
 
 📒❲parse.js❳
  ┃
- ┗🏭❲Markup_Parse:CLASS()❳
+ ┗🏭❲Markup_12y2:CLASS()❳
    ┃
    ┣📜❲.prototype❳
    ┃

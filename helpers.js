@@ -1,12 +1,35 @@
+/**
+	Markup helper functions (for browser JS)
+	@namespace
+*/
 let Markup = {
+	/**
+		which css class to add
+		@type {string}
+	*/
 	css_class: "🍂",
+	/**
+		@type {Markup_Langs}
+	*/
 	langs: new Markup_Langs([new Markup_12y2(), new Markup_Legacy()]),
+	/**
+		@type {Markup_Render_Dom}
+	*/
 	renderer: new Markup_Render_Dom(),
+	/**
+		function to convert text into rendered output
+		note: throws a TypeError if `text` is not a string. otherwise should never throw.
+		@param {string} text - input text
+		@param {string|*} lang - markup language name
+		@param {Element} [element=] - element to insert content into. if not specified, a new DocumentFragment is created and returned
+		@param {Object} [options=] - unused currently
+		@return {(Element|DocumentFragment)} - the element which was passed, or the new documentfragment
+	*/
 	convert_lang(text, lang, element, options) {
 		if (element instanceof Element)
 			element.classList.add(this.css_class)
 		else if (element!=undefined)
-			throw new TypeError("Markup.message: element is not an Element")
+			throw new TypeError("Markup.convert_lang: element is not an Element")
 		
 		let tree, err
 		try {
