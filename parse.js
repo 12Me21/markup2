@@ -485,15 +485,18 @@ function Markup_12y2() {
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
-	if (this.langs)
-		this.langs['12y2'] = parse
-	else
-		/**
-			If this class is constructed normally, this field will be defined
-			@instance
-			@type {?function}
-		*/
-		this.parse = parse
+	/**
+		parse()
+		@instance
+		@type {Parser_Function}
+	*/
+	this.parse = parse
+	/**
+		@instance
+		@type {Object}
+		@property {Parser_Function} 12y2 - parse()
+	*/
+	this.langs = {'12y2': parse}
 	
 	// what if you want to write like, "{...}". well that's fine
 	// BUT if you are inside a tag, the } will close it.
@@ -503,11 +506,3 @@ function Markup_12y2() {
 	// \tag{ ...  {heck} ... } <- closes here
 	
 }
-
-/**
-	@name langs
-	@mixin
-	@memberof Markup_12y2
-	@type {Langs_Mixin_Langs}
-	@property 12y2 {Parser_Function} - parser
-*/

@@ -6,6 +6,9 @@
 function Markup_Legacy() {
 	"use strict"
 	
+	/** @instance */
+	this.langs = {}
+	
 	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
 	
 	let BLOCKS = MAP({
@@ -1063,7 +1066,7 @@ function Markup_Legacy() {
 	}
 	
 	// "plain text" (with autolinker)
-	this.default_lang = this.langs['plaintext'] = function(text) {
+	this.langs['plaintext'] = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
 		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
@@ -1087,15 +1090,6 @@ function Markup_Legacy() {
 		return root
 	}
 	
-	//this.default_lang = this.langs.plaintext
+	/** @instance */
+	this.default_lang = this.langs['plaintext']
 }
-
-/**
-	@name langs
-	@mixin
-	@memberof Markup_Legacy
-	@type {Langs_Mixin_Langs}
-	@property 12y {function} - bbcode parser
-	@property bbcode {function} - bbcode parser
-	@property plaintext {function} - bbcode parser
-*/

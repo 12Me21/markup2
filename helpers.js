@@ -1,6 +1,6 @@
 let Markup = {
 	css_class: "🍂",
-	langs: new Markup_Langs([Markup_12y2, Markup_Legacy]),
+	langs: new Markup_Langs([new Markup_12y2(), new Markup_Legacy()]),
 	renderer: new Markup_Render_Dom(),
 	convert_lang(text, lang, element, options) {
 		if (element instanceof Element)

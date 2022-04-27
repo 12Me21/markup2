@@ -18,25 +18,38 @@
 	@interface Langs_Mixin
 */
 /**
-	Markup_Langs may inherit from these classes
-	@typedef {Object<string,Parser_Function>} Langs_Mixin_Langs
+	@instance
+	@type {Object<string,Parser_Function>}
+	@name langs
+	@memberof Langs_Mixin
+*/
+/**
+	@instance
+	@type {?Parser_Function}
+	@name default_lang
+	@memberof Langs_Mixin
 */
 
 /**
 	markup langs container
-	@mixes {Langs_Mixin}
 */
 class Markup_Langs {
 	/**
 		@param {Array<Langs_Mixin>} inherit - parsers to include
 	*/
-	constructor(inherit) {
+	constructor(include) {
 		this.langs = Object.create(null)
 		this.default_lang = function(text) {
 			return {type:'ROOT', content:[text]}
 		}
-		for (let cls of inherit)
-			cls.call(this)
+		for (let m of include) 
+			this.include(m)
+	}
+	include(m) {
+		if (m.langs)
+			Object.assign(this.langs, m.langs)
+		if (m.default_lang)
+			this.default_lang = m.default_lang
 	}
 	/**
 		@param {(string|*)} lang - markup language name
