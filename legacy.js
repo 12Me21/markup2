@@ -1,11 +1,18 @@
 /**
 	legacy parser collection
 	@implements Langs_Mixin
+	@hideconstructor
 */
 class Markup_Legacy { constructor() {
 	"use strict"
 	
-	/** @instance */
+	/**
+		@instance
+		@type {Object}
+		@property {Parser_Function} 12y - 12y parser
+		@property {Parser_Function} bbcode - bbcode parser
+		@property {Parser_Function} plaintext - plaintext parser/autolinker
+	*/
 	this.langs = {}
 	
 	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
@@ -234,12 +241,6 @@ class Markup_Legacy { constructor() {
 		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
 	}
 	
-	/**
-		@inner
-		@name 12y
-		@memberof Markup_Legacy
-		@type {Parser_Function}
-	*/
 	this.langs['12y'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = '12y'
@@ -873,7 +874,6 @@ class Markup_Legacy { constructor() {
 		},	
 	})
 	
-	/** @inner */
 	this.langs['bbcode'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = 'bbcode'
@@ -1071,10 +1071,6 @@ class Markup_Legacy { constructor() {
 		}
 	}
 	
-	/**
-		plaintext (with autolinker)
-		@inner 
-	*/
 	this.langs['plaintext'] = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
@@ -1099,7 +1095,11 @@ class Markup_Legacy { constructor() {
 		return root
 	}
 	
-	/** @instance */
+	/**
+		default markup language (plaintext)
+		@instance
+		@type {Parser_Function}
+	*/
 	this.default_lang = this.langs['plaintext']
 }}
 

@@ -1,6 +1,7 @@
 /**
 	12y2 parser
 	@implements Langs_Mixin
+	@hideconstructor
 */
 class Markup_12y2 { constructor() {
 	// all state is stored in these vars (and REGEX.lastIndex)
@@ -419,9 +420,6 @@ class Markup_12y2 { constructor() {
 			CLOSE(true)
 	}
 	
-	/**
-		parser function
-	*/
 	function parse(text) {
 		let tree = {type:'ROOT', tag:"", content:[], prev:'all_newline'}
 		current = tree
@@ -483,7 +481,7 @@ class Markup_12y2 { constructor() {
 	}
 	
 	/**
-		parse()
+		parser
 		@instance
 		@type {Parser_Function}
 	*/
@@ -491,7 +489,7 @@ class Markup_12y2 { constructor() {
 	/**
 		@instance
 		@type {Object}
-		@property {Parser_Function} 12y2 - parse()
+		@property {Parser_Function} 12y2 - same as .parse
 	*/
 	this.langs = {'12y2': parse}
 	

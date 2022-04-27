@@ -272,8 +272,8 @@ class Markup_Render_Dom { constructor() {
 	}
 	
 	/**
-		renderer
-		@param {AST} ast - input ast
+		render function
+		@param {Tree} ast - input ast
 		@param {ParentNode} [node=document.createDocumentFragment()] - destination node
 		@return {ParentNode} - node with rendered contents. same as `node` if passed, otherwise is a new DocumentFragment.
 	 */
