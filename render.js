@@ -1,18 +1,21 @@
-class Markup_Render_Dom {constructor(){
-	"use strict"
-	
+/**
+	AST -> HTML DOM Node renderer
+*/
+class Markup_Render_Dom { constructor() {
 	// This tag-function parses an HTML string, and returns a function
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
 	
-	function 𐀶([html/*‹String›*/])/*‹Node›*/ {
+	function 𐀶([html]) {
 		let temp = document.createElement('template')
 		temp.innerHTML = html
 		let elem = temp.content.firstChild
 		return elem.cloneNode.bind(elem, true)
 	}
 	
+	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
+	// for embeds, need separate handlers for normal urls and embeds and
 	let URL_SCHEME = {
 		"sbs:"(url) {
 			return "#"+url.pathname+url.search+url.hash
@@ -268,12 +271,26 @@ class Markup_Render_Dom {constructor(){
 		}
 	}
 	
+	/**
+		renderer
+		@param {AST} ast - input ast
+		@param {ParentNode} [node=document.createDocumentFragment()] - destination node
+		@return {ParentNode} - node with rendered contents. same as `node` if passed, otherwise is a new DocumentFragment.
+	 */
 	this.render = function({args, content}, node=document.createDocumentFragment()) {
 		fill_branch(node, content)
 		return node
 	}
-	
+	/**
+		node create function map
+		@type {Object<string,function>}
+	*/
 	this.create = CREATE
-	
+	/**
+		url scheme handler map
+		@type {Object<string,function>}
+	*/
 	this.url_scheme = URL_SCHEME
 }}
+
+if ('object'==typeof module && module) module.exports = Markup_Render_Dom

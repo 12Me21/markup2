@@ -1,9 +1,8 @@
 /**
 	legacy parser collection
-	@constructor
 	@implements Langs_Mixin
 */
-function Markup_Legacy() {
+class Markup_Legacy { constructor() {
 	"use strict"
 	
 	/** @instance */
@@ -235,6 +234,12 @@ function Markup_Legacy() {
 		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
 	}
 	
+	/**
+		@inner
+		@name 12y
+		@memberof Markup_Legacy
+		@type {Parser_Function}
+	*/
 	this.langs['12y'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = '12y'
@@ -868,6 +873,7 @@ function Markup_Legacy() {
 		},	
 	})
 	
+	/** @inner */
 	this.langs['bbcode'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = 'bbcode'
@@ -1065,7 +1071,10 @@ function Markup_Legacy() {
 		}
 	}
 	
-	// "plain text" (with autolinker)
+	/**
+		plaintext (with autolinker)
+		@inner 
+	*/
 	this.langs['plaintext'] = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
@@ -1092,4 +1101,6 @@ function Markup_Legacy() {
 	
 	/** @instance */
 	this.default_lang = this.langs['plaintext']
-}
+}}
+
+if ('object'==typeof module && module) module.exports = Markup_Legacy

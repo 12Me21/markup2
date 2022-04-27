@@ -1,11 +1,8 @@
 /**
 	12y2 parser
-	@constructor
 	@implements Langs_Mixin
 */
-function Markup_12y2() {
-	"use strict"
-	
+class Markup_12y2 { constructor() {
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
@@ -505,4 +502,6 @@ function Markup_12y2() {
 	// or match paired {}s :  
 	// \tag{ ...  {heck} ... } <- closes here
 	
-}
+}}
+
+if ('object'==typeof module && module) module.exports = Markup_12y2

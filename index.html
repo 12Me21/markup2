@@ -28,7 +28,7 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='🍂'></div>
 
 <script>
-	let langs = new Markup_Langs([Markup_12y2, Markup_Legacy])
+	let langs = new Markup_Langs([new Markup_12y2(), new Markup_Legacy()])
 	let render = new Markup_Render_Dom()
 	
 	function update() {

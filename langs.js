@@ -71,3 +71,5 @@ class Markup_Langs {
 		return this.get(lang)(text)
 	}
 }
+
+if ('object'==typeof module && module) module.exports = Markup_Langs
