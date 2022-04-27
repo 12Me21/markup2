@@ -73,7 +73,9 @@ class Markup_Render_Dom {constructor(){
 		image: function({url, alt, width, height}) {
 			let e = this()
 			e.src = filter_url(url)
-			e.onerror = e.onload = e.removeAttribute.bind(e, 'data-loading')
+			e.onerror = e.onload = function(e) {
+				delete this.dataset.loading
+			}
 			if (alt!=null) e.alt = alt
 			if (width) e.width = width
 			if (height) e.height = height

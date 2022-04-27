@@ -2,9 +2,10 @@
 <html lang=en-QC-2sbs>
 <meta charset="utf-8">
 
-<script src=parse.js></script>
-<script src=render.js></script>
 <script src=langs.js></script>
+<script src=parse.js></script>
+<script src=legacy.js></script>
+<script src=render.js></script>
 
 <link rel=stylesheet href=markup.css>
 <style>
@@ -18,8 +19,7 @@
 	<option>12y2</option>
 	<option>12y</option>
 	<option>bbcode</option>
-	<option>text</option>
-	<option value=plaintext>(fallback)</option>
+	<option>plaintext</option>
 </select>
 <textarea-container>
 	<textarea id=$input></textarea>
@@ -28,8 +28,7 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 <div id=$output class='🍂'></div>
 
 <script>
-	let parse12y2 = new Markup_Parse_12y2()
-	let langs = new Markup_Langs({'12y2': parse12y2.parse})
+	let langs = new Markup_Langs([Markup_12y2, Markup_Legacy])
 	let render = new Markup_Render_Dom()
 	
 	function update() {
@@ -45,8 +44,6 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 		let e = render.render(tree)
 		$output.replaceChildren(e)
 		$time2.value = Δ
-		
-		
 	}
 	
 	$input.oninput = update

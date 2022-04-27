@@ -1,8 +1,9 @@
 /**
 	12y2 parser
-	@implements Parser
+	@constructor
+	@implements Langs_Mixin
 */
-class Markup_Parse_12y2 {constructor(){
+function Markup_12y2() {
 	"use strict"
 	
 	// all state is stored in these vars (and REGEX.lastIndex)
@@ -421,7 +422,10 @@ class Markup_Parse_12y2 {constructor(){
 			CLOSE(true)
 	}
 	
-	this.parse = function(text) {
+	/**
+		parser function
+	*/
+	function parse(text) {
 		let tree = {type:'ROOT', tag:"", content:[], prev:'all_newline'}
 		current = tree
 		brackets = 0
@@ -431,6 +435,8 @@ class Markup_Parse_12y2 {constructor(){
 			// text before token
 			TEXT(text.substring(last, match.index))
 			// get token
+			//for (; match[group_num]===undefined; group_num++)
+			//	;
 			let group_num = match.indexOf("", 1)-1
 			let thing = GROUPS[group_num]
 			// is a \tag
@@ -479,6 +485,16 @@ class Markup_Parse_12y2 {constructor(){
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
+	if (this.langs)
+		this.langs['12y2'] = parse
+	else
+		/**
+			If this class is constructed normally, this field will be defined
+			@instance
+			@type {?function}
+		*/
+		this.parse = parse
+	
 	// what if you want to write like, "{...}". well that's fine
 	// BUT if you are inside a tag, the } will close it.
 	// maybe closing tags should need some kind of special syntax?
@@ -486,6 +502,12 @@ class Markup_Parse_12y2 {constructor(){
 	// or match paired {}s :  
 	// \tag{ ...  {heck} ... } <- closes here
 	
-}}
+}
 
-if ('object'==typeof module) module.exports = Markup_Parse_12y2
+/**
+	@name langs
+	@mixin
+	@memberof Markup_12y2
+	@type {Langs_Mixin_Langs}
+	@property 12y2 {Parser_Function} - parser
+*/
