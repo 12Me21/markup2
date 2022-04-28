@@ -80,40 +80,44 @@ L + ratio {}
 	display: inline-block;
 	border: 1px solid gray;
 	border-radius: 3px;
-	padding-block: 0.2rem;
-	padding-inline: 0.4rem;
-	font-family: monospace;
+	padding: 0.2rem 0.4rem;
+	font-family: monospace, monospace;
+	font-size: 0.8em;
 }
 
 /*** divider ***/
 .🍂 hr {
-	margin-block: 0.5rem;
+	margin: 0.5rem 0;
 }
 
 /**********/
 /** Code **/
 /**********/
 .🍂 pre, .🍂 code {
-	font-family: monospace; /* code font here */
+	font-family: monospace, monospace; /* code font here */
+	font-size: 0.8em;
 }
+/* inline */
+.🍂 code {
+	background: rgba(192,192,192,0.5);
+	padding: 0 0.2em;
+	vertical-align: 1px;
+}
+/* block */
 .🍂 pre {
 	color: white;
 	background: black;
 	border: 1px solid black;
 	padding: 0.5em;
-	margin-block: 0.25em;
+	margin: 0.25em 0;
 	word-break: break-all;
-}
-.🍂 code {
-	background: rgba(192,192,192,0.5);
-	padding-inline: 0.2em;
 }
 
 /*************/
 /** Spoiler **/
 /*************/
 .🍂 summary {
-	padding-inline: 0.3em;
+	padding: 0 0.3em;
 	background: white;
 	border: 2px outset gray;
 	border-left-width: 4px;
@@ -159,8 +163,7 @@ L + ratio {}
 	border-collapse: collapse;
 }
 .🍂 td, .🍂 th {
-	padding-block: 0.2em;
-	padding-inline: 0.3em;
+	padding: 0.2em 0.3em;
 }
 
 /**********************/
@@ -176,3 +179,10 @@ L + ratio {}
 .🍂 table { background: var(--bg); } /* reset */
 
 
+/***********/
+/** Links **/
+/***********/
+.🍂 a[href] {
+	/*color: rgb(0, 80, 150);*/
+	text-decoration: underline;
+}
