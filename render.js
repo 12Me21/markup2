@@ -267,7 +267,14 @@ class Markup_Render_Dom { constructor() {
 			if ('string'==typeof leaf) {
 				branch.append(leaf)
 			} else {
-				let node = CREATE[leaf.type](leaf.args)
+				let creator = CREATE[leaf.type]
+				if (!creator) {
+					if ('object'==typeof leaf && leaf)
+						throw new RangeError("unknown node .type: ‘"+leaf.type+"’")
+					else
+						throw new TypeError("unknown node type: "+typeof leaf)
+				}
+				let node = creator(leaf.args)
 				if (leaf.content)
 					fill_branch(node, leaf.content)
 				branch.append(node.getRootNode())

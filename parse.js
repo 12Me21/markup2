@@ -367,7 +367,7 @@ class Markup_12y2 { constructor() {
 	function merge(content, prev, tag) {
 		if (tag)
 			current.content.push(tag)
-		else if (current.prev=='block' && content[0]===true)
+		else if (current.prev=='block' && content[0]==="\n")
 			content.shift() // strip newline
 		
 		current.content.push(...content)
@@ -391,7 +391,7 @@ class Markup_12y2 { constructor() {
 		} else {
 			// otherwise, we have a normal block:
 			if (o.prev=='newline')
-				o.content.push(true)
+				o.content.push("\n")
 			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
 			current.content.push(o)
 			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
@@ -475,7 +475,7 @@ class Markup_12y2 { constructor() {
 		while (current.type!='ROOT')
 			CLOSE(true)
 		if (current.prev=='newline')
-			current.content.push(true)
+			current.content.push("\n")
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
