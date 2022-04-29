@@ -15,7 +15,6 @@ class Markup_Render_Dom { constructor() {
 		let temp = document.createElement('template')
 		temp.innerHTML = html
 		let elem = temp.content.firstChild
-		elem.remove()
 		return elem.cloneNode.bind(elem, true)
 	}
 	
@@ -290,6 +289,7 @@ class Markup_Render_Dom { constructor() {
 		@return {ParentNode} - node with rendered contents. same as `node` if passed, otherwise is a new DocumentFragment.
 	 */
 	this.render = function({args, content}, node=document.createDocumentFragment()) {
+		node.textContent = "" //mmnn
 		fill_branch(node, content)
 		return node
 	}

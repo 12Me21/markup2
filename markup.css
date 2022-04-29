@@ -1,6 +1,6 @@
 L + ratio {}
 
-.🍂 {
+.Markup {
 	/* control text rendering */
 	word-break: break-word;
 	white-space: pre-wrap;
@@ -14,7 +14,7 @@ L + ratio {}
 }
 
 /*** everything ***/
-.🍂 * {
+.Markup * {
 	/* (override the defaults) */
 	font-family: inherit;
 	word-break: inherit;
@@ -26,28 +26,28 @@ L + ratio {}
 /************/
 /** Embeds **/
 /************/
-.🍂 img, .🍂 video, .🍂 audio {
+.Markup img, .Markup video, .Markup audio {
 	display: block;
 }
-.🍂 img, .🍂 video, .🍂 youtube-embed figure {
+.Markup img, .Markup video, .Markup youtube-embed figure {
 	max-width: 100%;
 	height: var(--image-height);
 	max-height: var(--image-max-height);
 	object-fit: scale-down;
 	border: 1px solid gray;
 }
-.🍂 img[data-loading] {
+.Markup img[data-loading] {
 	height: var(--image-max-height);
 }
 
-.🍂 youtube-embed {
+.Markup youtube-embed {
 	display: table;
 }
-.🍂 youtube-embed figure {
+.Markup youtube-embed figure {
 	overflow: hidden;
 	background-size: cover;
 }
-.🍂 youtube-embed iframe {
+.Markup youtube-embed iframe {
 	width: 480px;
 	height: 270px;
 	max-height: unset;
@@ -55,10 +55,10 @@ L + ratio {}
 	display: inline-block;
 	overflow: hidden;
 }
-.🍂 youtube-embed button {
+.Markup youtube-embed button {
 	vertical-align: top;
 }
-.🍂 youtube-embed figcaption {
+.Markup youtube-embed figcaption {
 	color: white;
 	background-color: rgba(0,0,0,0.3);
 	padding: 0 0.2em;
@@ -66,17 +66,17 @@ L + ratio {}
 }
 
 /* ruby text doesn't work if set to white-space: pre */
-.🍂 rt {
+.Markup rt {
 	white-space: pre-line;
 }
 
 /*** invalid tag ***/
-.🍂 .invalid {
+.Markup .invalid {
 	background: #F888;
 }
 
 /*** keyboard key ***/
-.🍂 kbd {
+.Markup kbd {
 	display: inline-block;
 	border: 1px solid gray;
 	border-radius: 3px;
@@ -86,37 +86,37 @@ L + ratio {}
 }
 
 /*** divider ***/
-.🍂 hr {
+.Markup hr {
 	margin: 0.5rem 0;
 }
 
 /**********/
 /** Code **/
 /**********/
-.🍂 pre, .🍂 code {
+.Markup pre, .Markup code {
 	font-family: monospace, monospace; /* code font here */
 	font-size: 0.8em;
 }
 /* inline */
-.🍂 code {
+.Markup code {
 	background: rgba(192,192,192,0.5);
 	padding: 0 0.2em;
 	vertical-align: 1px;
 }
 /* block */
-.🍂 pre {
+.Markup pre {
 	color: white;
 	background: black;
 	border: 1px solid black;
 	padding: 0.5em;
 	margin: 0.25em 0;
-	word-break: break-all;
+	line-break: anywhere;
 }
 
 /*************/
 /** Spoiler **/
 /*************/
-.🍂 summary {
+.Markup summary {
 	padding: 0 0.3em;
 	background: white;
 	border: 2px outset gray;
@@ -125,64 +125,64 @@ L + ratio {}
 	display: table;
 	cursor: pointer;
 }
-.🍂 details[open] > summary {
+.Markup details[open] > summary {
 	border-style: inset;
 	border-bottom: none;
 }
-.🍂 details > div {
+.Markup details > div {
 	padding: 0.4rem;
 	border: 2px solid gray;
 	border-left-width: 4px;
 	background: var(--spoiler-bg);
 	margin-bottom: 1px;
 }
-.🍂 summary::before { content: "Show "; }
-.🍂 details[open] > summary::before { content: "Hide "; }
+.Markup summary::before { content: "Show "; }
+.Markup details[open] > summary::before { content: "Hide "; }
 
 /***********/
 /** Quote **/
 /***********/
-.🍂 blockquote {
+.Markup blockquote {
 	border: 2px solid gray;
 	padding: 0.3rem;
 }
-.🍂 cite {
+.Markup cite {
 	unicode-bidi: embed;
 	font-weight: bold;
 	font-style: normal;
 }
-.🍂 cite + div {
+.Markup cite + div {
 	margin-left: 0.5rem;
 }
 
 /***********/
 /** Table **/
 /***********/
-.🍂 table, .🍂 td, .🍂 th {
+.Markup table, .Markup td, .Markup th {
 	border: 1px solid currentColor;
 	border-collapse: collapse;
 }
-.🍂 td, .🍂 th {
+.Markup td, .Markup th {
 	padding: 0.2em 0.3em;
 }
 
 /**********************/
 /** Background Color **/
 /**********************/
-.🍂 [data-bgcolor="red"]    { background: var(--bgred, #F888); }
-.🍂 [data-bgcolor="orange"]  { background: var(--bggreen, #FA08); }
-.🍂 [data-bgcolor="yellow"] { background: var(--bgyellow, #FF08); }
-.🍂 [data-bgcolor="green"] { background: var(--bgorange, #0F08); }
-.🍂 [data-bgcolor="blue"]   { background: var(--bgblue, #08F8); }
-.🍂 [data-bgcolor="purple"] { background: var(--bgpurple, #C0F8); }
-.🍂 [data-bgcolor="gray"]   { background: var(--bggray, #AAA8); }
-.🍂 table { background: var(--bg); } /* reset */
+.Markup [data-bgcolor="red"]    { background: var(--bgred, #F888); }
+.Markup [data-bgcolor="orange"]  { background: var(--bggreen, #FA08); }
+.Markup [data-bgcolor="yellow"] { background: var(--bgyellow, #FF08); }
+.Markup [data-bgcolor="green"] { background: var(--bgorange, #0F08); }
+.Markup [data-bgcolor="blue"]   { background: var(--bgblue, #08F8); }
+.Markup [data-bgcolor="purple"] { background: var(--bgpurple, #C0F8); }
+.Markup [data-bgcolor="gray"]   { background: var(--bggray, #AAA8); }
+.Markup table { background: var(--bg); } /* reset */
 
 
 /***********/
 /** Links **/
 /***********/
-.🍂 a[href] {
+.Markup a[href] {
 	/*color: rgb(0, 80, 150);*/
 	text-decoration: underline;
 }

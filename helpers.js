@@ -21,7 +21,7 @@ let Markup = {
 		which css class to add
 		@type {string}
 	*/
-	css_class: "🍂",
+	css_class: "Markup",
 	/**
 		@type {Markup_Langs}
 	*/
