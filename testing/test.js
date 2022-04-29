@@ -1,4 +1,4 @@
-let PARSER = new Markup_Parse_12y2()
+let PARSER = new Markup_12y2()
 
 class Test {
 	constructor({name}, input, correct) {

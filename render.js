@@ -15,6 +15,7 @@ class Markup_Render_Dom { constructor() {
 		let temp = document.createElement('template')
 		temp.innerHTML = html
 		let elem = temp.content.firstChild
+		elem.remove()
 		return elem.cloneNode.bind(elem, true)
 	}
 	
