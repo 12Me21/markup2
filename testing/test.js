@@ -35,7 +35,7 @@ class Test {
 		}
 		
 		try {
-			compare_node(this.correct, t)
+			compare_node(this.correct, t, new Path())
 		} catch (e) {
 			this.status = -1
 			this.result = e
@@ -96,12 +96,14 @@ class Mismatch extends Error {
 		super(msg)
 		this.correct = correct
 		this.got = got
-		this.message = `${msg}\nExpect: ${correct}\n   Got: ${got}`
+		this.message = `${msg}\nExpect: ${safe_string(correct)}\n   Got: ${safe_string(got)}`
 		this.name = 'Mismatch'
 	}
 }
 
 function safe_string(obj) {
+	if (obj===undefined)
+		return "<empty>"
 	try {
 		return JSON.stringify(obj)
 	} catch(e) {
@@ -111,132 +113,107 @@ function safe_string(obj) {
 
 // todo; during the comparison process, keep track of which node in `correct` is being checked, 
 
-function simple_type(x) {
-	if (x===null)
-		return 'null'
+class Path {
+	constructor() {
+		this.stack = []
+	}
+	mismatch(msg, correct, got) {
+		throw new Mismatch("\n"+this.print()+msg, correct, got)
+	}
+	push(correct) {
+		this.stack.push({node:correct})
+	}
+	index(i) {
+		this.stack[this.stack.length-1].index = i
+	}
+	pop() {
+		this.stack.pop()
+	}
+	print() {
+		let s = "", i = 0
+		for (let {node, index} of this.stack) {
+			index = index==null ? "" : ".content["+(index+1)+"/"+node.content.length+"]"
+			node = 'string'==typeof node ? JSON.stringify(node) : node.type
+			let prefix = i==0 ? "" : "    ".repeat(i-1)+"└ "
+			s += prefix+node+index+"\n"
+			i++
+		}
+		return s
+	}
+}
+
+function is_object(x) {
+	return x && Object.getPrototypeOf(x)==Object.prototype
+}
+
+function json_type(x) {
+	if (x===null || x===undefined) return 'null'
 	let t = typeof x
-	if (t=='number' || t=='undefined' || t=='boolean' || t=='string')
+	if (t=='number' || t=='boolean' || t=='string')
 		return t
 	if (t=='object') {
-		let p = Object.getPrototypeOf(x)
-		if (p==Object.prototype)
-			return 'object'
-		if (p==Array.prototype)
-			return 'array'
+		if (Array.isArray(x)) return 'array'
+		if (is_object(x)) return 'object'
 	}
 	throw new InvalidTree("value has illegal type")
 }
 
-function is_object(x) {
-	return x && Object.getPrototypeOf(x) == Object.prototype
-}
-
-function compare_object(correct, got) {
-	// simple comparison (primitive)
-	if (correct === got)
-		return true
-	if (is_object(correct)) {
-		if (!is_object(got))
-			return false
-	} else if (Array.isArray(correct)) {
-		if (!Array.isArray(got))
-			return false
-		if (correct.length != got.length)
-			return false
-	} else {
-		return false
+function compare_args(correct, got, path) {
+	if (correct==null) {
+		if (got!=null)
+			path.mismatch("node.args", correct, got)
+		return
 	}
+	if (!is_object(correct))
+		throw new Error("invalid reference tree")
+	if (!is_object(got))
+		path.mismatch("node.args", correct, got)
 	
-	let n = 0
-	for (let key in correct)
-		if (correct[key] !== undefined) {
-			if (!compare_object(correct[key], got[key]))
-				return false
-			n++
-		}
-	
-	for (let key in got)
-		if (got[key] !== undefined)
-			n--
-	
-	if (n!=0)
-		return false
-		
-	return true
+	for (let obj of [correct, got])
+		for (let key in obj)
+			if (correct[key] !== got[key])
+				path.mismatch(`node.args.${key}`, correct[key], got[key])
 }
 
-function node_kind(node) {
-	if (typeof node == 'string')
-		return 'text'
-	if (node == true)
-		return 'newline'
-	if (!is_object(node))
-		throw new InvalidTree("illegal node")
-	if (typeof node.type != 'string')
-		throw new InvalidTree("illegal node.type")
-	return 'block'
-}
-
-function compare_node_types(correct, got) {
-	let type = node_kind(got)
-	// text
-	if (typeof correct == 'string') {
-		if (type != 'text')
-			throw new Mismatch("wrong node kind", 'text', type)
-		if (correct != got)
-			throw new Mismatch("wrong text", correct, got)
-	// newline
-	} else if (correct == true) {
-		if (type != 'newline')
-			throw new Mismatch("wrong node kind", 'newline', type)
-	// block
-	} else {
-		if (type != 'block')
-			throw new Mismatch("wrong node kind", 'block', type)
-		if (correct.type != got.type)
-			throw new Mismatch("wrong block type", correct.type, got.type)
-	}
-	return true
-}
-
-function has_content(node) {
-	if (node.content===undefined)
-		return false
-	if (Array.isArray(node.content))
-		return true
-	throw new InvalidTree(".content field is not array")
-}
-
-function compare_content(correct, got) {
-	
-	if (got.content===undefined)
-		return false
-
-	let got_content = has_content(got)
-	
-	// no content
+function compare_content(correct, got, path) {
 	// todo: whether a node has .content depends on the node type
 	// i.e. /italic/ always has content, --- <hr> never does, etc.
 	// so instead of this check, perhaps we should have a table of which blocks have contents?
-	if (!correct.content) {
-		if (got_content)
-			throw new Mismatch("wrong children", "(none)", "(array)")
-	} else {
-		if (!got_content)
-			throw new Mismatch("wrong children", "(array)", "(none)")
-		if (correct.content.length != got.content.length)
-			throw new Mismatch("wrong children length", correct.content.length, got.content.length)
-		for (let i=0; i<correct.content.length; i++)
-			compare_node(correct.content[i], got.content[i])
+	if (correct==null) {
+		if (got!=null)
+			path.mismatch("node.content", correct, got)
+		return
+	}
+	//
+	if (!Array.isArray(correct))
+		throw new Error("invalid .content in reference tree")
+	if (!Array.isArray(got))
+		path.mismatch("node.content", correct, got)
+	
+	for (let i=0; i<correct.length || i<got.length; i++) {
+		path.index(i)
+		compare_node(correct[i], got[i], path, i)
 	}
 }
 
-function compare_node(correct, got) {
-	compare_node_types(correct, got)
-	
-	if (!compare_object(correct.args, got.args)) {
-		throw new Mismatch("arg mismatch", JSON.stringify(correct.args), safe_string(got.args))
+function compare_node(correct, got, path) {
+	path.push(correct)
+	// string node
+	if ('string'==typeof correct) {
+		if (got !== correct)
+			path.mismatch("node", correct, got)
+	} else {
+		// object node
+		if (!is_object(correct))
+			throw new Error("invalid reference tree")
+		if (!is_object(got))
+			path.mismatch("node", correct, got)
+		if (got.type !== correct.type)
+			path.mismatch("node.type", correct.type, got.type)
+		// 
+		compare_args(correct.args, got.args, path)
+		// 
+		compare_content(correct.content, got.content, path)
 	}
-	
-	compare_content(correct, got)
+	path.pop()
 }

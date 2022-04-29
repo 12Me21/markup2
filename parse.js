@@ -1,3 +1,5 @@
+// todo: after parsing a block element: eat the next newline directly
+
 /**
 	12y2 parser
 	@implements Langs_Mixin
