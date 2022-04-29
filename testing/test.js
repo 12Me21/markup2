@@ -1,5 +1,16 @@
 let PARSER = new Markup_12y2()
 
+function clean(tree) {
+	if ('string'==typeof tree)
+		return tree
+	let ret = {type:tree.type}
+	if (tree.args)
+		ret.args = tree.args
+	if (tree.content)
+		ret.content = tree.content.map(x=>clean(x))
+	return ret
+}
+
 class Test {
 	constructor({name}, input, correct) {
 		Object.defineProperties(this, {
@@ -55,7 +66,7 @@ class Test {
 	}
 	
 	to_entry() {
-		return `🟩 ${this.name}\n${this.input}\n🟩 ${JSON.stringify(this.correct)}`
+		return `🟩 ${this.name}\n${this.input}\n🟩 ${JSON.stringify(clean(this.correct))}`
 	}
 	
 	static all = []
@@ -79,7 +90,7 @@ class Test {
 				let line = text.substr(0, m.index).match(/\n/g).length+1
 				console.warn("error parsing tests file:", line)
 			} else {
-				let test = new this({name: name}, input, JSON.parse(output))
+				let test = new this({name: name}, input, clean(JSON.parse(output)))
 			}
 		}
 	}

@@ -86,11 +86,11 @@ abc
 	function add_test(title, input) {
 		// todo: insert the output results element right away
 		
-		input = input.replace(/🟩/g, "")
+		input = input.replace(/🟩/g, "?")
 		let tree = parser.parse(input)
 		JSON.stringify(tree) // just to test
 		
-		let t = new Test({name: title}, input, tree)
+		let t = new Test({name: title}, input, clean(tree))
 		
 		$show_entries.value += "\n\n"+t.to_entry()
 		
