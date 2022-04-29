@@ -392,8 +392,8 @@ class Markup_12y2 { constructor() {
 			merge(o.content, o.prev)
 		} else {
 			// otherwise, we have a normal block:
-			if (o.prev=='newline')
-				o.content.push("\n")
+//			if (o.prev=='newline')
+				//o.content.push("\n")
 			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
 			current.content.push(o)
 			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev

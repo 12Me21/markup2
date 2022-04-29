@@ -35,7 +35,8 @@ class Test {
 		}
 		
 		try {
-			compare_node(this.correct, t, new Path())
+			let p = new Comparator(this.correct, t)
+			p.run()
 		} catch (e) {
 			this.status = -1
 			this.result = e
@@ -111,11 +112,16 @@ function safe_string(obj) {
 	}
 }
 
-// todo; during the comparison process, keep track of which node in `correct` is being checked, 
-
-class Path {
-	constructor() {
+// todo: this could be more fancy. integrate it with Test directly. instead of making a new one
+// rather than keeping a stack, just add annotations onto `correct` once at the start, then reuse them.
+class Comparator {
+	constructor(correct, got) {
 		this.stack = []
+		this.correct = correct
+		this.got = got
+	}
+	run() {
+		this.compare_node(this.correct, this.got)
 	}
 	mismatch(msg, correct, got) {
 		throw new Mismatch("\n"+this.print()+msg, correct, got)
@@ -140,80 +146,75 @@ class Path {
 		}
 		return s
 	}
-}
-
-function is_object(x) {
-	return x && Object.getPrototypeOf(x)==Object.prototype
-}
-
-function json_type(x) {
-	if (x===null || x===undefined) return 'null'
-	let t = typeof x
-	if (t=='number' || t=='boolean' || t=='string')
-		return t
-	if (t=='object') {
-		if (Array.isArray(x)) return 'array'
-		if (is_object(x)) return 'object'
+	is_object(x) {
+		return x && Object.getPrototypeOf(x)==Object.prototype
 	}
-	throw new InvalidTree("value has illegal type")
-}
-
-function compare_args(correct, got, path) {
-	if (correct==null) {
-		if (got!=null)
-			path.mismatch("node.args", correct, got)
-		return
+	json_type(x) {
+		if (x===null || x===undefined) return 'null'
+		let t = typeof x
+		if (t=='number' || t=='boolean' || t=='string')
+			return t
+		if (t=='object') {
+			if (Array.isArray(x)) return 'array'
+			if (is_object(x)) return 'object'
+		}
+		throw new InvalidTree("value has illegal type")
 	}
-	if (!is_object(correct))
-		throw new Error("invalid reference tree")
-	if (!is_object(got))
-		path.mismatch("node.args", correct, got)
-	
-	for (let obj of [correct, got])
-		for (let key in obj)
-			if (correct[key] !== got[key])
-				path.mismatch(`node.args.${key}`, correct[key], got[key])
-}
-
-function compare_content(correct, got, path) {
-	// todo: whether a node has .content depends on the node type
-	// i.e. /italic/ always has content, --- <hr> never does, etc.
-	// so instead of this check, perhaps we should have a table of which blocks have contents?
-	if (correct==null) {
-		if (got!=null)
-			path.mismatch("node.content", correct, got)
-		return
-	}
-	//
-	if (!Array.isArray(correct))
-		throw new Error("invalid .content in reference tree")
-	if (!Array.isArray(got))
-		path.mismatch("node.content", correct, got)
-	
-	for (let i=0; i<correct.length || i<got.length; i++) {
-		path.index(i)
-		compare_node(correct[i], got[i], path, i)
-	}
-}
-
-function compare_node(correct, got, path) {
-	path.push(correct)
-	// string node
-	if ('string'==typeof correct) {
-		if (got !== correct)
-			path.mismatch("node", correct, got)
-	} else {
-		// object node
-		if (!is_object(correct))
+	compare_args(correct, got) {
+		if (correct==null) {
+			if (got!=null)
+				this.mismatch("node.args", correct, got)
+			return
+		}
+		if (!this.is_object(correct))
 			throw new Error("invalid reference tree")
-		if (!is_object(got))
-			path.mismatch("node", correct, got)
-		if (got.type !== correct.type)
-			path.mismatch("node.type", correct.type, got.type)
-		// 
-		compare_args(correct.args, got.args, path)
-		// 
-		compare_content(correct.content, got.content, path)
+		if (!this.is_object(got))
+			this.mismatch("node.args", correct, got)
+		
+		for (let obj of [correct, got])
+			for (let key in obj)
+				if (correct[key] !== got[key])
+					this.mismatch(`node.args.${key}`, correct[key], got[key])
 	}
-	path.pop()
+	compare_content(correct, got) {
+		// todo: whether a node has .content depends on the node type
+		// i.e. /italic/ always has content, --- <hr> never does, etc.
+		// so instead of this check, perhaps we should have a table of which blocks have contents?
+		if (correct==null) {
+			if (got!=null)
+				this.mismatch("node.content", correct, got)
+			return
+		}
+		//
+		if (!Array.isArray(correct))
+			throw new Error("invalid .content in reference tree")
+		if (!Array.isArray(got))
+			this.mismatch("node.content", correct, got)
+		
+		for (let i=0; i<correct.length || i<got.length; i++) {
+			this.index(i)
+			this.compare_node(correct[i], got[i])
+		}
+	}
+	compare_node(correct, got) {
+		this.push(correct)
+		// string node
+		if ('string'==typeof correct) {
+			if (got !== correct)
+				this.mismatch("node", correct, got)
+		} else {
+			// object node
+			if (!this.is_object(correct))
+				throw new Error("invalid reference tree")
+			if (!this.is_object(got))
+				this.mismatch("node", correct, got)
+			if (got.type !== correct.type)
+				this.mismatch("node.type", correct.type, got.type)
+			// 
+			this.compare_args(correct.args, got.args)
+			// 
+			this.compare_content(correct.content, got.content)
+		}
+		this.pop()
+	}
 }
