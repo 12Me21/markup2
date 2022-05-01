@@ -9,8 +9,6 @@ L + ratio {}
 	--bg: var(--mainbg, white);
 	color: var(--maincolor, black);
 	--image-max-height: 10vh;
-	--image-height: var(--image-max-height);
-	/* unset --image-height if you want small images to shrink */
 }
 
 /*** everything ***/
@@ -30,14 +28,30 @@ L + ratio {}
 	display: block;
 }
 .Markup img, .Markup video, .Markup youtube-embed figure {
-	max-width: 100%;
-	height: var(--image-height);
+	/* this feature is widely supported, but wasn't standard until recently */
+	max-width: 100%; /* fallback */
+	max-width: -webkit-fill-available;
+	max-width: -moz-available;
+	max-width: stretch; /* no browser supports this value yet */
+	
+	/*height: var(--image-height);*/
 	max-height: var(--image-max-height);
 	object-fit: scale-down;
 	border: 1px solid gray;
 }
-.Markup img[data-loading] {
+/* before loading, assume image will be larger than --image-max-height */
+.Markup img[data-loading], .Markup video[data-loading] {
 	height: var(--image-max-height);
+}
+/* width/height attributes (overrides ↑) */
+.Markup img[height], .Markup video[height] {
+	min-height: unset;
+	box-sizing: content-box;
+	height: auto;
+}
+.Markup img[width], .Markup video[width] {
+	box-sizing: content-box;
+	width: auto;
 }
 
 .Markup youtube-embed {
