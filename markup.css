@@ -37,13 +37,16 @@ L + ratio {}
 	
 	max-height: var(--image-max-height);
 }
-.Markup img, .Markup video, {
+.Markup img, .Markup video {
 	/* these variables are set in element.style if supplied by user */
 	/* i.e. in !url[100x50] syntax */
 	box-sizing: content-box;
 	object-fit: scale-down;
 	width: var(--width);
 	height: var(--height);
+	/* prevent inheriting width/height from parent, if they aren't set */
+	--width: initial;
+	--height: initial;
 }
 /* before loading, assume image will be larger than --image-max-height */
 /* unless --height is set */
@@ -57,6 +60,7 @@ L + ratio {}
 .Markup youtube-embed figure {
 	overflow: hidden;
 	background-size: cover;
+	height: 270px;
 }
 .Markup youtube-embed iframe {
 	width: 480px;
