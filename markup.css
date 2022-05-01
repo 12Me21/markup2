@@ -25,7 +25,7 @@ L + ratio {}
 /** Embeds **/
 /************/
 .Markup img, .Markup video, .Markup audio {
-	/*display: block;*/
+	display: block;
 }
 .Markup img, .Markup video, .Markup youtube-embed figure {
 	border: 1px solid gray;
@@ -36,7 +36,8 @@ L + ratio {}
 	max-width: stretch; /* no browser supports this value yet */
 	
 	max-height: var(--image-max-height);
-	
+}
+.Markup img, .Markup video, {
 	/* these variables are set in element.style if supplied by user */
 	/* i.e. in !url[100x50] syntax */
 	box-sizing: content-box;
