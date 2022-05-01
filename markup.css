@@ -25,33 +25,29 @@ L + ratio {}
 /** Embeds **/
 /************/
 .Markup img, .Markup video, .Markup audio {
-	display: block;
+	/*display: block;*/
 }
 .Markup img, .Markup video, .Markup youtube-embed figure {
+	border: 1px solid gray;
 	/* this feature is widely supported, but wasn't standard until recently */
 	max-width: 100%; /* fallback */
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
 	max-width: stretch; /* no browser supports this value yet */
 	
-	/*height: var(--image-height);*/
 	max-height: var(--image-max-height);
+	
+	/* these variables are set in element.style if supplied by user */
+	/* i.e. in !url[100x50] syntax */
+	box-sizing: content-box;
 	object-fit: scale-down;
-	border: 1px solid gray;
+	width: var(--width);
+	height: var(--height);
 }
 /* before loading, assume image will be larger than --image-max-height */
+/* unless --height is set */
 .Markup img[data-loading], .Markup video[data-loading] {
-	height: var(--image-max-height);
-}
-/* width/height attributes (overrides ↑) */
-.Markup img[height], .Markup video[height] {
-	min-height: unset;
-	box-sizing: content-box;
-	height: auto;
-}
-.Markup img[width], .Markup video[width] {
-	box-sizing: content-box;
-	width: auto;
+	height: var(--height, var(--image-max-height));
 }
 
 .Markup youtube-embed {

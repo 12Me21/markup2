@@ -84,8 +84,15 @@ class Markup_Render_Dom { constructor() {
 				delete this.dataset.loading
 			}
 			if (alt!=null) e.alt = alt
-			if (width) e.width = width
-			if (height) e.height = height
+			if (width) {
+				e.width = width
+				e.style.setProperty('--width', width+"px")
+				e.style.width = width
+			}
+			if (height) {
+				e.height = height
+				e.style.setProperty('--height', height+"px")
+			}
 			return e
 		}.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
 		

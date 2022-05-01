@@ -492,10 +492,9 @@ class Markup_Legacy { constructor() {
 							after = true
 					}
 					if (embed) {
-						let [type, id] = urlType(url)
-						let altText = null
+						let [type, args] = urlType(url)
 						if (after) {
-							altText = ""
+							let altText = ""
 							while (c) {
 								if (c==']' && code[i+1]==']') { //messy
 									scan()
@@ -506,8 +505,9 @@ class Markup_Legacy { constructor() {
 								altText += c
 								scan()
 							}
+							args.alt = altText
 						}
-						add_block(type, {url, id, alt:altText})
+						add_block(type, args)
 					} else {
 						if (after)
 							start_block('link', {url}, {big: true, inBrackets: true})
@@ -647,18 +647,18 @@ class Markup_Legacy { constructor() {
 			let after = eatChar("[")
 			
 			if (embed) {
-				let [type, id] = urlType(url)
-				let altText = null
+				let [type, args] = urlType(url)
 				if (after) {
-					altText = ""
+					let altText = ""
 					while (c && c!=']' && c!="\n") {
 						eatChar("\\")
 						altText += c
 						scan()
 					}
 					scan()
+					args.alt = altText
 				}
-				add_block(type, {url, id, alt:altText})
+				add_block(type, args)
 			} else {
 				if (after)
 					start_block('link', {url}, {inBrackets: true})
@@ -746,13 +746,16 @@ class Markup_Legacy { constructor() {
 		// audio, video, image, youtube
 		function urlType(url) {
 			if (/(\.mp3(?!\w)|\.ogg(?!\w)|\.wav(?!\w)|#audio$)/i.test(url))
-				return ["audio"]
+				return ["audio", {url}]
 			if (/(\.mp4(?!\w)|\.mkv(?!\w)|\.mov(?!\w)|#video$)/i.test(url))
-				return ["video"]
+				return ["video", {url}]
 			let m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)
 			if (m)
-				return ["youtube", m[1]]
-			return ["image"]
+				return ["youtube", {url, id:m[1]}]
+			let size = /^([^#]*)#(\d+)x(\d+)$/.exec(url)
+			if (size)
+				return ["image", {url:size[1], width:+size[2], height:+size[3]}]
+			return ["image", {url}]
 		}
 		
 		// common code for all text styling tags (bold etc.)
