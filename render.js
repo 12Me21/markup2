@@ -1,21 +1,28 @@
-Markup.INJECT = Markup=>{
-	"use strict"
-	
+/**
+	@typedef {(Element|DocumentFragment|Document)} ParentNode
+*/
+
+/**
+	AST -> HTML DOM Node renderer
+*/
+class Markup_Render_Dom { constructor() {
 	// This tag-function parses an HTML string, and returns a function
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
 	
-	function 𐀶([html/*‹String›*/])/*‹Node›*/ {
+	function 𐀶([html]) {
 		let temp = document.createElement('template')
 		temp.innerHTML = html
 		let elem = temp.content.firstChild
 		return elem.cloneNode.bind(elem, true)
 	}
 	
-	Markup.url_scheme = {
+	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
+	// for embeds, need separate handlers for normal urls and embeds and
+	let URL_SCHEME = {
 		"sbs:"(url) {
-			return "?"+url.pathname+url.search+url.hash
+			return "#"+url.pathname+url.search+url.hash
 		},
 		"no-scheme:"(url) {
 			url.protocol = "https:"
@@ -29,11 +36,19 @@ Markup.INJECT = Markup=>{
 	function filter_url(url) {
 		try {
 			let u = new URL(url, "no-scheme:/")
-			let f = Markup.url_scheme[u.protocol]
+			let f = URL_SCHEME[u.protocol]
 			return f ? f(u) : u.href
 		} catch(e) {
 			return "about:blank"
 		}
+	}
+	
+	function get_youtube(id, callback) {
+		let x = new XMLHttpRequest()
+		x.responseType = 'json'
+		x.open('GET', `https://www.youtube.com/oembed?url=https%3A//youtube.com/watch%3Fv%3D${id}&format=json`)
+		x.onload = ()=>{callback(x.response)}
+		x.send()
 	}
 	
 	let CREATE = {
@@ -65,7 +80,9 @@ Markup.INJECT = Markup=>{
 		image: function({url, alt, width, height}) {
 			let e = this()
 			e.src = filter_url(url)
-			e.onerror = e.onload = e.removeAttribute.bind(e, 'data-loading')
+			e.onerror = e.onload = function(e) {
+				delete this.dataset.loading
+			}
 			if (alt!=null) e.alt = alt
 			if (width) e.width = width
 			if (height) e.height = height
@@ -94,9 +111,8 @@ Markup.INJECT = Markup=>{
 			// for clients that expand images/video when clicked:
 			// mousedown events don't happen on <video>,
 			// so instead I throw a fake event when the video plays
-			// todo: maybe use a custom event instead?
 			e.onplaying = (event)=>{
-				let e2 = new MouseEvent('mousedown', {bubbles:true, cancellable:true})
+				let e2 = new Event('videoclicked', {bubbles:true, cancellable:true})
 				event.target.dispatchEvent(e2)
 			}
 			return e
@@ -140,7 +156,7 @@ Markup.INJECT = Markup=>{
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
 		
 		youtube: function({id, url}) {
-			let e = this[0]()
+			let e = this()
 			
 			let close = e.lastChild
 			let preview = e.firstChild
@@ -149,12 +165,11 @@ Markup.INJECT = Markup=>{
 			link.href = url
 			
 			let figure = preview.firstChild
-			figure.style.background = `no-repeat center/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
+			figure.style.background = `no-repeat left/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
 			
 			let caption = figure.firstChild
 			caption.textContent = url
 			
-			let create = this[1]
 			let iframe
 			
 			close.onclick = (event)=>{
@@ -170,17 +185,21 @@ Markup.INJECT = Markup=>{
 				if (iframe)
 					return
 				close.hidden = false
-				iframe = create()
+				iframe = document.createElement('iframe')
+				iframe.setAttribute('allowfullscreen', "")
+				iframe.setAttribute('referrerpolicy', "no-referrer")
 				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
 				preview.replaceWith(iframe)
 			}
 			
+			get_youtube(id, data=>{
+				caption.textContent = data.title+"\n"+data.author_name
+			})
+			
 			return e
-		}.bind([
+		}.bind(
 			𐀶`<youtube-embed><a target=_blank><figure><figcaption></figcaption></figure></a><button hidden>❌</button>`,
-			𐀶`<iframe referrerpolicy=no-referrer allowfullscreen>`,
-		]),
-		x:	``,
+		),
 		
 		link: function({url}) {
 			let e = this()
@@ -243,40 +262,47 @@ Markup.INJECT = Markup=>{
 		key: 𐀶`<kbd>`,
 	}
 	
-	function fill_branch(branch/*‹ParentNode›*/, leaves/*LIST(‹branch›)*/)/*ENUM(newline,block,text)*/ {
-		// children
-		let prev = 'newline'
-		let all_newline = true
+	function fill_branch(branch, leaves) {
 		for (let leaf of leaves) {
-			if (typeof leaf == 'string') {
-				all_newline = false
+			if ('string'==typeof leaf) {
 				branch.append(leaf)
-				prev = 'text'
-			} else if (leaf === true) {
-				if (prev!='block')
-					branch.append(CREATE.newline())
-				prev = 'newline'
 			} else {
-				all_newline = false
-				let node = CREATE[leaf.type](leaf.args)
-				branch.append(node.getRootNode())
+				let creator = CREATE[leaf.type]
+				if (!creator) {
+					if ('object'==typeof leaf && leaf)
+						throw new RangeError("unknown node .type: ‘"+leaf.type+"’")
+					else
+						throw new TypeError("unknown node type: "+typeof leaf)
+				}
+				let node = creator(leaf.args)
 				if (leaf.content)
-					prev = fill_branch(node, leaf.content)
-				else
-					prev = 'text'
-				prev = Markup.IS_BLOCK[leaf.type] ? 'block' : prev
+					fill_branch(node, leaf.content)
+				branch.append(node.getRootNode())
 			}
 		}
-		if (prev=='newline' && !all_newline)
-			branch.append(CREATE.newline())
-		
-		return prev
 	}
 	
-	Markup.render = function({args, content}, node=document.createDocumentFragment()) {
+	/**
+		render function
+		@param {Tree} ast - input ast
+		@param {ParentNode} [node=document.createDocumentFragment()] - destination node
+		@return {ParentNode} - node with rendered contents. same as `node` if passed, otherwise is a new DocumentFragment.
+	 */
+	this.render = function({args, content}, node=document.createDocumentFragment()) {
+		node.textContent = "" //mmnn
 		fill_branch(node, content)
 		return node
 	}
-	
-	Markup.create = CREATE
-}
+	/**
+		node create function map
+		@type {Object<string,function>}
+	*/
+	this.create = CREATE
+	/**
+		url scheme handler map
+		@type {Object<string,function>}
+	*/
+	this.url_scheme = URL_SCHEME
+}}
+
+if ('object'==typeof module && module) module.exports = Markup_Render_Dom

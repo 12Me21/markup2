@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang=en-QC-2sbs><meta charset="utf-8">
 
+<!-- TODO: test renderer? at least make sure it doesn't crash -->
+
 <script src=../parse.js></script>
 <script src=../render.js></script>
 <link rel=stylesheet href=../markup.css>
@@ -43,7 +45,7 @@
 		<input id=$title placeholder='name'>
 		<button onclick="add_test($title.value, $input.value)">add</button>
 	</div>
-	<div class='🍂' id=$preview style='padding: 5px; border: 1px solid black;'></div>
+	<div class='Markup' id=$preview style='padding: 5px; border: 1px solid black;'></div>
 	<hr>
 	test definitions: (saved in localstorage)
 	<textarea id=$show_entries style='resize: vertical;height: 200px;'></textarea>
@@ -53,6 +55,9 @@
 </div>
 
 <script>
+	let parser = new Markup_12y2()
+	let renderer = new Markup_Render_Dom()
+	
 	$show_entries.value = localStorage.tests || `🟩 text
 abc
 🟩 {"type":"ROOT","tag":"","content":["abc"]}`
@@ -61,8 +66,8 @@ abc
 	run()
 	
 	$input.oninput = function() {
-		let tree = Markup.parse(this.value)
-		let e = Markup.render(tree)
+		let tree = parser.parse(this.value)
+		let e = renderer.render(tree)
 		$preview.replaceChildren(e)
 	}
 	
@@ -83,11 +88,11 @@ abc
 	function add_test(title, input) {
 		// todo: insert the output results element right away
 		
-		input = input.replace(/🟩/g, "")
-		let tree = Markup.parse(input)
-		JSON.stringify(tree)
+		input = input.replace(/🟩/g, "?")
+		let tree = parser.parse(input)
+		JSON.stringify(tree) // just to test
 		
-		let t = new Test({name: title}, input, tree)
+		let t = new Test({name: title}, input, clean(tree))
 		
 		$show_entries.value += "\n\n"+t.to_entry()
 		

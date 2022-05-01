@@ -1,3 +1,7 @@
+
+THIS FILE IS OUTDATED, DO NOT READ
+
+
 🔸🔶🟧 EXAMPLE 🟧🔶🔸
 
 ═[HTML]══════════════════════════════════════
@@ -46,24 +50,90 @@ element.classList.add('whatever')
 
 🔸🔶🟧 FUNCTIONS 🟧🔶🔸
 
+‹ParentElement› = ‹Element› OR ‹DocumentFragment› OR ‹Document›
+
 ‹tree› = {type:ENUM(...), ?args:‹Object›, ?content:LIST(‹branch›)}
 
 ‹branch› = ‹tree› OR ‹String› OR `true`
 
+‹parser› = FUNCTION(‹String›) ⤑ ‹tree›
+
 📒❲parse.js❳
  ┃
- ┣📑❲Markup.parse(text‹String›) ⤑ ‹tree›❳
- ┃    ⎝parser, outputs a tree
- ┃
- ┗📑❲Markup.convert(text‹String›, ?parent‹ParentNode›) ⤑ ‹ParentNode›❳
-      ⎝equivalent to Markup.render(Markup.parse(...))
+ ┗🏭❲Markup_12y2:CLASS()❳
+   ┃
+   ┣📜❲.prototype❳
+   ┃
+   ┗📦❲new❳
+     ┃
+     ┗📑❲.parse:‹parser›❳
+          ⎝parser, outputs a tree
 
 📒❲render.js❳
  ┃
- ┗📑❲Markup.render(tree‹tree›, ?parent‹ParentNode›) ⤑ ‹ParentNode›❳
-      ⎜renderer, converts the parser's tree into html.
-      ⎜if `parent` is passed, the output is inserted into that element.
-      ⎝otherwise, it creates and returns a new ‹DocumentFragment›
+ ┗🏭❲Markup_Render:CLASS()❳
+   ┃
+   ┣📜❲.prototype❳
+   ┃
+   ┗📦❲new❳
+     ┃
+     ┣📑❲.render:FUNCTION(tree‹tree›, ?parent‹ParentNode›) ⤑ ‹ParentNode›❳
+     ┃    ⎜renderer, converts the parser's tree into html.
+     ┃    ⎜if `parent` is passed, the output is inserted into that node.
+     ┃    ⎝otherwise, it creates and returns a new ‹DocumentFragment›
+     ┃  
+     ┣📑❲.create:DICT ⤑ ❲FUNCTION(...) ⤑ ‹Node›❳❳
+     ┃
+     ┗📑❲.url_scheme:DICT ⤑ ❲FUNCTION(‹URL›) ⤑ ‹String›❳❳
+
+📒❲legacy.js❳
+ ┃
+ ┗🏭❲Markup_Langs:CLASS()❳
+   ┃
+   ┣📜❲.prototype❳
+   ┃
+   ┗📦❲new❳
+     ┃
+     ┣📑❲.12y2:‹parser›❳
+     ┣📑❲.text:‹parser›❳
+     ┣📑❲.12y:‹parser›❳
+     ┣📑❲.bbcode:‹parser›❳
+     ┗📑❲.plaintext:‹parser›❳
+
+📒❲helpers.js❳
+ ┃
+ ┣🏭❲SbsLocation:CLASS(‹String›)❳
+ ┃ ┃
+ ┃ ┣📜❲.prototype❳
+ ┃ ┃ ┃
+ ┃ ┃ ┗📑❲.toString:FUNCTION() ⤑ ‹String›❳
+ ┃ ┃
+ ┃ ┗📦❲new❳
+ ┃   ┃
+ ┃   ┣📑❲.type:‹String›❳
+ ┃   ┃
+ ┃   ┣📑❲?.id:‹String› OR ‹Number›❳
+ ┃   ┃
+ ┃   ┣📑❲.query:DICT ⤑ ‹String›❳
+ ┃   ┃
+ ┃   ┗📑❲?.fragment:‹String›❳
+ ┃
+ ┗📦❲???:CLASS() extends Markup_Render❳
+   ┃
+   ┣📜❲.prototype❳
+   ┃ ┃
+   ┃ ┣📑❲.parse:FUNCTION(‹String›, ‹String›) ⤑ ‹tree›❳
+   ┃ ┃
+   ┃ ┗📑❲.convert_lang:FUNCTION(‹String›, ‹String›, ?‹Element›, ?TABLE) ⤑ ‹ParentElement›❳
+   ┃
+   ┗📦❲new❳
+     ┃
+     ┣📑❲.langs:TABLE ⤑ ‹parser›❳
+     ┃    ⎝table of parser functions for different markup languages
+     ┃
+     ┗📑❲.css_class:‹String›❳
+          ⎜The css class used by `Markup.convert_lang`
+          ⎝default value: "🍂"
 
 📒❲legacy.js❳
  ┃

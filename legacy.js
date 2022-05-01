@@ -1,75 +1,28 @@
-Markup.INJECT = Markup=>{
+/**
+	legacy parser collection
+	@implements Langs_Mixin
+	@hideconstructor
+*/
+class Markup_Legacy { constructor() {
 	"use strict"
 	
-	Markup.langs = {
-		'12y2': Markup.parse,
-		'bbcode': null,
-		'12y': null,
-		'text': null, // new fallback parser
-		'plaintext': null, // legacy fallback parser (autolinker)
-	}
+	/**
+		@instance
+		@type {Object}
+		@property {Parser_Function} 12y - 12y parser
+		@property {Parser_Function} bbcode - bbcode parser
+		@property {Parser_Function} plaintext - plaintext parser/autolinker
+	*/
+	this.langs = {}
 	
-	Markup.css_class = "🍂"
+	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
 	
-	Markup.convert_lang = function(text, lang, element, options) {
-		if (typeof text != 'string')
-			throw new TypeError("Markup.message: msg.text is not a string")
-		if (element!==undefined) {
-			if (!(element instanceof Element))
-				throw new TypeError("Markup.message: element is not an Element")
-			element.classList.add(Markup.css_class)
-		}
-		
-		let tree, err
-		try {
-			let parser
-			if ('string'==typeof lang)
-				parser = Markup.langs[lang]
-			parser = parser || Markup.langs.plaintext
-			
-			tree = parser(text)
-			return Markup.render(tree, element)
-		} catch (e) {
-			err = e
-		}
-		if (!tree) {
-			console.error("Error during markup parsing:", err)
-			try {
-				return Markup.render({type:'ROOT', lang:'error', content:[
-					{type:'error', args: {error: err, text: text}, content: [text]}
-				]}, element)
-			} catch (e) {
-				err = e
-			}
-		}
-		console.error("Error during markup rendering:", err)
-		// last resort output format
-		let f = element || document.createDocumentFragment()
-		let d = document.createElement('pre')
-		d.textContent = `ERROR: ${err ? err.message : "unknown error"}`
-		d.style.border = "4px inset red"
-		f.append(d)
-		f.append(text)
-		return f
-	}
-	
-	Markup.langs.text = function(text) {
-		let tree = {type:'ROOT', lang:'text', content:[]}
-		for (let line of text.split("\n")) {
-			if (line)
-				tree.content.push(line)
-			tree.content.push(true)
-		}
-		tree.content.pop()
-		return tree
-	}
-	
-	let BLOCKS = {
+	let BLOCKS = MAP({
 		divider:1, code:1, audio:1, video:1, youtube:1,
 		heading:1, quote:1, list:1, list_item:1,
 		table:1, table_row:1, image:1, error:1,
 		align:1, spoiler:1
-	}
+	})
 	
 	function convert_cell_args(props, h) {
 		let args = {
@@ -86,7 +39,7 @@ Markup.INJECT = Markup=>{
 	
 	/***********
 	 ** STATE **
-    ***********/
+	 ***********/
 	let c, i, code
 	let skipNextLineBreak
 	let textBuffer
@@ -184,8 +137,8 @@ Markup.INJECT = Markup=>{
 	}
 	
 	/***********
-    ** stack **
-    ***********/
+	 ** stack **
+	 ***********/
 	function stackContains(type) {
 		for (let i=0; i<stack.length; i++) {
 			if (stack[i].type == type)
@@ -199,8 +152,8 @@ Markup.INJECT = Markup=>{
 	}
 	
 	/****************
-    ** outputting **
-    ****************/
+	 ** outputting **
+	 ****************/
 	function endBlock() {
 		flushText()
 		let item = stack.pop()
@@ -220,8 +173,6 @@ Markup.INJECT = Markup=>{
 		}
 	}
 	
-	
-	
 	// output contents of text buffer
 	function flushText() {
 		if (textBuffer) {
@@ -239,7 +190,7 @@ Markup.INJECT = Markup=>{
 			skipNextLineBreak = false
 		else
 			addText("\n")
-			//add_block(true)
+		//add_block(true)
 	}
 	
 	// add text to output (buffered)
@@ -290,7 +241,7 @@ Markup.INJECT = Markup=>{
 		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
 	}
 	
-	Markup.langs['12y'] = function(codeInput) {
+	this.langs['12y'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = '12y'
 		if (!codeInput)
@@ -302,9 +253,9 @@ Markup.INJECT = Markup=>{
 				//==========
 				// \ escape
 			} else if (eatChar("\\")) {
-/*				if (c == "\n") {
-					add_block(true)
-				} else*/
+				/*				if (c == "\n") {
+								add_block(true)
+								} else*/
 				addText(c)
 				scan()
 				//===============
@@ -798,7 +749,7 @@ Markup.INJECT = Markup=>{
 				return ["audio"]
 			if (/(\.mp4(?!\w)|\.mkv(?!\w)|\.mov(?!\w)|#video$)/i.test(url))
 				return ["video"]
-			let m = /^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.exec(url)
+			let m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)
 			if (m)
 				return ["youtube", m[1]]
 			return ["image"]
@@ -819,15 +770,15 @@ Markup.INJECT = Markup=>{
 		function canStartMarkup(type) {
 			return (
 				(!code[i-2] || char_in(code[i-2], " \t\n({'\"")) && //prev char is one of these (or start of text)
-				(c && !char_in(c, " \t\n,'\"")) && //next char is not one of these
-				!stackContains(type)
+					(c && !char_in(c, " \t\n,'\"")) && //next char is not one of these
+					!stackContains(type)
 			)
 		}
 		function canEndMarkup(type) {
 			return (
 				top_is(type) && //there is an item to close
-				!char_in(code[i-2], " \t\n,'\"") && //prev char is not one of these
-				(!c || char_in(c, " \t\n-.,:!?')}\"")) //next char is one of these (or end of text)
+					!char_in(code[i-2], " \t\n,'\"") && //prev char is not one of these
+					(!c || char_in(c, " \t\n-.,:!?')}\"")) //next char is one of these (or end of text)
 			)
 		}
 		function char_in(chr, list) {
@@ -837,7 +788,7 @@ Markup.INJECT = Markup=>{
 	}
 	
 	// start_block
-	const block_translate = {
+	const block_translate = MAP({
 		// things without arguments
 		b: 'bold',
 		i: 'italic',
@@ -893,9 +844,9 @@ Markup.INJECT = Markup=>{
 		audio: 2,
 		video: 2,
 		img: 2,
-	}
+	})
 	// add_block
-	const block_translate_2 = {
+	const block_translate_2 = MAP({
 		code(args, contents) {
 			let inline = args[""] == 'inline'
 			if (inline)
@@ -920,11 +871,10 @@ Markup.INJECT = Markup=>{
 		},
 		img(args, contents) {
 			return ['audio', {url: args['']}]
-		},
-		
-	}
+		},	
+	})
 	
-	Markup.langs['bbcode'] = function(codeInput) {
+	this.langs['bbcode'] = function(codeInput) {
 		init(codeInput)
 		curr.lang = 'bbcode'
 		if (!codeInput)
@@ -943,7 +893,7 @@ Markup.INJECT = Markup=>{
 					// invalid end tag
 					if (!eatChar("]") || !name) {
 						cancel()
-					// valid end tag
+						// valid end tag
 					} else {
 						// end last item in lists (mostly unnecessary now with greedy closing)
 						if (name == "list" && stack_top().type == "list_item")
@@ -958,7 +908,7 @@ Markup.INJECT = Markup=>{
 							//addBlock('invalid', code.substring(point, i), "unexpected closing tag")
 						}
 					}
-				// [... start tag?
+					// [... start tag?
 				} else {
 					let name = readTagName()
 					if (!name || !block_translate[name]) {
@@ -1121,8 +1071,7 @@ Markup.INJECT = Markup=>{
 		}
 	}
 	
-	// "plain text" (with autolinker)
-	Markup.langs.plaintext = function(text) {
+	this.langs['plaintext'] = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
 		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
@@ -1145,4 +1094,13 @@ Markup.INJECT = Markup=>{
 		
 		return root
 	}
-}
+	
+	/**
+		default markup language (plaintext)
+		@instance
+		@type {Parser_Function}
+	*/
+	this.default_lang = this.langs['plaintext']
+}}
+
+if ('object'==typeof module && module) module.exports = Markup_Legacy

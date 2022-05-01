@@ -1,62 +1,59 @@
 <!DOCTYPE html>
-<html lang=en-QC-2sbs>
+<html lang=en-QS>
 <meta charset="utf-8">
 
+<script src=langs.js></script>
 <script src=parse.js></script>
-<script src=render.js></script>
 <script src=legacy.js></script>
+<script src=render.js></script>
+<script src=helpers.js></script>
 
 <link rel=stylesheet href=markup.css>
-<style>
-	#\$output {
-		border: 3px solid black;
-		padding: 2px;
-	}
-</style>
 
 <select id=$lang>
-	<option>12y2</option>
-	<option>12y</option>
-	<option>bbcode</option>
-	<option>text</option>
-	<option value=plaintext>(fallback)</option>
+	<option> 12y2
+	<option> 12y
+	<option> bbcode
+	<option> plaintext
 </select>
+
 <textarea-container>
 	<textarea id=$input></textarea>
 </textarea-container>
-parse: <output id=$time1></output> render: <output id=$time2></output>
-<div id=$output class='🍂'></div>
+
+<table border>
+	<tr>
+		<th> <th> parse <th> render <th> total
+	<tr>
+		<th> time (ms)
+		<td> <time id=$time1></time>
+		<td> <time id=$time2></time>
+		<td> <time id=$time3></time>
+</table>
+
+<div id=$output class="Markup" style="border: 3px solid black; padding: 2px;"></div>
 
 <script>
+	function show_time(elem, ms) {
+		elem.dateTime = (ms/1000).toFixed(4)+' s'
+		elem.textContent = ms.toFixed(1)
+	}
+	
 	function update() {
-		let t = $input.value
-		
-		~Δ
-		let tree = Markup.langs[$lang.value](t)
-		$time1.value = Δ
-		
-		window.tree = tree
-		
-		~Δ
-		let e = Markup.render(tree)
-		$time2.value = Δ
-		
-		$output.replaceChildren(e)
+		//Markup.convert_lang($input.value, $lang.value, $output)
+		let t0 = performance.now()
+		let tree = Markup.langs.parse($input.value, $lang.value)
+		let t1 = performance.now()
+		Markup.renderer.render(tree, $output)
+		let t2 = performance.now()
+		show_time($time1, t1-t0)
+		show_time($time2, t2-t1)
+		show_time($time3, t2-t0)
 	}
 	
 	$input.oninput = update
 	$lang.onchange = update
 	window.onload = update
-	
-	// Timer	
-	let tₛ = 0
-	function Δ() {
-		let t = performance.now()
-		let str = (t - tₛ).toFixed(1)+" ms"
-		tₛ = performance.now()
-		return str
-	}
-	Δ.valueOf = Δ.toString = Δ
 </script>
 
 
@@ -93,11 +90,17 @@ parse: <output id=$time1></output> render: <output id=$time2></output>
 </style>
 
 <script>
-	document.addEventListener('input', function(e) {
-		let t = e.target
-		if (t instanceof HTMLTextAreaElement && t.parentNode.tagName=='TEXTAREA-CONTAINER') {
+	{
+		let resize = (t)=>{
 			t.style.height = "0"
 			t.parentNode.style.height = t.style.height = `${t.scrollHeight+1}px`
 		}
-	}, {passive: true})
+		document.addEventListener('input', function(e) {
+			let t = e.target
+			if (t instanceof HTMLTextAreaElement && t.parentNode.tagName=='TEXTAREA-CONTAINER')
+				resize(t)
+		}, {passive: true})
+		for (let t of document.querySelectorAll("textarea-container > textarea"))
+			resize(t)
+	}
 </script>
