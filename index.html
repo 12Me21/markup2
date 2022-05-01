@@ -90,11 +90,17 @@
 </style>
 
 <script>
-	document.addEventListener('input', function(e) {
-		let t = e.target
-		if (t instanceof HTMLTextAreaElement && t.parentNode.tagName=='TEXTAREA-CONTAINER') {
+	{
+		let resize = (t)=>{
 			t.style.height = "0"
 			t.parentNode.style.height = t.style.height = `${t.scrollHeight+1}px`
 		}
-	}, {passive: true})
+		document.addEventListener('input', function(e) {
+			let t = e.target
+			if (t instanceof HTMLTextAreaElement && t.parentNode.tagName=='TEXTAREA-CONTAINER')
+				resize(t)
+		}, {passive: true})
+		for (let t of document.querySelectorAll("textarea-container > textarea"))
+			resize(t)
+	}
 </script>
