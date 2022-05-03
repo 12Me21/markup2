@@ -72,7 +72,12 @@ class Markup_Render_Dom { constructor() {
 		
 		simple_link: function({url, text}) {
 			let e = this()
-			e.textContent = text
+			if (text==null)
+				e.textContent = url
+			else {
+				e.textContent = text
+				e.className += ' M-link-custom'
+			}
 			e.href = filter_url(url)
 			return e
 		}.bind(𐀶`<a href="" target=_blank>`),
@@ -223,7 +228,7 @@ class Markup_Render_Dom { constructor() {
 			let e = this()
 			e.href = filter_url(url)
 			return e
-		}.bind(𐀶`<a target=_blank href="">`),
+		}.bind(𐀶`<a class='M-link-custom' target=_blank href="">`),
 		
 		list: function({style}) {
 			if (style==null)

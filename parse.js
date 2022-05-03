@@ -219,7 +219,7 @@ class Markup_12y2 { constructor() {
 			let args = {url}
 			if (body)
 				return OPEN('link', tag, args, true)
-			args.text = arg0(rargs, url)
+			args.text = rargs[0]
 			return TAG('simple_link', args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎

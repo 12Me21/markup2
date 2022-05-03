@@ -12,9 +12,9 @@ L + ratio {}
 	--T-bg: white;
 	
 	--T-border-col: gray;
+	/* these are transparent, so they should work with both dark and light */
 	--T-box-bg: #AAA2;
 	
-	/* these are transparent, so they should work with both dark and light */
 	--T-red-bg: #F888;
 	--T-green-bg: #FA08;
 	--T-yellow-bg: #FF08;
@@ -23,11 +23,12 @@ L + ratio {}
 	--T-purple-bg: #C0F8;
 	--T-gray-bg: #AAA8;
 	
-	/* Most themes won't change these: */
+	--T-link-bg: #5CE5; /* for links w/ custom text */
 	
+	/* Most themes won't change these: */
 	--T-tab-size: 3.5;
 	--T-embed-height: 10vh;
-	--T-font: roboto, sans-serif;
+	--T-font: sans-serif;
 }
 
 /** aa */
@@ -245,4 +246,8 @@ L + ratio {}
 .Markup a[href] {
 	/*color: rgb(0, 80, 150);*/
 	text-decoration: underline;
+}
+
+.M-link-custom {
+	background: var(--T-link-bg);
 }
