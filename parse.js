@@ -140,6 +140,8 @@ class Markup_12y2 { constructor() {
 			return TEXT(tag)
 		}},
 	],[// 💎 ENV 💎 (handled separately)
+		// todo: make this more strict
+		// ex: something like `\u2013` should not parse as env?
 		/[\\]\w+/,
 		false,
 	],[// 💎 BLOCK END 💎

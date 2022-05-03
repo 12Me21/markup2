@@ -13,7 +13,7 @@ class Markup_Render_Dom { constructor() {
 	
 	function 𐀶([html]) {
 		let temp = document.createElement('template')
-		temp.innerHTML = html
+		temp.innerHTML = html.replace(/\s*\n\s*/g,"")
 		let elem = temp.content.firstChild
 		return elem.cloneNode.bind(elem, true)
 	}
@@ -79,10 +79,10 @@ class Markup_Render_Dom { constructor() {
 		
 		image: function({url, alt, width, height}) {
 			let e = this()
-			e.src = filter_url(url)
-			e.onerror = e.onload = function(e) {
-				delete this.dataset.loading
+			e.onerror = e.onload = (ev)=>{
+				e.removeAttribute('data-loading')
 			}
+			e.src = filter_url(url)
 			if (alt!=null) e.alt = alt
 			if (width) {
 				e.width = width
@@ -143,7 +143,10 @@ class Markup_Render_Dom { constructor() {
 			let e = this[1]()
 			e.firstChild.textContent = cite
 			return e.lastChild
-		}.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite></cite>:<div>`]),
+		}.bind([
+			𐀶`<blockquote class='.M-quote'>`,
+			𐀶`<blockquote class='.M-quote'><cite class='.M-quote-label'></cite>:<div class='.M-quote-inner'></div></blockquote>` // should we have -outer class?
+		]),
 		
 		table: function() {
 			let e = this()
@@ -193,6 +196,7 @@ class Markup_Render_Dom { constructor() {
 					return
 				close.hidden = false
 				iframe = document.createElement('iframe')
+				iframe.className = '.M-youtube-embed'
 				iframe.setAttribute('allowfullscreen', "")
 				iframe.setAttribute('referrerpolicy', "no-referrer")
 				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
@@ -205,9 +209,15 @@ class Markup_Render_Dom { constructor() {
 			})
 			
 			return e
-		}.bind(
-			𐀶`<youtube-embed><a target=_blank><figure><figcaption></figcaption></figure></a><button hidden>❌</button>`,
-		),
+		}.bind(𐀶`
+<div class='.M-youtube'>
+	<a target=_blank>
+		<figure class='.M-youtube-preview'>
+			<figcaption class='.M-youtube-label'></figcaption>
+		</figure>
+	</a>
+	<button hidden class='.M-youtube-close'>❌</button>
+</div>`),
 		
 		link: function({url}) {
 			let e = this()
@@ -237,9 +247,9 @@ class Markup_Render_Dom { constructor() {
 		
 		anchor: function({name}) {
 			let e = this()
-			e.name = "_anchor_"+name
+			e.id = "Markup-anchor-"+name
 			return e
-		}.bind(𐀶`<a name="">`),
+		}.bind(𐀶`<span id="" class='M-anchor'>`),
 		
 		ruby: function({text}) {
 			let e = this()
@@ -251,21 +261,26 @@ class Markup_Render_Dom { constructor() {
 			let e = this()
 			e.firstChild.textContent = label
 			return e.lastChild
-		}.bind(𐀶`<details><summary></summary><div>`),
+		}.bind(𐀶`
+<details class='M-spoiler'>
+	<summary class='M-spoiler-label'></summary>
+	<div class='M-spoiler-inner'></div>
+</details>`),
+		//}.bind(𐀶`<details><summary></summary><div>`),
 		
 		background_color: function({color}) {
 			let e = this()
 			if (color)
 				e.dataset.bgcolor = color
 			return e
-		}.bind(𐀶`<span>`),
+		}.bind(𐀶`<span class='M-background'>`),
 		
 		invalid: function({text, reason}) {
 			let e = this()
 			e.title = reason
 			e.textContent = text
 			return e
-		}.bind(𐀶`<span class='invalid'>`),
+		}.bind(𐀶`<span class='M-invalid'>`),
 		
 		key: 𐀶`<kbd>`,
 	}
