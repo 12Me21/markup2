@@ -512,7 +512,7 @@ class Markup_Legacy { constructor() {
 						if (after)
 							start_block('link', {url}, {big: true, inBrackets: true})
 						else
-							add_block('simple_link', {text:url, url})
+							add_block('simple_link', {url})
 					}
 					return true
 				} else {
@@ -663,7 +663,7 @@ class Markup_Legacy { constructor() {
 				if (after)
 					start_block('link', {url}, {inBrackets: true})
 				else
-					add_block('simple_link', {text:url, url:url})
+					add_block('simple_link', {url})
 			}
 			return true
 		}
@@ -861,7 +861,7 @@ class Markup_Legacy { constructor() {
 			}
 		},
 		url(args, contents) {
-			return ['simple_link', {text:contents, url: contents}]
+			return ['simple_link', {url:contents}]
 		},
 		youtube(args, contents) {
 			return ['youtube', {url: args['']}] // TODO: set id here
@@ -1012,7 +1012,7 @@ class Markup_Legacy { constructor() {
 		function readPlainLink() {
 			if (isUrlStart()) {
 				let url = readUrl()
-				add_block('simple_link', {text:url, url:url})
+				add_block('simple_link', {url})
 				return true
 			}
 		}
@@ -1087,7 +1087,7 @@ class Markup_Legacy { constructor() {
 				root.content.push(before)
 			// generate link
 			let url = result[0]
-			root.content.push({type:'simple_link', args:{url:url, text:url}})
+			root.content.push({type:'simple_link', args:{url}})
 			last = result.index + result[0].length
 		}
 		// text after last link (or entire message if no links were found)
