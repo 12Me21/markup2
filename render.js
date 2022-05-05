@@ -149,8 +149,8 @@ class Markup_Render_Dom { constructor() {
 			e.firstChild.textContent = cite
 			return e.lastChild
 		}.bind([
-			𐀶`<blockquote class='.M-quote'>`,
-			𐀶`<blockquote class='.M-quote'><cite class='.M-quote-label'></cite>:<div class='.M-quote-inner'></div></blockquote>` // should we have -outer class?
+			𐀶`<blockquote class='M-quote'>`,
+			𐀶`<blockquote class='M-quote'><cite class='M-quote-label'></cite>:<div class='M-quote-inner'></div></blockquote>` // should we have -outer class?
 		]),
 		
 		table: function() {
