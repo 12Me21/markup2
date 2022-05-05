@@ -201,7 +201,7 @@ class Markup_Render_Dom { constructor() {
 					return
 				close.hidden = false
 				iframe = document.createElement('iframe')
-				iframe.className = '.M-youtube-embed'
+				iframe.className = 'M-youtube-embed'
 				iframe.setAttribute('allowfullscreen', "")
 				iframe.setAttribute('referrerpolicy', "no-referrer")
 				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
@@ -215,13 +215,13 @@ class Markup_Render_Dom { constructor() {
 			
 			return e
 		}.bind(𐀶`
-<div class='.M-youtube'>
+<div class='M-youtube'>
 	<a target=_blank>
-		<figure class='.M-youtube-preview'>
-			<figcaption class='.M-youtube-label'></figcaption>
+		<figure class='M-youtube-preview'>
+			<figcaption class='M-youtube-label'></figcaption>
 		</figure>
 	</a>
-	<button hidden class='.M-youtube-close'>❌</button>
+	<button hidden class='M-youtube-close'>❌</button>
 </div>`),
 		
 		link: function({url}) {
