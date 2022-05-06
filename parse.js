@@ -182,7 +182,6 @@ class Markup_12y2 { constructor() {
 		}},
 	],[// 💎 CODE BLOCK 💎
 		/{BOL}```[^]*?(```|$)/,
-		//`{BOL}\`\`\`[^]*?(\`\`\`|$)`, idea... use template strings instead of rx literals here
 		{do(token) {
 			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```)?$/g.exec(token)// hack...
 			// idea: strip leading indent from code?
@@ -198,22 +197,7 @@ class Markup_12y2 { constructor() {
 		// 💎 EMBED 💎
 		{argtype:ARGS_BODYLESS, do(token, rargs, body, base_token) {
 			let url = base_token.substr(1) // ehh better
-			let [type, yt] = embed_type(rargs, url)
-			if (type=='youtube')
-				return TAG('youtube', yt)
-			let args = {
-				url: url,
-				alt: rargs.named.alt,
-			}
-			if (type=='image' || type=='video') {
-				for (let arg of rargs) {
-					let m
-					if (m = /^(\d+)x(\d+)$/.exec(arg)) {
-						args.width = +m[1]
-						args.height = +m[2]
-					}
-				}
-			}
+			let [type, args] = process_embed(url, rargs)
 			return TAG(type, args)
 		}},
 		// 💎 LINK 💎
@@ -221,12 +205,14 @@ class Markup_12y2 { constructor() {
 			let url = base_token
 			let args = {url}
 			if (body)
-				return OPEN('link', token, args, body) //todo: pass /tag/ automatically in OPEN
+				return OPEN('link', token, args, body)
 			args.text = rargs[0]
 			return TAG('simple_link', args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
 		/ *[|] *\n[|]/,
+		//{OWS}[|]{OWS}{NEWLINE}[|]/,
+		/// {whitespace} "|" {whitespace} {newline} "|" /,
 		{argtype:ARGS_TABLE, do(token, rargs, body) {
 			if (!REACH_CELL())
 				return TEXT(token)
@@ -239,11 +225,12 @@ class Markup_12y2 { constructor() {
 	],[// 💎 TABLE - END 💎
 		/ *[|] *{EOL}/,
 		{do(token) {
-			if (!REACH_CELL())
-				return TEXT(token)
-			CLOSE()
-			CLOSE()
-			return CLOSE()
+			if (REACH_CELL()) {
+				CLOSE()
+				CLOSE()
+				return CLOSE()
+			}
+			return TEXT(token)
 		}},
 	],[// 💎 TABLE - START 💎
 		/{BOL} *[|]/,
@@ -311,29 +298,46 @@ class Markup_12y2 { constructor() {
 		}
 		return list
 	}
-	function embed_type(rargs, url) {
+	// process an embed url: !https://example.com/image.png[alt=balls]
+	// returns [type: String, args: Object]
+	function process_embed(url, rargs) {
 		let type
+		let args = {url, alt:rargs.named.alt}
 		for (let arg of rargs)
 			if (arg=='video' || arg=='audio' || arg=='image')
 				type = arg
 		// todo: improve this
-		if (type)
-			return [type]
-		if (/[.](mp3|ogg|wav|m4a)(?!\w)/i.test(url))
-			return ['audio']
-		if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
-			return ['video']
-		// youtube
-		let m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)
-		if (m) {
-			let [, id, query] = m
-			// todo: use query here to extract start/end times
-			// also, accept [start-end] args maybe?
-			return ['youtube', {id, url}]
+		if (!type) {
+			//let u = new URL(url, "x-relative:/")
+			//let ext = /[.]([a-z0-9A-Z]{3,4})(?!\w)[^.]*$/.exec(url)
+			let m
+			if (/[.](mp3|ogg|wav|m4a)(?!\w)/i.test(url))
+				type = 'audio'
+			else if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
+				type = 'video'
+			else if (m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)) {
+				let [, id, query] = m
+				// todo: use query here to extract start/end times
+				// also, accept [start-end] args maybe?
+				type = 'youtube'
+				args.id = id
+			}
 		}
-		// default
-		return ['image']
+		if (!type)
+			type = 'image'
+		// process args
+		if (type=='image' || type=='video') {
+			for (let arg of rargs) {
+				let m
+				if (m = /^(\d+)x(\d+)$/.exec(arg)) {
+					args.width = +m[1]
+					args.height = +m[2]
+				}
+			}
+		}
+		return [type, args]
 	}
+
 	function table_args(rargs) {
 		let ret = {}
 		for (let arg of rargs) {
@@ -495,7 +499,7 @@ class Markup_12y2 { constructor() {
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
-	
+	//this.regex = REGEX
 	/**
 		parser
 		@instance
