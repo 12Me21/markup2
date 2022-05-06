@@ -119,7 +119,7 @@ class Markup_12y2 { constructor() {
 			return TAG('divider')
 		}},
 	],[// 💎💎 STYLE
-		/(?:[*][*]|__|~~|[/])(?=\w{CAPTURE}|)/, //todo: improve start/end detect
+		/([*][*]|__|~~|[/])(?=\w{CAPTURE}|)/, //todo: improve start/end detect
 		// 💎 STYLE START 💎
 		{do(token) {
 			return OPEN('style', token)
@@ -181,7 +181,8 @@ class Markup_12y2 { constructor() {
 			return OPEN('quote', token, {cite: rargs[0]}, body)
 		}},
 	],[// 💎 CODE BLOCK 💎
-		/{BOL}```[^]*?(?:```|$)/,
+		/{BOL}```[^]*?(```|$)/,
+		//`{BOL}\`\`\`[^]*?(\`\`\`|$)`, idea... use template strings instead of rx literals here
 		{do(token) {
 			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```)?$/g.exec(token)// hack...
 			// idea: strip leading indent from code?
@@ -193,7 +194,7 @@ class Markup_12y2 { constructor() {
 			return TAG('icode', {text: token.replace(/^`|`$/g,"")})
 		}},
 	],[// 💎💎 URL
-		/(?:!{CAPTURE})?(?:https?:[/][/]|sbs:){URL_TEXT}/,
+		/(!{CAPTURE})?(https?:[/][/]|sbs:){URL_TEXT}/,
 		// 💎 EMBED 💎
 		{argtype:ARGS_BODYLESS, do(token, rargs, body, base_token) {
 			let url = base_token.substr(1) // ehh better
@@ -273,14 +274,14 @@ class Markup_12y2 { constructor() {
 		let regi = []
 		let groups = []
 		for (let [regex, ...matches] of table) {
-			let rx = regex.source.replace(/[{]([A-Z_]+)[}]/g, ([], tag)=>{
-				return {
+			let rx = regex.source
+				.replace(/[(](?![?])/g, "(?:") // (…) → (?:…)
+				.replace(/[{]([A-Z_]+)[}]/g, (m, tag)=>({
 					EOL: "(?![^\\n])",
 					BOL: "^",
 					CAPTURE: "()",
 					URL_TEXT: "[-\\w/%&=#+~@$*')(!?,.;:]*[-\\w/%&=#+~@$*')(]"
-				}[tag]
-			})
+				}[tag]))
 			regi.push(rx+"()")
 			groups.push(...matches)
 		}
