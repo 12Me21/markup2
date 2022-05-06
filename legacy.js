@@ -247,8 +247,15 @@ class Markup_Legacy { constructor() {
 		if (!codeInput)
 			return tree
 		
+		let fr = /(?:(?!https?:\/\/|sbs:)[^\n\\{}*/_~>-\]|`![])+/y
+		
 		while (c) {
-			if (eatChar("\n")) {
+			fr.lastIndex = i
+			let m = fr.exec(code)
+			if (m) {
+				addText(m[0])
+				restore(fr.lastIndex)
+			} else if (eatChar("\n")) {
 				endLine()
 				//==========
 				// \ escape
