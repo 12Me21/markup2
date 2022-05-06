@@ -94,11 +94,13 @@ so existing themes won't need to be updated.
 	display: block;
 }
 /* styles and maximum sizes for embedded media */
-.Markup img, .Markup video, .M-youtube-preview {
+.Markup img, .Markup video {
 	border: 1px solid var(--T-border-col);
 	max-height: var(--T-embed-height);
 	/* this feature is widely supported */
 	/* but wasn't standard until recently: */
+}
+.Markup img, .Markup video, .Markup youtube-embed {
 	max-width: 100%; /* fallback */
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
@@ -120,35 +122,6 @@ so existing themes won't need to be updated.
 /* unless --height is set */
 .Markup img[data-loading], .Markup video[data-loading] {
 	height: var(--height, var(--T-embed-height));
-}
-
-/*************/
-/** Youtube **/
-/*************/
-.M-youtube {
-	display: table;
-}
-.M-youtube-preview {
-	overflow: hidden;
-	background-size: cover;
-	height: 270px;
-}
-.M-youtube-embed {
-	width: 480px;
-	height: 270px;
-	max-height: unset;
-	max-width: 100%;
-	display: inline-block;
-	overflow: hidden;
-}
-.M-youtube-close {
-	vertical-align: top;
-}
-.M-youtube-label {
-	color: white;
-	background-color: rgba(0,0,0,0.3);
-	padding: 0 0.2em;
-	display: inline-block;
 }
 
 /* ruby text doesn't work if set to white-space: pre */

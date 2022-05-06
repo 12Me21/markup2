@@ -43,14 +43,6 @@ class Markup_Render_Dom { constructor() {
 		}
 	}
 	
-	function get_youtube(id, callback) {
-		let x = new XMLHttpRequest()
-		x.responseType = 'json'
-		x.open('GET', `https://www.youtube.com/oembed?url=https%3A//youtube.com/watch%3Fv%3D${id}&format=json`)
-		x.onload = ()=>{callback(x.response)}
-		x.send()
-	}
-	
 	let CREATE = {
 		newline: 𐀶`<br>`,
 		
@@ -172,57 +164,11 @@ class Markup_Render_Dom { constructor() {
 		
 		youtube: function({id, url}) {
 			let e = this()
-			
-			let close = e.lastChild
-			let preview = e.firstChild
-			
-			let link = preview
-			link.href = url
-			
-			let figure = preview.firstChild
-			figure.style.background = `no-repeat left/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`
-			
-			let caption = figure.firstChild
-			caption.textContent = url
-			
-			let iframe
-			
-			close.onclick = (event)=>{
-				if (!iframe) return
-				close.hidden = true
-				iframe.src = 'about:blank'
-				iframe.replaceWith(preview)
-				iframe = null
-			}
-			
-			preview.onclick = (event)=>{
-				event.preventDefault()
-				if (iframe)
-					return
-				close.hidden = false
-				iframe = document.createElement('iframe')
-				iframe.className = 'M-youtube-embed'
-				iframe.setAttribute('allowfullscreen', "")
-				iframe.setAttribute('referrerpolicy', "no-referrer")
-				iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`
-				preview.replaceWith(iframe)
-			}
-			
-			get_youtube(id, data=>{
-				if (data)
-					caption.textContent = data.title+"\n"+data.author_name
-			})
-			
+			e.firstChild.textContent = url
+			e.firstChild.href = url
+			e.setAttribute('href', url)
 			return e
-		}.bind(𐀶`
-<div class='M-youtube'>
-	<a target=_blank>
-		<figure class='M-youtube-preview'>
-			<figcaption class='M-youtube-label'></figcaption>
-		</figure>
-	</a>
-	<button hidden class='M-youtube-close'>❌</button>
-</div>`),
+		}.bind(𐀶`<youtube-embed><a></a></youtube-embed>`),
 		
 		link: function({url}) {
 			let e = this()
