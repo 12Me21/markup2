@@ -1,9 +1,16 @@
-export class Markup_Parse_12y2 {constructor(){
-	"use strict"
-	
+// 📤📥doc
+// todo: after parsing a block element: eat the next newline directly
+
+/**
+	12y2 parser
+	@implements Langs_Mixin
+	@hideconstructor
+*/
+export class Markup_12y2 { constructor() {
+	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
-	// maybe instead of this separate parse step, we should just do something like
+	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
 	// have either
 	// - custom post-processing regex for each token (ex /[\\](\w+)(<args>)?({)?/ )
@@ -11,10 +18,12 @@ export class Markup_Parse_12y2 {constructor(){
 	
 
 	
-	// elements which can be cancelled rather than being closed
-	const CAN_CANCEL = { style:1, table_cell:1 }
+	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
+	
+	const CAN_CANCEL = MAP({style:1, table_cell:1})
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = { ROOT:1, table_cell:1 }
+	const SURVIVE_EOL = MAP({ROOT:1, table_cell:1})
+	const IS_BLOCK = MAP({code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1})
 	
 	// argtype
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
@@ -32,7 +41,7 @@ export class Markup_Parse_12y2 {constructor(){
 			if (body)
 				return OPEN('invalid', tag, {text: tag, reason:"invalid tag"}, body)
 			else
-				return TAG('invalid', tag, {text: tag, reason:"invalid tag"})
+				return TAG('invalid', {text: tag, reason:"invalid tag"})
 		}
 	}
 	
@@ -49,14 +58,14 @@ export class Markup_Parse_12y2 {constructor(){
 		}}
 	}
 	
-	const ENVS = {
+	const ENVS = MAP({
 		sub: simple_word_tag('subscript'),
 		sup: simple_word_tag('superscript'),
 		b: simple_word_tag('bold'),
 		i: simple_word_tag('italic'),
 		u: simple_word_tag('underline'),
 		s: simple_word_tag('strikethrough'),
-		quote: {argtype:ARGS_LINE,do(tag, rargs, body) {
+		quote: {argtype:ARGS_LINE, do(tag, rargs, body) {
 			// todo: this feels very repetitive...
 			return OPEN('quote', tag, {cite: rargs[0]}, body)
 		}},
@@ -77,7 +86,7 @@ export class Markup_Parse_12y2 {constructor(){
 		key: {argtype:ARGS_WORD, do(tag, rargs, body) {
 			return OPEN('key', tag, null, body)
 		}},
-	}
+	})
 	
 	/* NOTE:
 		/^/ matches after a <newline> or <env> token
@@ -92,7 +101,7 @@ export class Markup_Parse_12y2 {constructor(){
 		{newline:true, do(tag) {
 			while (!current.body && !SURVIVE_EOL[current.type])
 				CLOSE(true)
-			return TEXT(true)
+			return NEWLINE()
 		}},
 	],[// 💎 HEADING 💎
 		/^#{1,4}/,
@@ -105,7 +114,7 @@ export class Markup_Parse_12y2 {constructor(){
 	],[// 💎 DIVIDER 💎
 		/^---+(?![^\n])/,
 		{do(tag) {
-			return TAG('divider', tag)
+			return TAG('divider')
 		}},
 	],[// 💎💎 STYLE
 		/(?:[*][*]|__|~~|[/])(?=\w()|)/, //todo: improve start/end detect
@@ -146,6 +155,8 @@ export class Markup_Parse_12y2 {constructor(){
 			// only runs if at least 1 element has a body, so this won't fail:
 			while (!current.body)
 				CLOSE(true)
+			if (current.type=='invalid')
+				TEXT("}")
 			return CLOSE()
 		}},
 	],[// 💎 NULL ENV 💎 (maybe can be in the envs table now? todo)
@@ -157,7 +168,7 @@ export class Markup_Parse_12y2 {constructor(){
 		/[\\][^]/, //todo: match surrogate pairs
 		{do(tag) {
 			if (tag=="\\\n")
-				return TEXT(true)
+				return NEWLINE()
 			return TEXT(tag.substr(1))
 		}},
 	],[// 💎 QUOTE 💎
@@ -170,12 +181,12 @@ export class Markup_Parse_12y2 {constructor(){
 		{do(tag) {
 			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```)?$/g.exec(tag)// hack...
 			// idea: strip leading indent from code?
-			return TAG('code', tag, {text, lang})
+			return TAG('code', {text, lang})
 		}},
 	],[// 💎 INLINE CODE 💎
 		/`[^`\n]+`?/,
 		{do(tag) {
-			return TAG('icode', tag, {text: tag.replace(/^`|`$/g,"")})
+			return TAG('icode', {text: tag.replace(/^`|`$/g,"")})
 		}},
 	],[// 💎💎 URL
 		/(?:!())?(?:https?:[/][/]|sbs:)[-\w./%?&=#+~@:$*',;!)(]*[-\w/%&=#+~@$*';)(]/,
@@ -184,20 +195,21 @@ export class Markup_Parse_12y2 {constructor(){
 			let url = base.substr(1) // ehh better
 			let [type, yt] = embed_type(rargs, url)
 			if (type=='youtube')
-				return TAG('youtube', tag, yt)
+				return TAG('youtube', yt)
 			let args = {
 				url: url,
 				alt: rargs.named.alt,
 			}
 			if (type=='image' || type=='video') {
-				match_args(rargs, [
-					[/^(\d+)x(\d+)$/, ([,x,y])=>{
-						args.width = +x
-						args.height = +y
-					}]
-				])
+				for (let arg of rargs) {
+					let m
+					if (m = /^(\d+)x(\d+)$/.exec(arg)) {
+						args.width = +m[1]
+						args.height = +m[2]
+					}
+				}
 			}
-			return TAG(type, tag, args)
+			return TAG(type, args)
 		}},
 		// 💎 LINK 💎
 		{argtype:ARGS_NORMAL, do(tag, rargs, body, base) {
@@ -206,7 +218,7 @@ export class Markup_Parse_12y2 {constructor(){
 			if (body)
 				return OPEN('link', tag, args, true)
 			args.text = arg0(rargs, url)
-			return TAG('simple_link', tag, args)
+			return TAG('simple_link', args)
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
 		/ *[|] *\n[|]/,
@@ -274,14 +286,15 @@ export class Markup_Parse_12y2 {constructor(){
 	const null_args = []
 	null_args.named = Object.freeze({})
 	Object.freeze(null_args)
-	// todo: args class? and then have arg0() etc as methods
+	// todo: do we even need named args?
 	function parse_args(arglist) {
-		if (!arglist) // note: tests for undefined (\tag) AND "" (\tag[])
+		// note: checks undefined AND "" (\tag AND \tag[])
+		if (!arglist) 
 			return null_args
 		
 		let list = []
 		list.named = {}
-		for (let arg of arglist.split(";")) { ///^(?:([^;=]*)=)?([^;]*)(?:$|;)/gy
+		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
 			// value OR =value
 			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
@@ -315,38 +328,20 @@ export class Markup_Parse_12y2 {constructor(){
 		// default
 		return ['image']
 	}
-	// youtu.be/([\w-]+)
-	// 
-	// (?:www[.])?youtu[.]?be(?:[.]com)
-	// www.youtu.be
-	// www.youtube.com
-	// youtube.com
-	// ugly...
-	function match_args(rargs, defs) {
-		for (let arg of rargs)
-			for (let [regex, func] of defs) {
-				let m = regex.exec(arg)
-				if (m) {
-					func(m)
-					break
-				}
-			}
-	}
 	function table_args(rargs) {
 		let ret = {}
-		match_args(rargs, [
-			// should this be * or # or h ?  // perhaps # = heading applied to entire row?
-			[/^[*]$/, ()=>{
+		for (let arg of rargs) {
+			let m
+			if (arg=="*")
 				ret.header = true
-			}],
-			[/^(?:red|orange|yellow|green|blue|purple|gray)$/, ([color])=>{
-				ret.color = color
-			}],
-			[/^(\d*)x(\d*)$/, ([,w,h])=>{
+			else if (['red','orange','yellow','green','blue','purple','gray'].includes(arg))
+				ret.color = arg
+			else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
+				let [, w, h] = m
 				if (+w > 1) ret.colspan = +w
 				if (+h > 1) ret.rowspan = +h
-			}]
-		])
+			}
+		}
 		return ret
 	}
 	
@@ -355,7 +350,7 @@ export class Markup_Parse_12y2 {constructor(){
 		// todo: anything with a body doesn't need a tag, i think
 		// since body items can never be cancelled.
 		// so perhaps we can specify the body flag by setting tag = true
-		current = {type, tag, content: [], parent: current}
+		current = {type, tag, content: [], parent: current, prev: 'all_newline'}
 		if (body) {
 			brackets++
 			current.body = true
@@ -371,44 +366,65 @@ export class Markup_Parse_12y2 {constructor(){
 		current = current.parent
 		return o
 	}
+	// sketchy...
+	function merge(content, prev, tag) {
+		if (tag)
+			current.content.push(tag)
+		else if (current.prev=='block' && content[0]==="\n")
+			content.shift() // strip newline
+		
+		current.content.push(...content)
+		current.prev = prev
+	}
 	// complete current block
 	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
+		
 		if (cancel && !o.body && CAN_CANCEL[o.type]) {
-			// if we just cancelled a table cell,
 			if (o.type=='table_cell') {
-				// close table row (or cancel if empty)
-				current.content.length ? CLOSE() : pop() // row (don't need TEXT() - table rows never have .tag set)
-				// close table (or cancel if empty)
-				current.content.length ? CLOSE() : TEXT(pop().tag) // table
+				// close table row (cancel if empty)
+				current.content.length ? CLOSE() : pop()
+				// close table (cancel if empty)
+				current.content.length ? CLOSE() : TEXT(pop().tag)
 			}
-			TEXT(o.tag) // todo: merge with surrounding text nodes?
-			// push the contents of the block
-			current.content.push(...o.content)
+			merge(o.content, o.prev, o.tag)
 		} else if (o.type=='null_env') {
-			current.content.push(...o.content)
+			merge(o.content, o.prev)
 		} else {
-			delete o.parent // remove cyclical reference before adding to tree
+			// otherwise, we have a normal block:
+			if (o.prev=='newline')
+				o.content.push("\n")
+			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
 			current.content.push(o)
+			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
 		}
 	}
 	// push text
 	function TEXT(text) {
-		if (text)
-			current.content.push(text)
+		if (text) {
+			current.content.push(text) // todo: merge with surrounding textnodes?
+			current.prev = 'text'
+		}
 	}
 	// push empty tag
-	function TAG(type, tag, args) {
-		current.content.push({type, tag, args})
+	function TAG(type, args) {
+		current.content.push({type, args})
+		current.prev = IS_BLOCK[type] ? 'block' : 'text'
+	}
+	function NEWLINE() {
+		if (current.prev != 'block')
+			current.content.push("\n")
+		if (current.prev != 'all_newline')
+			current.prev = 'newline'
 	}
 	function kill_weak() {
 		while (current.type=='style')
 			CLOSE(true)
 	}
 	
-	this.parse = function(text) {
-		let tree = {type:'ROOT', tag:"", content:[]}
+	function parse(text) {
+		let tree = {type:'ROOT', tag:"", content:[], prev:'all_newline'}
 		current = tree
 		brackets = 0
 		
@@ -417,6 +433,8 @@ export class Markup_Parse_12y2 {constructor(){
 			// text before token
 			TEXT(text.substring(last, match.index))
 			// get token
+			//for (; match[group_num]===undefined; group_num++)
+			//	;
 			let group_num = match.indexOf("", 1)-1
 			let thing = GROUPS[group_num]
 			// is a \tag
@@ -459,8 +477,24 @@ export class Markup_Parse_12y2 {constructor(){
 		
 		while (current.type!='ROOT')
 			CLOSE(true)
+		if (current.prev=='newline') // todo: this is repeated
+			current.content.push("\n")
+		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
+	
+	/**
+		parser
+		@instance
+		@type {Parser_Function}
+	*/
+	this.parse = parse
+	/**
+		@instance
+		@type {Object}
+		@property {Parser_Function} 12y2 - same as .parse
+	*/
+	this.langs = {'12y2': parse}
 	
 	// what if you want to write like, "{...}". well that's fine
 	// BUT if you are inside a tag, the } will close it.
@@ -470,3 +504,5 @@ export class Markup_Parse_12y2 {constructor(){
 	// \tag{ ...  {heck} ... } <- closes here
 	
 }}
+
+if ('object'==typeof module && module) module.exports = Markup_12y2

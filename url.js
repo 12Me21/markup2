@@ -12,7 +12,12 @@ class SbsLocation {
 				this.id = +this.id
 		}
 		
-		this.query = query_str ? Object.fromEntries(query_str.match(/[^?&]+/g).map(pair=>pair.match(/[^=]*(?==?(.*))/).map(decodeURIComponent))) : {}
+		this.query = {}
+		if (query_str)
+			for (let pair of query_str.match(/[^?&]+/g)) {
+				let [key, value] = pair.match(/[^=]*(?==?(.*))/)
+				this.query[decodeURIComponent(key)] = decodeURIComponent(value)
+			}
 		
 		if (fragment)
 			this.fragment = decodeURIComponent(fragment.substr(1))
