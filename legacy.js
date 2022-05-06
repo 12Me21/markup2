@@ -247,7 +247,7 @@ class Markup_Legacy { constructor() {
 		if (!codeInput)
 			return tree
 		
-		let fr = /(?:(?!https?:\/\/|sbs:)[^\n\\{}*/_~>-\]|`![])+/y
+		let fr = /(?:(?!https?:\/\/|sbs:)[^\n\\{}*/_~>\]|`![-])+/y
 		
 		while (c) {
 			fr.lastIndex = i
