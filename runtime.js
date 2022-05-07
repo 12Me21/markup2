@@ -45,6 +45,7 @@ class YoutubeEmbedElement extends HTMLElement {
 		this._id = null
 	}
 	async update_href(url) {
+		url = url.replace("/shorts/", "/watch?v=") // 🤮
 		if (this._href == url)
 			return
 		this._href = url

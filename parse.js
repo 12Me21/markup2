@@ -211,8 +211,6 @@ class Markup_12y2 { constructor() {
 		}},
 	],[// 💎 TABLE - NEXT ROW 💎
 		/ *[|] *\n[|]/,
-		//{OWS}[|]{OWS}{NEWLINE}[|]/,
-		/// {whitespace} "|" {whitespace} {newline} "|" /,
 		{argtype:ARGS_TABLE, do(token, rargs, body) {
 			if (!REACH_CELL())
 				return TEXT(token)
@@ -315,12 +313,9 @@ class Markup_12y2 { constructor() {
 				type = 'audio'
 			else if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
 				type = 'video'
-			else if (m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)) {
-				let [, id, query] = m
-				// todo: use query here to extract start/end times
-				// also, accept [start-end] args maybe?
+			else if (/^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/]|youtube.com[/]shorts[/])[\w-]{11}/.test(url)) {
+				// todo: accept [start-end] args maybe?
 				type = 'youtube'
-				args.id = id
 			}
 		}
 		if (!type)

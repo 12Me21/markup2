@@ -756,9 +756,8 @@ class Markup_Legacy { constructor() {
 				return ["audio", {url}]
 			if (/(\.mp4(?!\w)|\.mkv(?!\w)|\.mov(?!\w)|#video$)/i.test(url))
 				return ["video", {url}]
-			let m = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)
-			if (m)
-				return ["youtube", {url, id:m[1]}]
+			if (/^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/]|youtube.com[/]shorts[/])[\w-]{11}/.test(url))
+				return ["youtube", {url}]
 			let size = /^([^#]*)#(\d+)x(\d+)$/.exec(url)
 			if (size)
 				return ["image", {url:size[1], width:+size[2], height:+size[3]}]
