@@ -56,9 +56,10 @@ so existing themes won't need to be updated.
 	--T-link-bg: #5CE5; /* for links w/ custom text */
 	
 	/* Most themes won't change these: */
-	--T-tab-size: 3.5;
+	--T-tab-size: 2.5;
 	--T-embed-height: 10vh;
 	--T-font: sans-serif;
+	--T-monospace-font: consolas, monospace;
 }
 
 /** aa */
@@ -68,11 +69,10 @@ so existing themes won't need to be updated.
 	white-space: pre-wrap;
 	word-break: normal;
 	overflow-wrap: break-word;
-	line-height: 1.2;
 	
 	color: var(--T-col);
 	background: var(--T-bg);
-	font-family: var(--T-font);
+	font: var(--T-font);
 	-moz-tab-size: var(--T-tab-size);
 	tab-size: var(--T-tab-size);
 }
@@ -83,6 +83,7 @@ so existing themes won't need to be updated.
 	font-family: inherit;
 	word-break: inherit;
 	white-space: inherit;
+	/*line-height: inherit;*/
 	
 	margin: 0;
 }
@@ -141,8 +142,7 @@ so existing themes won't need to be updated.
 	border: 1px solid var(--T-border-col);
 	border-radius: 3px;
 	padding: 0.2rem 0.4rem;
-	font-family: monospace, monospace;
-	font-size: 0.8em;
+	font: var(--T-monospace-font);
 }
 
 /*** divider ***/
@@ -154,8 +154,7 @@ so existing themes won't need to be updated.
 /** Code **/
 /**********/
 .Markup pre, .Markup code {
-	font-family: monospace, monospace; /* code font here */
-	font-size: 0.8em;
+	font: var(--T-monospace-font);
 }
 /* inline */
 .Markup code {

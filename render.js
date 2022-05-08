@@ -162,7 +162,7 @@ class Markup_Render_Dom { constructor() {
 			return e
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
 		
-		youtube: function({id, url}) {
+		youtube: function({url}) {
 			let e = this()
 			e.firstChild.textContent = url
 			e.firstChild.href = url
