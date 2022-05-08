@@ -88,6 +88,20 @@ so existing themes won't need to be updated.
 	margin: 0;
 }
 
+/* gosh is there a better way to do this? */
+.Markup img, .Markup video, .Markup youtube-embed,
+.M-spoiler-label,
+.Markup pre {
+	display: block;
+	width: max-content;
+	/* this feature is widely supported */
+	/* but wasn't standard until recently: */
+	max-width: 100%; /* fallback */
+	max-width: -webkit-fill-available;
+	max-width: -moz-available;
+	max-width: stretch; /* no browser supports this value yet */
+}
+
 /************/
 /** Embeds **/
 /************/
@@ -98,14 +112,6 @@ so existing themes won't need to be updated.
 .Markup img, .Markup video {
 	border: 1px solid var(--T-border-col);
 	max-height: var(--T-embed-height);
-	/* this feature is widely supported */
-	/* but wasn't standard until recently: */
-}
-.Markup img, .Markup video, .Markup youtube-embed {
-	max-width: 100%; /* fallback */
-	max-width: -webkit-fill-available;
-	max-width: -moz-available;
-	max-width: stretch; /* no browser supports this value yet */
 }
 /* sizes for <img> (and <video>, maybe) */
 .Markup img, .Markup video {
@@ -181,12 +187,7 @@ so existing themes won't need to be updated.
 	border: 2px solid var(--T-border-col);
 	border-left-width: 4px;
 	margin-top: 1px;
-	display: table;
 	cursor: pointer;
-}
-[open] > .M-spoiler-label {
-	border-style: inset;
-	border-bottom: none;
 }
 .M-spoiler-inner {
 	padding: 0.4rem;
@@ -196,10 +197,18 @@ so existing themes won't need to be updated.
 	margin-bottom: 1px;
 }
 .M-spoiler-label::before {
-	content: "Show ";
+	content: "Show ";
 }
 [open] > .M-spoiler-label::before {
-	content: "Hide ";
+	content: "Hide ";
+}
+[open] > .M-spoiler-label {
+	border-style: inset;
+	border-bottom: none;
+}
+/* safari */
+.M-spoiler-label::marker {
+	font-size: 0;
 }
 
 /***********/
