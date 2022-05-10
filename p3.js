@@ -117,16 +117,16 @@ class Markup_12y2 { constructor() {
 		} break; case 'NEWLINE': {
 			while (!current.body && !SURVIVE_EOL[current.type])
 				CLOSE(true)
-			return NEWLINE()
+			NEWLINE()
 		} break; case 'HEADING': {
 			let level = base_token.length
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
-			return OPEN('heading', token, args, body)
+			OPEN('heading', token, args, body)
 		} break; case 'DIVIDER': {
-			return BLOCK('divider')
+			BLOCK('divider')
 		} break; case 'STYLE_START': {
-			return OPEN('style', token)
+			OPEN('style', token)
 		} break; case 'STYLE_END': {
 			while (current.type==='style') { 
 				if (current.token === token) { // found opening
@@ -134,104 +134,115 @@ class Markup_12y2 { constructor() {
 						"**": 'bold', "__": 'underline',
 						"~~": 'strikethrough', "/": 'italic',
 					}[current.token]
-					return CLOSE()
+					CLOSE()
+					return
 				}
 				CLOSE(true) // different style (kill)
 			}
-			return TEXT(token)
+			TEXT(token)
 		} break; case 'BLOCK_END': {
-			if (brackets<=0)
-				return TEXT(token)
+			if (brackets<=0) {
+				TEXT(token)
+				return
+			}
 			// only runs if at least 1 element has a body, so this won't fail:
 			while (!current.body)
 				CLOSE(true)
 			if (current.type==='invalid')
 				TEXT("}")
-			return CLOSE()
+			CLOSE()
 		} break; case 'NULL_ENV': {
-			return OPEN('null_env', token, null, true)
+			OPEN('null_env', token, null, true)
 		} break; case 'ESCAPED': {
 			if (token==="\\\n")
-				return NEWLINE()
-			return TEXT(token.substr(1))
+				NEWLINE()
+			else
+				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
-			return OPEN('quote', token, {cite: rargs[0]}, body)
+			OPEN('quote', token, {cite: rargs[0]}, body)
 		} break; case 'CODE_BLOCK': {
 			let lang = rargs[0]
 			// idea: strip leading indent from code?
-			return BLOCK('code', {text:body, lang})
+			BLOCK('code', {text:body, lang})
 		} break; case 'INLINE_CODE': {
-			return BLOCK('icode', {text:body})
+			BLOCK('icode', {text:body})
 		} break; case 'EMBED': {
 			let url = base_token.substr(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
-			return BLOCK(type, args)
+			BLOCK(type, args)
 		} break; case 'LINK': {
 			let url = base_token
 			let args = {url}
-			if (body)
-				return OPEN('link', token, args, body)
-			args.text = rargs[0]
-			return BLOCK('simple_link', args)
+			if (body) {
+				OPEN('link', token, args, body)
+			} else {
+				args.text = rargs[0]
+				BLOCK('simple_link', args)
+			}
 		} break; case 'TABLE_ROW': {
-			if (!REACH_CELL())
-				return TEXT(token)
+			if (!REACH_CELL()) {
+				TEXT(token)
+				return
+			}
 			let args = table_args(rargs)
 			CLOSE() // cell
 			CLOSE() // row
 			OPEN('table_row', "")
-			return OPEN('table_cell', token.replace(/^ *\n/, ""), args, body)
+			OPEN('table_cell', token.replace(/^ *\n/, ""), args, body)
 		} break; case 'TABLE_END': {
 			if (REACH_CELL()) {
 				CLOSE()
 				CLOSE()
-				return CLOSE()
+				CLOSE()
+				return
 			}
-			return TEXT(token)
+			TEXT(token)
 		} break; case 'TABLE_START': {
 			let args = table_args(rargs)
 			OPEN('table', "")
 			OPEN('table_row', "")
-			return OPEN('table_cell', token, args, body)
+			OPEN('table_cell', token, args, body)
 		} break; case 'TABLE_CELL': {
-			if (!REACH_CELL())
-				return TEXT(token)
+			if (!REACH_CELL()) {
+				TEXT(token)
+				return
+			}
 			let args = table_args(rargs)
 			CLOSE() // cell
-			return OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
+			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
 		} break; case 'INVALID_TAG': {
 			if (body)
-				return OPEN('invalid', token, {text: token, reason:"invalid tag"}, body)
+				OPEN('invalid', token, {text: token, reason:"invalid tag"}, body)
 			else
-				return BLOCK('invalid', {text: token, reason:"invalid tag"})
+				BLOCK('invalid', {text: token, reason:"invalid tag"})
 
 		} break; case '\\sub': {
-			return OPEN('subscript', token, null, body)
+			OPEN('subscript', token, null, body)
 		} break; case '\\sup': {
-			return OPEN('superscript', token, null, body)
+			OPEN('superscript', token, null, body)
 		} break; case '\\b': {
-			return OPEN('bold', token, null, body)
+			OPEN('bold', token, null, body)
 		} break; case '\\i': {
-			return OPEN('italic', token, null, body)
+			OPEN('italic', token, null, body)
 		} break; case '\\u': {
-			return OPEN('underline', token, null, body)
+			OPEN('underline', token, null, body)
 		} break; case '\\s': {
-			return OPEN('strikethrough', token, null, body)
+			OPEN('strikethrough', token, null, body)
 		} break; case '\\quote': {
-			return OPEN('quote', token, {cite: rargs[0]}, body)
+			OPEN('quote', token, {cite: rargs[0]}, body)
 		} break; case '\\align': {
 			let a = rargs[0]
 			if (!(a==='left' || a==='right' || a==='center'))
 				a = 'center'
-			return OPEN('align', token, {align: a}, body)
+			OPEN('align', token, {align: a}, body)
 		} break; case '\\spoiler': {
 			let label = arg0(rargs, "spoiler") // todo: handle this default value in the renderer
-			return OPEN('spoiler', token, {label}, body)
+			OPEN('spoiler', token, {label}, body)
 		} break; case '\\ruby': {
 			let text = arg0(rargs, "true")
-			return OPEN('ruby', token, {text}, body)
+			OPEN('ruby', token, {text}, body)
 		} break; case '\\key': {
-			return OPEN('key', token, null, body)
+			OPEN('key', token, null, body)
 		}}
 	}
 	
