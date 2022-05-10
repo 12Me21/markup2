@@ -2,9 +2,6 @@
 // todo: after parsing a block element: eat the next newline directly
 
 class Markup_12y2 { constructor() {
-	// all state is stored in these vars (and REGEX.lastIndex)
-	let current, brackets
-	
 	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
 	// have either
@@ -12,6 +9,9 @@ class Markup_12y2 { constructor() {
 	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 	
 
+	
+	// all state is stored in these vars (and REGEX.lastIndex)
+	let current, brackets
 	
 	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
 	
@@ -29,30 +29,11 @@ class Markup_12y2 { constructor() {
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
 	
 	const ARGS_ICODE    = /(){0}([^\n`]+)`?/y
+	ARGS_ICODE._raw = true
 	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
-	const ARGS_ICODE_TAG = /(){0}{([^\n`]*)}/y // todo
-	const ARGS_CODE_TAG = /(){0}{([^\n`]*)}/y // todo
+	ARGS_CODE._raw = true
 	
-	function arg0(rargs, def) {
-		if (rargs.length<1)
-			return def
-		return rargs[0]
-	}
-	
-	const TAGS = MAP({
-		'\\sub': ARGS_WORD, '\\sup': ARGS_WORD,
-		'\\b': ARGS_WORD, '\\i': ARGS_WORD,
-		'\\u': ARGS_WORD, '\\s': ARGS_WORD,
-		'\\quote': ARGS_LINE,
-		'\\align': ARGS_LINE,
-		'\\spoiler': ARGS_LINE,
-		'\\ruby': ARGS_WORD,
-		'\\key': ARGS_WORD,
-	})
-	
-	const GROUPS = []
-	const ARGTYPES = []
-	const SPECIAL = []
+	const GROUPS = [], ARGTYPES = [], SPECIAL = []
 	
 	let regi = []
 	function T({raw}, ...groups) {
@@ -99,6 +80,17 @@ class Markup_12y2 { constructor() {
 	Object.freeze(SPECIAL)
 	const REGEX = new RegExp(regi.join("|"), 'g')
 	
+	const TAGS = MAP({
+		'\\sub': ARGS_WORD, '\\sup': ARGS_WORD,
+		'\\b': ARGS_WORD, '\\i': ARGS_WORD,
+		'\\u': ARGS_WORD, '\\s': ARGS_WORD,
+		'\\quote': ARGS_LINE,
+		'\\align': ARGS_LINE,
+		'\\spoiler': ARGS_LINE,
+		'\\ruby': ARGS_WORD,
+		'\\key': ARGS_WORD,
+	})
+	
 	/**
 		process a token
 		@param {string} _token_type - 
@@ -128,11 +120,11 @@ class Markup_12y2 { constructor() {
 		} break; case 'STYLE_START': {
 			OPEN('style', token)
 		} break; case 'STYLE_END': {
-			while (current.type==='style') { 
-				if (current.token === token) { // found opening
+			while ('style'===current.type) { 
+				if (token===current.token) { // found opening
 					current.type = {
-						"**": 'bold', "__": 'underline',
-						"~~": 'strikethrough', "/": 'italic',
+						'**': 'bold', '__': 'underline',
+						'~~': 'strikethrough', '/': 'italic',
 					}[current.token]
 					CLOSE()
 					return
@@ -148,20 +140,20 @@ class Markup_12y2 { constructor() {
 			// only runs if at least 1 element has a body, so this won't fail:
 			while (!current.body)
 				CLOSE(true)
-			if (current.type==='invalid')
+			if ('invalid'===current.type)
 				TEXT("}")
 			CLOSE()
 		} break; case 'NULL_ENV': {
 			OPEN('null_env', token, null, true)
 		} break; case 'ESCAPED': {
-			if (token==="\\\n")
+			if ("\\\n"===token)
 				NEWLINE()
 			else
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
 			OPEN('quote', token, {cite: rargs[0]}, body)
 		} break; case 'CODE_BLOCK': {
-			let lang = rargs[0]
+			let lang = rargs
 			// idea: strip leading indent from code?
 			BLOCK('code', {text:body, lang})
 		} break; case 'INLINE_CODE': {
@@ -246,6 +238,12 @@ class Markup_12y2 { constructor() {
 		}}
 	}
 	
+	function arg0(rargs, def) {
+		if (rargs.length<1)
+			return def
+		return rargs[0]
+	}
+	
 
 	
 	const null_args = []
@@ -276,7 +274,7 @@ class Markup_12y2 { constructor() {
 		let type
 		let args = {url, alt:rargs.named.alt}
 		for (let arg of rargs)
-			if (arg==='video' || arg==='audio' || arg==='image')
+			if ('video'===arg || 'audio'===arg || 'image'===arg)
 				type = arg
 		// todo: improve this
 		if (!type) {
@@ -295,7 +293,7 @@ class Markup_12y2 { constructor() {
 		if (!type)
 			type = 'image'
 		// process args
-		if (type==='image' || type==='video') {
+		if ('image'===type || 'video'===type) {
 			for (let arg of rargs) {
 				let m
 				if (m = /^(\d+)x(\d+)$/.exec(arg)) {
@@ -311,7 +309,7 @@ class Markup_12y2 { constructor() {
 		let ret = {}
 		for (let arg of rargs) {
 			let m
-			if (arg==="*")
+			if ('*'===arg)
 				ret.header = true
 			else if (['red','orange','yellow','green','blue','purple','gray'].includes(arg))
 				ret.color = arg
@@ -346,7 +344,7 @@ class Markup_12y2 { constructor() {
 	function merge(content, prev, token) {
 		if (token)
 			current.content.push(token)
-		else if (current.prev==='block' && content[0]==="\n")
+		else if ('block'===current.prev && "\n"===content[0])
 			content.shift() // strip newline
 		
 		current.content.push(...content)
@@ -358,18 +356,18 @@ class Markup_12y2 { constructor() {
 		let o = pop()
 		
 		if (cancel && !o.body && o.type in CAN_CANCEL) {
-			if (o.type==='table_cell') {
+			if ('table_cell'===o.type) {
 				// close table row (cancel if empty)
 				current.content.length ? CLOSE() : pop()
 				// close table (cancel if empty)
 				current.content.length ? CLOSE() : TEXT(pop().token)
 			}
 			merge(o.content, o.prev, o.token)
-		} else if (o.type==='null_env') {
+		} else if ('null_env'===o.type) {
 			merge(o.content, o.prev)
 		} else {
 			// otherwise, we have a normal block:
-			if (o.prev==='newline')
+			if ('newline'===o.prev)
 				o.content.push("\n")
 			current.content.push({
 				type:o.type, args:o.args, content:o.content
@@ -390,19 +388,16 @@ class Markup_12y2 { constructor() {
 		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
 	function NEWLINE() {
-		if (current.prev !== 'block')
+		if ('block'!==current.prev)
 			current.content.push("\n")
-		if (current.prev !== 'all_newline')
+		if ('all_newline'!==current.prev)
 			current.prev = 'newline'
 	}
 	function REACH_CELL() {
-		kill_weak()
-		return current.type==='table_cell'
-		// todo: wait, we don't find a cell, we just killed all those blocks even though this tag isn't valid ??
-	}
-	function kill_weak() {
-		while (current.type==='style')
+		while ('style'===current.type)
 			CLOSE(true)
+		return 'table_cell'===current.type
+		// todo: wait, we don't find a cell, we just killed all those blocks even though this tag isn't valid ??
 	}
 	
 	function parse(text) {
@@ -410,81 +405,84 @@ class Markup_12y2 { constructor() {
 		current = tree
 		brackets = 0
 		
+		// MAIN LOOP //
 		let prev = -1
 		let last = REGEX.lastIndex = 0
 		for (let match; match=REGEX.exec(text); ) {
+			// check for infinite loops
 			if (match.index===prev)
-				throw ["INFINITE LOOP",match]
+				throw ["INFINITE LOOP", match]
 			prev = match.index
-			// text before token
+			// 1: insert the text from after previous token
 			TEXT(text.substring(last, match.index))
-			
-			let group = match.indexOf("", 1)-1
-			let type = GROUPS[group]
+			// 2: figure out which token type was matched
 			let token_text = match[0]
+			let group_num = match.indexOf("", 1)-1
 			
+			// 3: get type + argument pattern
+			let type = GROUPS[group_num]
 			let argregex
-			if (type==='TAG') {
+			if ('TAG'!==type) {
+				argregex = ARGTYPES[group_num]
+			} else if (token_text in TAGS) {
 				type = token_text
-				if (type in TAGS)
-					argregex = TAGS[type]
-				else {
-					// when an unknown \tag is encountered, we create a block
-					// rather than just ignoring it, so in the future,
-					// we can add a new tag without changing the parsing (much)
-					type = 'INVALID_TAG'
-					argregex = ARGS_NORMAL
-				}
+				argregex = TAGS[type]
 			} else {
-				argregex = ARGTYPES[group]
+				// when an unknown \tag is encountered, we create a block
+				// rather than just ignoring it, so in the future,
+				// we can add a new tag without changing the parsing (much)
+				type = 'INVALID_TAG'
+				argregex = ARGS_NORMAL
 			}
 			
-			let has_body
-			// parse args and {
-			if (argregex) {
+			// 4: parse args and {
+			let start_line = false
+			if (!argregex) {
+				let body = 'NULL_ENV'===type //h
+				PROCESS(type, token_text, null, body, token_text)
+				last = REGEX.lastIndex
+				if (body || 'NEWLINE'===type)
+					start_line = true
+			} else {
 				// try to match arguments
 				argregex.lastIndex = REGEX.lastIndex
 				let argmatch = argregex.exec(text)
-				if (!argmatch) { // INVALID! skip 1 char
+				if (null===argmatch) { // INVALID! skip 1 char
 					REGEX.lastIndex = match.index+1
 					last = match.index
 					continue
 				}
 				let full_token = token_text+argmatch[0]
-				if (argregex._raw) {
-					// raw argtype
-					// should we call parse_args here?
-					PROCESS(type, full_token, argmatch[1], argmatch[2], token_text)
-				} else {
-					// normal args
-					has_body = argmatch[2]
-					PROCESS(type, full_token, parse_args(argmatch[1]), has_body, token_text)
-					// args that take word token
-					if (argmatch[3]!==undefined) {
-						let text = argmatch[3]
-						TEXT(text.replace(/\\([^])/g, "$1"))
-						CLOSE()
-						has_body = false
-					}
+				let args = argmatch[1]
+				let body = argmatch[2] // the {, or contents of raw tags
+				let word = argmatch[3] // only for syntax like \sub word
+				
+				if (!argregex._raw) {
+					args = parse_args(args)
+					start_line = body
+				}
+				PROCESS(type, full_token, args, body, token_text)
+				// word
+				if (undefined!==word) {
+					TEXT(word.replace(/\\([^])/g, "$1"))
+					CLOSE()
+					start_line = false
 				}
 				last = REGEX.lastIndex = argregex.lastIndex
-			} else {
-				has_body = type==='NULL_ENV'
-				PROCESS(type, token_text, null, has_body, token_text)
-				last = REGEX.lastIndex
 			}
-			// "start of line"
-			if (has_body || type==='NEWLINE') {
+			// 5: handle start-of-line
+			if (start_line) {
 				text = text.substring(last)
 				last = REGEX.lastIndex = 0
 				prev = -1
 			}
-		}
+		} // end of main loop
+		
 		TEXT(text.substring(last)) // text after last token
 		
-		while (current.type!=='ROOT')
+		while ('ROOT'!==current.type)
 			CLOSE(true)
-		if (current.prev==='newline') // todo: this is repeated
+		if ('newline'===current.prev) //todo: this is repeated
 			current.content.push("\n")
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
