@@ -1,6 +1,15 @@
 // 📤📥doc
 // todo: after parsing a block element: eat the next newline directly
 
+// TokenType 🏷 enum
+// BlockType 🏷 enum
+// Text 🏷 string 📝 from input text
+// ArgPattern 🏷 RegExp
+// GroupNum 🏷 number - regex capturing group num
+// RawArgs 🏷 Array - array with .named field
+// Block 🏷 Object - has .type .args .contents
+// CurrentBlock 🏷 Object - block + other fields
+
 class Markup_12y2 { constructor() {
 	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
@@ -15,12 +24,13 @@ class Markup_12y2 { constructor() {
 	
 	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
 	
+	// BlockType -> (set)
 	const CAN_CANCEL = MAP({style:1, table_cell:1})
 	// elements which can survive an eol (without a body)
 	const SURVIVE_EOL = MAP({ROOT:1, table_cell:1})
 	const IS_BLOCK = MAP({code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1})
 	
-	// argtype
+	// ArgPattern
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
 	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
 	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
@@ -33,7 +43,9 @@ class Markup_12y2 { constructor() {
 	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
 	ARGS_CODE._raw = true
 	
-	const GROUPS = [], ARGTYPES = [], SPECIAL = []
+	const GROUPS = [] // GroupNum -> TokenType
+	const ARGTYPES = [] // GroupNum -> ArgPattern
+	const SPECIAL = [] // ??
 	
 	let regi = []
 	function T({raw}, ...groups) {
@@ -80,6 +92,7 @@ class Markup_12y2 { constructor() {
 	Object.freeze(SPECIAL)
 	const REGEX = new RegExp(regi.join("|"), 'g')
 	
+	// TokenType -> ArgRegex
 	const TAGS = MAP({
 		'\\sub': ARGS_WORD, '\\sup': ARGS_WORD,
 		'\\b': ARGS_WORD, '\\i': ARGS_WORD,
@@ -91,16 +104,12 @@ class Markup_12y2 { constructor() {
 		'\\key': ARGS_WORD,
 	})
 	
-	/**
-		process a token
-		@param {string} _token_type - 
-		@param {string} token - token text, including arguments
-		@param {Array} rargs - raw arguments
-		@param body - varies depending on token type:
-		- truthy if `{` is present
-		- raw contents (of icode, code, etc.)
-		@param {string} base_token - token text, without arguments
-	*/
+	// process a token
+	// 📥 _token_type 🏷 TokenType 📝
+	// 📥 token 🏷 Text 📝 token text, including arguments
+	// 📥 rarys 🏷 RawArgs 📝 raw arguments
+	// 📥 body 🏷 Text 📝 argmatch[2] (varies)
+	// 📥 base_token 🏷 Text 📝 token text, without arguments 
 	function PROCESS(_token_type, token, rargs, body, base_token) {
 		//console.log('process', arguments)
 		switch(_token_type) { default: {
@@ -356,6 +365,7 @@ class Markup_12y2 { constructor() {
 		let o = pop()
 		
 		if (cancel && !o.body && o.type in CAN_CANCEL) {
+			// todo: maybe instead of THIS, we could open a temporary table cell block, then turn it into a real one if the table ends up having more content
 			if ('table_cell'===o.type) {
 				// close table row (cancel if empty)
 				current.content.length ? CLOSE() : pop()
