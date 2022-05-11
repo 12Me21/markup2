@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang=en-QS>
 <meta charset="utf-8">
+<title>Markup2 Demo</title>
 
 <script src=langs.js></script>
 <script src=parse.js></script>
@@ -8,6 +9,7 @@
 <script src=render.js></script>
 <script src=runtime.js></script>
 <script src=helpers.js></script>
+<script src=from-html.js></script>
 
 <link rel=stylesheet href=markup.css>
 
@@ -27,9 +29,9 @@
 		<th> <th> parse <th> render <th> total
 	<tr>
 		<th> time (ms)
-		<td> <time id=$time1></time>
-		<td> <time id=$time2></time>
-		<td> <time id=$time3></time>
+		<td> <time id=$time1 datetime=Z></time>
+		<td> <time id=$time2 datetime=Z></time>
+		<td> <time id=$time3 datetime=Z></time>
 </table>
 
 <div id=$output class="Markup" style="border: 3px solid black; padding: 2px;"></div>
@@ -55,7 +57,7 @@
 	
 	$input.oninput = update
 	$lang.onchange = update
-	window.onload = update
+	update()
 </script>
 
 
@@ -68,8 +70,7 @@
 		min-height: 5em;
 		max-height: 15em;
 		height: 0;
-		font-family: monospace;
-		font-size: 1em;
+		font: 1em monospace;
 	}
 	
 	textarea-container {

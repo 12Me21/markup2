@@ -2,6 +2,22 @@ use different boxdrawing styles for properties vs params etc.
 
 
 
+AST: object
+|
++-.type: string
+|
++-.args?: object
+|
++-.contents?: Array
+   |
+   +-...: AST or string
+
+Parser: function
+|
++- return: AST
+|
++- param 0: string
+
 Langs_Mixin: object
 |
 +-.langs?: object
@@ -10,31 +26,17 @@ Langs_Mixin: object
 |
 +-.default_lang?: Parser
 
-Parser: function
-|
-+- return: AST
-|
-+- parameters
-   |
-   +-.0: string
-
 
 
 parse.js: file
 |
 +- Markup_12y2: class implements Langs_Mixin
-   |
-   +- parameters
-   |
-   +-.prototype: Object
    |  
-   +- this
+   +- this.parse: Parser
+   |
+   +- this.langs: object
       |
-      +-.parse: Parser
-      |
-      +-.langs: Object
-         |
-         +-.12y2: Parser
+      +-.12y2: Parser
 
 
 
@@ -42,21 +44,15 @@ legacy.js: file
 |
 +-.Markup_Legacy: class implements Langs_Mixin
    |
-   +- parameters
+   +- this.default_lang: Parser
    |
-   +-.prototype: Object
-   |
-   +- this
+   +- this.langs: object
       |
-      +-.default_lang: Parser
+      +-.12y: Parser
       |
-      +-.langs: Object
-         |
-         +-.12y: Parser
-         |
-         +-.bbcode: Parser
-         |
-         +-.plaintext: Parser
+      +-.bbcode: Parser
+      |
+      +-.plaintext: Parser
 
 
 
@@ -64,43 +60,33 @@ langs.js: file
 |
 +-.Markup_Langs: class
    |
-   +- parameters
+   +- constructor
    |  |
    |  +-.0: Array
    |     |
    |     +-...: Langs_Mixin
    |
-   +-.prototype: Object
+   +-.prototype.include: function
    |  |
-   |  +-.include: function
-   |  |  |
-   |  |  +- parameters
-   |  |     |
-   |  |     +-.0: Langs_Mixin
-   |  |
-   |  +-.get: function
-   |  |  |
-   |  |  +- return: Parser
-   |  |  |
-   |  |  +- parameters
-   |  |     |
-   |  |     +- 0?: string
-   |  |
-   |  +-.parse: function
-   |     |
-   |     +- return: AST
-   |     |
-   |     +- par-=--------pppppppppp[[[[[[[[pameters
-   |        |
-   |        +- 0: string
-   |        |
-   |        +- 1?: string
+   |  +- param 0: Langs_Mixin
    |
-   +- this
-      |
-      +-.langs: object(null)
-      |
-      +-.default_lang: Parser
+   +-.prototype.get: function
+   |  |
+   |  +- return: Parser
+   |  |
+   |  +- param 0?: string
+   |
+   +-.prototype.parse: function
+   |  |
+   |  +- return: AST
+   |  |
+   |  +- param 0: string
+   |  |
+   |  +- param 1?: string
+   |
+   +- this.langs: object(null)
+   |
+   +- this.default_lang: Parser
 
 
 
@@ -125,8 +111,6 @@ helpers.js: file
 +-.Markup: Object
    |
    +-.css_class: string = "Markup"
-   |  |
-   |  +- value = "Markup" //todo: which
    |
    +-.langs: Markup_Langs
    |
@@ -136,14 +120,12 @@ helpers.js: file
       |
       +- return: ParentNode
       |
-      +- parameters
-         |
-         +-.0: string
-         |
-         +-.1?: string
-         |
-         +-.2?: Element
-         |
-         +-.3?: object
+      +- param 0: string
+      |
+      +- param 1?: string
+      |
+      +- param 2?: Element
+      |
+      +- param 3?: object
 
 

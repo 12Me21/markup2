@@ -1,3 +1,5 @@
+"use strict"
+
 let PARSER = new Markup_12y2()
 
 function clean(tree) {
@@ -11,9 +13,14 @@ function clean(tree) {
 	return ret
 }
 
+function INIT(th, defs) {
+	Object.defineProperties(th, defs)
+	Object.seal(th)
+}
+
 class Test {
 	constructor({name}, input, correct) {
-		Object.defineProperties(this, {
+		INIT(this, {
 			name: {value: name},
 			input: {value: input},
 			correct: {value: correct},
@@ -21,13 +28,12 @@ class Test {
 			result: {writable: true},
 			parse_time: {writable: true},
 		})
-		Object.preventExtensions(this)
 		
 		this.reset()
 		
-		if (this.constructor.all.find(test=>test.input == input))
+		if (Test.all.find(test=>test.input == input))
 			console.warn('duplicate test!', this)
-		this.constructor.all.push(this)
+		Test.all.push(this)
 	}
 	
 	run() {

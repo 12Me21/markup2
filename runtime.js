@@ -1,6 +1,6 @@
 function template([html]) {
 	let temp = document.createElement('template')
-	temp.innerHTML = html.replace(/\s*\n\s*/g,"")
+	temp.innerHTML = html.replace(/\s*\n\s*/g, "")
 	return temp.content.cloneNode.bind(temp.content, true)
 }
 

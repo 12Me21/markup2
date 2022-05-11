@@ -33,6 +33,18 @@
 /**
 	markup langs container
 */
+
+/*class Markup_Parser {
+	static [Symbol.hasInstance](instance) {
+		if ('langs' in instance) {
+			let langs = instance.langs
+			if (langs && 'object'==typeof langs) {
+				return Object.values(langs).every(x=>'function'==typeof x)
+			}
+		}
+	}
+	}*/
+
 class Markup_Langs {
 	/**
 		@param {Array<Langs_Mixin>} inherit - parsers to include

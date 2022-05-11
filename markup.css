@@ -58,8 +58,8 @@ so existing themes won't need to be updated.
 	/* Most themes won't change these: */
 	--T-tab-size: 2.5;
 	--T-embed-height: 10vh;
-	--T-font: sans-serif;
-	--T-monospace-font: consolas, monospace;
+	--T-font: 1em / 1.2 sans-serif;
+	--T-monospace-font: 0.8em / 1.2 consolas, monospace;
 }
 
 /** aa */
@@ -89,6 +89,8 @@ so existing themes won't need to be updated.
 }
 
 /* gosh is there a better way to do this? */
+/*: something about block formatting context... */
+/* mm but i dont know if i can think about that right now... */
 .Markup img, .Markup video, .Markup youtube-embed,
 .M-spoiler-label,
 .Markup pre {
@@ -207,8 +209,8 @@ so existing themes won't need to be updated.
 	border-bottom: none;
 }
 /* safari */
-.M-spoiler-label::marker {
-	font-size: 0;
+.M-spoiler-label::-webkit-details-marker {
+	display: none;
 }
 
 /***********/

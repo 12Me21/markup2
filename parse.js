@@ -1,17 +1,7 @@
 // 📤📥doc
 // todo: after parsing a block element: eat the next newline directly
 
-// move to switch/case maybe..
-
-/**
-	12y2 parser
-	@implements Langs_Mixin
-	@hideconstructor
-*/
 class Markup_12y2 { constructor() {
-	// all state is stored in these vars (and REGEX.lastIndex)
-	let current, brackets
-	
 	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
 	// have either
@@ -19,6 +9,9 @@ class Markup_12y2 { constructor() {
 	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 	
 
+	
+	// all state is stored in these vars (and REGEX.lastIndex)
+	let current, brackets
 	
 	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
 	
@@ -35,16 +28,214 @@ class Markup_12y2 { constructor() {
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
 	
-	// when an unknown \tag is encountered, we create a block
-	// rather than just ignoring it, so in the future,
-	// we can add a new tag without changing the parsing (much)
-	const ENV_INVALID = {
-		argtype:ARGS_NORMAL, do(token, rargs, body) {
-			if (body)
-				return OPEN('invalid', token, {text: token, reason:"invalid tag"}, body)
-			else
-				return TAG('invalid', {text: token, reason:"invalid tag"})
+	const ARGS_ICODE    = /(){0}([^\n`]+)`?/y
+	ARGS_ICODE._raw = true
+	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
+	ARGS_CODE._raw = true
+	
+	const GROUPS = [], ARGTYPES = [], SPECIAL = []
+	
+	let regi = []
+	function T({raw}, ...groups) {
+		let part = raw.join("()").replace("\\`", "`")
+		// replace "(" with "(?:" - except for "(?" and "()"
+			.replace(/[(](?![?)])/g, "(?:")
+		// replace {TAG}s
+			.replace(/[{]([A-Z_]+)[}]/g, (m, tag)=>({
+				EOL: "(?![^\\n])",
+				BOL: "^",
+				URL_TEXT: "[-\\w/%&=#+~@$*')(!?,.;:]*[-\\w/%&=#+~@$*')(]"
+			}[tag]))
+		regi.push(part)
+		for (let g of groups) {
+			let [key, arg] = Object.entries(g)[0]
+			let special = 0
+			if (g.raw)
+				special |= 1
+			GROUPS.push(key)
+			ARGTYPES.push(arg)
+			SPECIAL.push(special)
 		}
+	}
+	
+	T`\n${{ NEWLINE :0}}`
+	T`{BOL}#{1,4}${{ HEADING :ARGS_HEADING}}`
+	T`{BOL}---+{EOL}${{ DIVIDER :0}}`
+	T`([*][*]|__|~~|[/])(?=\w${{ STYLE_START :0}}|${{ STYLE_END :0}})`
+	T`[\\]\w+${{ TAG :0}}`
+	T`\}${{ BLOCK_END :0}}`
+	T`[\\]\{${{ NULL_ENV :0}}`
+	T`[\\][^]${{ ESCAPED :0}}`
+	T`{BOL}>${{ QUOTE :ARGS_HEADING}}`
+	T`{BOL}\`\`\`${{ CODE_BLOCK :ARGS_CODE}}`
+	T`\`${{ INLINE_CODE :ARGS_ICODE}}`
+	T`(!${{ EMBED :ARGS_BODYLESS}})?(https?:[/][/]|sbs:){URL_TEXT}${{ LINK :ARGS_NORMAL}}`
+	T` *[|] *\n[|]${{ TABLE_ROW :ARGS_TABLE}}`
+	T` *[|] *{EOL}${{ TABLE_END :0}}`
+	T`{BOL} *[|]${{ TABLE_START :ARGS_TABLE}}`
+	T` *[|]${{ TABLE_CELL :ARGS_TABLE}}`
+	
+	Object.freeze(GROUPS)
+	Object.freeze(ARGTYPES)
+	Object.freeze(SPECIAL)
+	const REGEX = new RegExp(regi.join("|"), 'g')
+	
+	const TAGS = MAP({
+		'\\sub': ARGS_WORD, '\\sup': ARGS_WORD,
+		'\\b': ARGS_WORD, '\\i': ARGS_WORD,
+		'\\u': ARGS_WORD, '\\s': ARGS_WORD,
+		'\\quote': ARGS_LINE,
+		'\\align': ARGS_LINE,
+		'\\spoiler': ARGS_LINE,
+		'\\ruby': ARGS_WORD,
+		'\\key': ARGS_WORD,
+	})
+	
+	/**
+		process a token
+		@param {string} _token_type - 
+		@param {string} token - token text, including arguments
+		@param {Array} rargs - raw arguments
+		@param body - varies depending on token type:
+		- truthy if `{` is present
+		- raw contents (of icode, code, etc.)
+		@param {string} base_token - token text, without arguments
+	*/
+	function PROCESS(_token_type, token, rargs, body, base_token) {
+		//console.log('process', arguments)
+		switch(_token_type) { default: {
+			throw new TypeError("unknown token type: "+_token_type)
+			// error
+		} break; case 'NEWLINE': {
+			while (!current.body && !SURVIVE_EOL[current.type])
+				CLOSE(true)
+			NEWLINE()
+		} break; case 'HEADING': {
+			let level = base_token.length
+			let args = {level}
+			// todo: anchor name (and, can this be chosen automatically based on contents?)
+			OPEN('heading', token, args, body)
+		} break; case 'DIVIDER': {
+			BLOCK('divider')
+		} break; case 'STYLE_START': {
+			OPEN('style', token)
+		} break; case 'STYLE_END': {
+			while ('style'===current.type) { 
+				if (token===current.token) { // found opening
+					current.type = {
+						'**': 'bold', '__': 'underline',
+						'~~': 'strikethrough', '/': 'italic',
+					}[current.token]
+					CLOSE()
+					return
+				}
+				CLOSE(true) // different style (kill)
+			}
+			TEXT(token)
+		} break; case 'BLOCK_END': {
+			if (brackets<=0) {
+				TEXT(token)
+				return
+			}
+			// only runs if at least 1 element has a body, so this won't fail:
+			while (!current.body)
+				CLOSE(true)
+			if ('invalid'===current.type)
+				TEXT("}")
+			CLOSE()
+		} break; case 'NULL_ENV': {
+			OPEN('null_env', token, null, true)
+		} break; case 'ESCAPED': {
+			if ("\\\n"===token)
+				NEWLINE()
+			else
+				TEXT(token.substr(1))
+		} break; case 'QUOTE': {
+			OPEN('quote', token, {cite: rargs[0]}, body)
+		} break; case 'CODE_BLOCK': {
+			let lang = rargs
+			// idea: strip leading indent from code?
+			BLOCK('code', {text:body, lang})
+		} break; case 'INLINE_CODE': {
+			BLOCK('icode', {text:body})
+		} break; case 'EMBED': {
+			let url = base_token.substr(1) // ehh better
+			let [type, args] = process_embed(url, rargs)
+			BLOCK(type, args)
+		} break; case 'LINK': {
+			let url = base_token
+			let args = {url}
+			if (body) {
+				OPEN('link', token, args, body)
+			} else {
+				args.text = rargs[0]
+				BLOCK('simple_link', args)
+			}
+		} break; case 'TABLE_ROW': {
+			if (!REACH_CELL()) {
+				TEXT(token)
+				return
+			}
+			let args = table_args(rargs)
+			CLOSE() // cell
+			CLOSE() // row
+			OPEN('table_row', "")
+			OPEN('table_cell', token.replace(/^ *\n/, ""), args, body)
+		} break; case 'TABLE_END': {
+			if (REACH_CELL()) {
+				CLOSE()
+				CLOSE()
+				CLOSE()
+				return
+			}
+			TEXT(token)
+		} break; case 'TABLE_START': {
+			let args = table_args(rargs)
+			OPEN('table', "")
+			OPEN('table_row', "")
+			OPEN('table_cell', token, args, body)
+		} break; case 'TABLE_CELL': {
+			if (!REACH_CELL()) {
+				TEXT(token)
+				return
+			}
+			let args = table_args(rargs)
+			CLOSE() // cell
+			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
+		} break; case 'INVALID_TAG': {
+			if (body)
+				OPEN('invalid', token, {text: token, reason:"invalid tag"}, body)
+			else
+				BLOCK('invalid', {text: token, reason:"invalid tag"})
+
+		} break; case '\\sub': {
+			OPEN('subscript', token, null, body)
+		} break; case '\\sup': {
+			OPEN('superscript', token, null, body)
+		} break; case '\\b': {
+			OPEN('bold', token, null, body)
+		} break; case '\\i': {
+			OPEN('italic', token, null, body)
+		} break; case '\\u': {
+			OPEN('underline', token, null, body)
+		} break; case '\\s': {
+			OPEN('strikethrough', token, null, body)
+		} break; case '\\quote': {
+			OPEN('quote', token, {cite: rargs[0]}, body)
+		} break; case '\\align': {
+			let a = rargs[0]
+			if (!(a==='left' || a==='right' || a==='center'))
+				a = 'center'
+			OPEN('align', token, {align: a}, body)
+		} break; case '\\spoiler': {
+			let label = arg0(rargs, "spoiler") // todo: handle this default value in the renderer
+			OPEN('spoiler', token, {label}, body)
+		} break; case '\\ruby': {
+			let text = arg0(rargs, "true")
+			OPEN('ruby', token, {text}, body)
+		} break; case '\\key': {
+			OPEN('key', token, null, body)
+		}}
 	}
 	
 	function arg0(rargs, def) {
@@ -53,226 +244,7 @@ class Markup_12y2 { constructor() {
 		return rargs[0]
 	}
 	
-	function simple_word_tag(name) {
-		// nnnnn closure
-		return {argtype:ARGS_WORD, do(token, rargs, body) {
-			return OPEN(name, token, null, body)
-		}}
-	}
-	
-	const ENVS = MAP({
-		sub: simple_word_tag('subscript'),
-		sup: simple_word_tag('superscript'),
-		b: simple_word_tag('bold'),
-		i: simple_word_tag('italic'),
-		u: simple_word_tag('underline'),
-		s: simple_word_tag('strikethrough'),
-		quote: {argtype:ARGS_LINE, do(token, rargs, body) {
-			// todo: this feels very repetitive...
-			return OPEN('quote', token, {cite: rargs[0]}, body)
-		}},
-		align: {argtype:ARGS_LINE, do(token, rargs, body) {
-			let a = rargs[0]
-			if (!(a=='left' || a=='right' || a=='center'))
-				a = 'center'
-			return OPEN('align', token, {align: a}, body)
-		}},
-		spoiler: {argtype:ARGS_LINE, do(token, rargs, body) {
-			let label = arg0(rargs, "spoiler")
-			return OPEN('spoiler', token, {label}, body)
-		}},
-		ruby: {argtype:ARGS_WORD, do(token, rargs, body) {
-			let text = arg0(rargs, "true")
-			return OPEN('ruby', token, {text}, body)
-		}},
-		key: {argtype:ARGS_WORD, do(token, rargs, body) {
-			return OPEN('key', token, null, body)
-		}},
-	})
-	
-	/* NOTE:
-		/^/ matches after a <newline> or <env> token
-		/$/ matches end of string
-		/(?![^\n])/ matches end of line
-		/()/ empty tags are used to mark token types
-	*/
-	// ⚠ The order of these is important!
-	const [REGEX, GROUPS] = process_def([[
-		// 💎 NEWLINE 💎
-		/\n/,
-		{newline:true, do(token) {
-			while (!current.body && !SURVIVE_EOL[current.type])
-				CLOSE(true)
-			return NEWLINE()
-		}},
-	],[// 💎 HEADING 💎
-		/{BOL}#{1,4}/,
-		{argtype:ARGS_HEADING, do(token, rargs, body, base_token) {
-			let level = base_token.length
-			let args = {level}
-			// todo: anchor name (and, can this be chosen automatically based on contents?)
-			return OPEN('heading', token, args, body)
-		}},
-	],[// 💎 DIVIDER 💎
-		/{BOL}---+{EOL}/,
-		{do(token) {
-			return TAG('divider')
-		}},
-	],[// 💎💎 STYLE
-		/([*][*]|__|~~|[/])(?=\w{CAPTURE}|)/, //todo: improve start/end detect
-		// 💎 STYLE START 💎
-		{do(token) {
-			return OPEN('style', token)
-		}},
-		// 💎 STYLE END 💎
-		{do(token) {
-			// todo: should be checking for WEAK here?
-			while (current.type=='style') { 
-				if (current.token == token) { // found opening
-					current.type = {
-						"**": 'bold',
-						"__": 'underline',
-						"~~": 'strikethrough',
-						"/": 'italic',
-					}[current.token]
-					return CLOSE()
-				}
-				CLOSE(true) // different style (kill)
-			}
-			return TEXT(token)
-		}},
-	],[// 💎 ENV 💎 (handled separately)
-		// todo: make this more strict
-		// ex: something like `\u2013` should not parse as env?
-		/[\\]\w+/,
-		false,
-	],[// 💎 BLOCK END 💎
-		// todo: outside the end of a block/table, 
-		// eat whitespace + newline ?
-		// ex \spoiler{abc}  <spaces> ← those
-		// also inside the {} of course,
-		//[/{/, {token:''}], // maybe
-		/}/,
-		{do(token) {
-			if (brackets<=0)
-				return TEXT(token)
-			// only runs if at least 1 element has a body, so this won't fail:
-			while (!current.body)
-				CLOSE(true)
-			if (current.type=='invalid')
-				TEXT("}")
-			return CLOSE()
-		}},
-	],[// 💎 NULL ENV 💎 (maybe can be in the envs table now? todo)
-		/[\\]{/,
-		{body:true, do(token) {
-			return OPEN('null_env', token, null, true)
-		}},
-	],[// 💎 ESCAPED CHAR 💎
-		/[\\][^]/, //todo: match surrogate pairs
-		{do(token) {
-			if (token=="\\\n")
-				return NEWLINE()
-			return TEXT(token.substr(1))
-		}},
-	],[// 💎 QUOTE 💎
-		/{BOL}>/,
-		{argtype:ARGS_HEADING, do(token, rargs, body) {
-			return OPEN('quote', token, {cite: rargs[0]}, body)
-		}},
-	],[// 💎 CODE BLOCK 💎
-		/{BOL}```[^]*?(```|$)/,
-		{do(token) {
-			let [, lang, text] = /^```(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```)?$/g.exec(token)// hack...
-			// idea: strip leading indent from code?
-			return TAG('code', {text, lang})
-		}},
-	],[// 💎 INLINE CODE 💎
-		/`[^`\n]+`?/,
-		{do(token) {
-			return TAG('icode', {text: token.replace(/^`|`$/g,"")})
-		}},
-	],[// 💎💎 URL
-		/(!{CAPTURE})?(https?:[/][/]|sbs:){URL_TEXT}/,
-		// 💎 EMBED 💎
-		{argtype:ARGS_BODYLESS, do(token, rargs, body, base_token) {
-			let url = base_token.substr(1) // ehh better
-			let [type, args] = process_embed(url, rargs)
-			return TAG(type, args)
-		}},
-		// 💎 LINK 💎
-		{argtype:ARGS_NORMAL, do(token, rargs, body, base_token) {
-			let url = base_token
-			let args = {url}
-			if (body)
-				return OPEN('link', token, args, body)
-			args.text = rargs[0]
-			return TAG('simple_link', args)
-		}},
-	],[// 💎 TABLE - NEXT ROW 💎
-		/ *[|] *\n[|]/,
-		{argtype:ARGS_TABLE, do(token, rargs, body) {
-			if (!REACH_CELL())
-				return TEXT(token)
-			let args = table_args(rargs)
-			CLOSE() // cell
-			CLOSE() // row
-			OPEN('table_row', "")
-			return OPEN('table_cell', token.replace(/^ *\n/, ""), args, body)
-		}},
-	],[// 💎 TABLE - END 💎
-		/ *[|] *{EOL}/,
-		{do(token) {
-			if (REACH_CELL()) {
-				CLOSE()
-				CLOSE()
-				return CLOSE()
-			}
-			return TEXT(token)
-		}},
-	],[// 💎 TABLE - START 💎
-		/{BOL} *[|]/,
-		{argtype:ARGS_TABLE, do(token, rargs, body) {
-			let args = table_args(rargs)
-			OPEN('table', "")
-			OPEN('table_row', "")
-			return OPEN('table_cell', token, args, body)
-		}},
-	],[// 💎 TABLE - NEXT CELL 💎
-		/ *[|]/,
-		{argtype:ARGS_TABLE, do(token, rargs, body) {
-			if (!REACH_CELL())
-				return TEXT(token)
-			let args = table_args(rargs)
-			CLOSE() // cell
-			return OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
-		}},
-	]]) // todo: we can probably merge a few table types, to save on match count / complexity..
-	// and, maybe instead of using ^ and truncating the string on newline,
-	// we can just filter the match results and retry if a match is in an invalid location (similar to how results are rejected if arg parsing fails)
-	
-	//[/^ *- /, 'list'], TODO
-	
 
-	
-	function process_def(table) {
-		let regi = []
-		let groups = []
-		for (let [regex, ...matches] of table) {
-			let rx = regex.source
-				.replace(/[(](?![?])/g, "(?:") // (…) → (?:…)
-				.replace(/[{]([A-Z_]+)[}]/g, (m, tag)=>({
-					EOL: "(?![^\\n])",
-					BOL: "^",
-					CAPTURE: "()",
-					URL_TEXT: "[-\\w/%&=#+~@$*')(!?,.;:]*[-\\w/%&=#+~@$*')(]"
-				}[tag]))
-			regi.push(rx+"()")
-			groups.push(...matches)
-		}
-		let r = new RegExp(regi.join("|"), 'g')
-		return [r, groups]
-	}
 	
 	const null_args = []
 	null_args.named = Object.freeze({})
@@ -283,8 +255,7 @@ class Markup_12y2 { constructor() {
 		if (!arglist) 
 			return null_args
 		
-		let list = []
-		list.named = {}
+		let list = [], named = {}
 		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
 			// value OR =value
@@ -292,8 +263,9 @@ class Markup_12y2 { constructor() {
 			if (!name)
 				list.push(value)
 			else // name=value
-				list.named[name] = value
+				named[name] = value
 		}
+		list.named = named
 		return list
 	}
 	// process an embed url: !https://example.com/image.png[alt=balls]
@@ -302,7 +274,7 @@ class Markup_12y2 { constructor() {
 		let type
 		let args = {url, alt:rargs.named.alt}
 		for (let arg of rargs)
-			if (arg=='video' || arg=='audio' || arg=='image')
+			if ('video'===arg || 'audio'===arg || 'image'===arg)
 				type = arg
 		// todo: improve this
 		if (!type) {
@@ -321,7 +293,7 @@ class Markup_12y2 { constructor() {
 		if (!type)
 			type = 'image'
 		// process args
-		if (type=='image' || type=='video') {
+		if ('image'===type || 'video'===type) {
 			for (let arg of rargs) {
 				let m
 				if (m = /^(\d+)x(\d+)$/.exec(arg)) {
@@ -337,7 +309,7 @@ class Markup_12y2 { constructor() {
 		let ret = {}
 		for (let arg of rargs) {
 			let m
-			if (arg=="*")
+			if ('*'===arg)
 				ret.header = true
 			else if (['red','orange','yellow','green','blue','purple','gray'].includes(arg))
 				ret.color = arg
@@ -352,16 +324,13 @@ class Markup_12y2 { constructor() {
 	
 	// start a new block
 	function OPEN(type, token, args, body) {
-		// todo: anything with a body doesn't need a tag, i think
-		// since body items can never be cancelled.
-		// so perhaps we can specify the body flag by setting tag = true
-		current = {type, token, content: [], parent: current, prev: 'all_newline'}
-		if (body) {
+		current = Object.seal({
+			type, args, content: [],
+			token, body, parent: current,
+			prev: 'all_newline',
+		})
+		if (body)
 			brackets++
-			current.body = true
-		}
-		if (args)
-			current.args = args
 	}
 	// move up
 	function pop() {
@@ -375,7 +344,7 @@ class Markup_12y2 { constructor() {
 	function merge(content, prev, token) {
 		if (token)
 			current.content.push(token)
-		else if (current.prev=='block' && content[0]==="\n")
+		else if ('block'===current.prev && "\n"===content[0])
 			content.shift() // strip newline
 		
 		current.content.push(...content)
@@ -386,51 +355,49 @@ class Markup_12y2 { constructor() {
 		// push the block + move up
 		let o = pop()
 		
-		if (cancel && !o.body && CAN_CANCEL[o.type]) {
-			if (o.type=='table_cell') {
+		if (cancel && !o.body && o.type in CAN_CANCEL) {
+			if ('table_cell'===o.type) {
 				// close table row (cancel if empty)
 				current.content.length ? CLOSE() : pop()
 				// close table (cancel if empty)
 				current.content.length ? CLOSE() : TEXT(pop().token)
 			}
 			merge(o.content, o.prev, o.token)
-		} else if (o.type=='null_env') {
+		} else if ('null_env'===o.type) {
 			merge(o.content, o.prev)
 		} else {
 			// otherwise, we have a normal block:
-			if (o.prev=='newline')
+			if ('newline'===o.prev)
 				o.content.push("\n")
-			delete o.parent // remove cyclical reference before adding to tree. TODO: for some reason this line causes the code to run like 20% slower lol
-			current.content.push(o)
-			current.prev = IS_BLOCK[o.type] ? 'block' : o.prev
+			current.content.push({
+				type:o.type, args:o.args, content:o.content
+			})
+			current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 		}
 	}
 	// push text
 	function TEXT(text) {
-		if (text) {
+		if (text!=="") {
 			current.content.push(text) // todo: merge with surrounding textnodes?
 			current.prev = 'text'
 		}
 	}
 	// push empty tag
-	function TAG(type, args) {
+	function BLOCK(type, args) {
 		current.content.push({type, args})
-		current.prev = IS_BLOCK[type] ? 'block' : 'text'
+		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
 	function NEWLINE() {
-		if (current.prev != 'block')
+		if ('block'!==current.prev)
 			current.content.push("\n")
-		if (current.prev != 'all_newline')
+		if ('all_newline'!==current.prev)
 			current.prev = 'newline'
 	}
 	function REACH_CELL() {
-		kill_weak()
-		return current.type=='table_cell'
-		// todo: wait, we don't find a cell, we just killed all those blocks even though this tag isn't valid ??
-	}
-	function kill_weak() {
-		while (current.type=='style')
+		while ('style'===current.type)
 			CLOSE(true)
+		return 'table_cell'===current.type
+		// todo: wait, we don't find a cell, we just killed all those blocks even though this tag isn't valid ??
 	}
 	
 	function parse(text) {
@@ -438,58 +405,84 @@ class Markup_12y2 { constructor() {
 		current = tree
 		brackets = 0
 		
+		// MAIN LOOP //
+		let prev = -1
 		let last = REGEX.lastIndex = 0
 		for (let match; match=REGEX.exec(text); ) {
-			// text before token
+			// check for infinite loops
+			if (match.index===prev)
+				throw ["INFINITE LOOP", match]
+			prev = match.index
+			// 1: insert the text from after previous token
 			TEXT(text.substring(last, match.index))
-			// get token
-			//for (; match[group_num]===undefined; group_num++)
-			//	;
+			// 2: figure out which token type was matched
+			let token_text = match[0]
 			let group_num = match.indexOf("", 1)-1
-			let thing = GROUPS[group_num]
-			let token = match[0]
-			// is a \tag
-			if (thing===false) {
-				let name = token.substr(1)
-				thing = ENVS[name] || ENV_INVALID
+			
+			// 3: get type + argument pattern
+			let type = GROUPS[group_num]
+			let argregex
+			if ('TAG'!==type) {
+				argregex = ARGTYPES[group_num]
+			} else if (token_text in TAGS) {
+				type = token_text
+				argregex = TAGS[type]
+			} else {
+				// when an unknown \tag is encountered, we create a block
+				// rather than just ignoring it, so in the future,
+				// we can add a new tag without changing the parsing (much)
+				type = 'INVALID_TAG'
+				argregex = ARGS_NORMAL
 			}
-			// parse args and {
-			let body
-			let argregex = thing.argtype
-			if (argregex) {
+			
+			// 4: parse args and {
+			let start_line = false
+			if (!argregex) {
+				let body = 'NULL_ENV'===type //h
+				PROCESS(type, token_text, null, body, token_text)
+				last = REGEX.lastIndex
+				if (body || 'NEWLINE'===type)
+					start_line = true
+			} else {
+				// try to match arguments
 				argregex.lastIndex = REGEX.lastIndex
 				let argmatch = argregex.exec(text)
-				if (!argmatch) { // INVALID! skip 1 char
+				if (null===argmatch) { // INVALID! skip 1 char
 					REGEX.lastIndex = match.index+1
 					last = match.index
 					continue
 				}
-				body = argmatch[2]
-				token += argmatch[0]
-				thing.do(token, parse_args(argmatch[1]), body, match[0])
-				if (argmatch[3]!==undefined) {
-					let text = argmatch[3]
-					TEXT(text.replace(/\\([^])/g,"$1")) // todo: i wonder if we could pass indexes to TEXT, and have it automatically extract from the input string, only when necessary. i.e. 2 consecutive text tokens are pulled with a single .substring()
+				let full_token = token_text+argmatch[0]
+				let args = argmatch[1]
+				let body = argmatch[2] // the {, or contents of raw tags
+				let word = argmatch[3] // only for syntax like \sub word
+				
+				if (!argregex._raw) {
+					args = parse_args(args)
+					start_line = body
+				}
+				PROCESS(type, full_token, args, body, token_text)
+				// word
+				if (undefined!==word) {
+					TEXT(word.replace(/\\([^])/g, "$1"))
 					CLOSE()
-					body = false
+					start_line = false
 				}
 				last = REGEX.lastIndex = argregex.lastIndex
-			} else {
-				body = thing.body
-				thing.do(token)
-				last = REGEX.lastIndex
 			}
-			// "start of line"
-			if (body || thing.newline) {
+			// 5: handle start-of-line
+			if (start_line) {
 				text = text.substring(last)
 				last = REGEX.lastIndex = 0
+				prev = -1
 			}
-		}
+		} // end of main loop
+		
 		TEXT(text.substring(last)) // text after last token
 		
-		while (current.type!='ROOT')
+		while ('ROOT'!==current.type)
 			CLOSE(true)
-		if (current.prev=='newline') // todo: this is repeated
+		if ('newline'===current.prev) //todo: this is repeated
 			current.content.push("\n")
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
@@ -516,5 +509,3 @@ class Markup_12y2 { constructor() {
 	// \tag{ ...  {heck} ... } <- closes here
 	
 }}
-
-if ('object'==typeof module && module) module.exports = Markup_12y2
