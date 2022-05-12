@@ -2,6 +2,22 @@
 	@typedef {(Element|DocumentFragment|Document)} ParentNode
 */
 
+//todo: i really don't like the whole getrootnode thing.
+// maybe should pass the parent to the CREATE function and
+// have it handle appending, then return the new branch node.
+// return parent=>parent.appendChild(elem.cloneNode(true))
+// and then you call this(parent)
+// however, then the node gets appended immediately, before it's initialized...
+// so really the function process should be
+// func(parent, args) {
+//   let e = template()
+//   ...
+//   parent.appendChild(e)
+//   return e.firstChild
+// }
+// also: is it more efficient if the templates are in the current document? or somehow cloned INTO it rather than cloned and then adopted...
+// yes! importNode
+
 /**
 	AST -> HTML DOM Node renderer
 */
@@ -15,7 +31,7 @@ class Markup_Render_Dom { constructor() {
 		let temp = document.createElement('template')
 		temp.innerHTML = html.replace(/\s*\n\s*/g,"")
 		let elem = temp.content.firstChild
-		return elem.cloneNode.bind(elem, true)
+		return document.importNode.bind(document, elem, true)
 	}
 	
 	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
@@ -76,22 +92,23 @@ class Markup_Render_Dom { constructor() {
 		
 		image: function({url, alt, width, height}) {
 			let e = this()
-			e.onerror = e.onload = (ev)=>{
-				e.removeAttribute('data-loading')
-			}
 			e.src = filter_url(url)
 			if (alt!=null) e.alt = alt
-			if (width) {
-				e.width = width
-				e.style.setProperty('--width', width+"px")
-				e.style.width = width
-			}
-			if (height) {
-				e.height = height
-				e.style.setProperty('--height', height+"px")
+			if (width) e.width = width
+			if (height) e.height = height
+			// check whether the image is "available" (i.e. size is known)
+			// https://html.spec.whatwg.org/multipage/images.html#img-available
+			if (e.naturalHeight) {
+				e.width = e.naturalWidth
+				e.height = e.naturalHeight
+			} else {
+				e.dataset.loading = ""
+				e.onerror = e.onload = ()=>{
+					delete e.dataset.loading
+				}
 			}
 			return e
-		}.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
+		}.bind(𐀶`<img data-shrink tabindex=-1>`),
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
 		

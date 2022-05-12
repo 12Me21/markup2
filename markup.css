@@ -2,7 +2,7 @@ L + ratio {
 	
 }
 
-.Markup * {
+.Markup, .Markup * {
 	white-space: pre-wrap;
 	word-break: break-word; /* ⚠ very important to prevent overflow ⚠ */
 }
@@ -46,6 +46,11 @@ so existing themes won't need to be updated.
 	--T-col: black;
 	--T-bg: white;
 	
+	--T-link-color: #056;
+	--T-link-hover-color: #089;
+	--T-link-decoration: underline #AAAA; /* idk..*/
+	--T-custom-link-decoration: underline blue;
+	
 	--T-border-col: gray; /* nnnnn... */
 	/* these are transparent, so they should work with both dark and light */
 	--T-box-bg: #AAA2;
@@ -77,61 +82,39 @@ so existing themes won't need to be updated.
 	tab-size: var(--T-tab-size);
 }
 
-/*** everything ***/
 .Markup * {
-	/* (override the defaults) */
 	font-family: inherit;
-	/*line-height: inherit;*/
-	
 	margin: 0;
 }
 
-/* gosh is there a better way to do this? */
-/*: something about block formatting context... */
-/* mm but i dont know if i can think about that right now... */
-.Markup img, .Markup video, .Markup youtube-embed,
-.M-spoiler-label,
-.Markup pre {
-	/* if using `overflow-wrap: anywhere` / `word-break: break-word` */
-	display: table;
-	
-	/* if using `overflow-wrap: break-word` */
-	/*display: block;
+/*display: block;
 	width: max-content;
 	max-width: 100%;
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
 	max-width: stretch;*/
-}
 
 /************/
 /** Embeds **/
 /************/
-.Markup img, .Markup video, .Markup audio {
+.Markup audio {
 	display: block;
 }
 /* styles and maximum sizes for embedded media */
 .Markup img, .Markup video {
-	border: 1px solid var(--T-border-col);
+	display: block;
+	
+	max-width: 100%;
 	max-height: var(--T-embed-height);
-}
-/* sizes for <img> (and <video>, maybe) */
-.Markup img, .Markup video {
-	/* these variables are set in element.style if supplied by the user */
-	/* ex: using !http://example.com/image.png[100x50] syntax */
-	width: var(--width);
-	height: var(--height);
-	box-sizing: content-box;
-	object-fit: scale-down;
-	/* prevent inheriting width/height from parent */
-	--width: initial;
-	--height: initial;
+	width: auto;
+	
+	object-fit: scale-down; /* just in case */
+	border: 1px solid var(--T-border-col);
 }
 /* before loading, assume image will be larger than --image-max-height */
-/* unless --height is set */
-/*.Markup img[data-loading], .Markup video[data-loading] {
-	height: var(--height, var(--T-embed-height));
-}*/
+.Markup img[data-loading], .Markup video[data-loading] {
+	height: var(--T-embed-height);
+}
 
 /* ruby text doesn't work if set to white-space: pre */
 .Markup rt {
@@ -146,6 +129,7 @@ so existing themes won't need to be updated.
 /*** keyboard key ***/
 .Markup kbd {
 	display: inline-block;
+	
 	background: var(--T-box-bg);
 	border: 1px solid var(--T-border-col);
 	border-radius: 3px;
@@ -184,6 +168,7 @@ so existing themes won't need to be updated.
 /** Spoiler **/
 /*************/
 .M-spoiler-label {
+	display: table; /* width... */
 	padding: 0 0.3em;
 	background: var(--T-box-bg);
 	border: 2px solid var(--T-border-col);
@@ -258,15 +243,21 @@ so existing themes won't need to be updated.
 .Markup [data-bgcolor="gray"]   { background: var(--T-gray-bg) }
 .Markup table { background: var(--T-bg); } /* reset */
 
-
 /***********/
 /** Links **/
 /***********/
 .Markup a[href] {
 	/*color: rgb(0, 80, 150);*/
-	text-decoration: underline;
+	color: var(--T-link-color);
+	text-decoration: var(--T-link-decoration);
 }
-
-.M-link-custom {
-	background: var(--T-link-bg);
+.Markup a[href]:hover {
+	color: var(--T-link-hover-color);
+}
+/* links with custom text */
+.Markup .M-link-custom[href] {
+	text-decoration: var(--T-custom-link-decoration);
+}
+.Markup .M-link-custom[href]:hover {
+	text-decoration-style: double; /* s*/
 }
