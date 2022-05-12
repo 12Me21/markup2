@@ -20,6 +20,8 @@
 ⎬−−🅡 return: AST
 ⎪
 ⎬−−🅐 param 0: string
+⎪
+⎬−−🅐 param 1?: ?
 
 🅣 Langs_Mixin: interface
 ⎪
@@ -86,6 +88,8 @@
    ⎪  ⎬−−🅐 param 0: string
    ⎪  ⎪
    ⎪  ⎬−−🅐 param 1?: string
+   ⎪  ⎪
+   ⎪  ⎬−−🅐 param 2?: ?
    ⎪
    ⎬−−🅘 this.langs: object(null)
    ⎪
@@ -125,7 +129,7 @@
       ⎪
       ⎬−−🅐 param 2?: Element
       ⎪
-      ⎬−−🅐 param 3?: object
+      ⎬−−🅐 param 3?: ?
 
 
 

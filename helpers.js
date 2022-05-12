@@ -39,7 +39,7 @@ let Markup = {
 		@param {Object} [options=] - unused currently
 		@return {(Element|DocumentFragment)} - the element which was passed, or the new documentfragment
 	*/
-	convert_lang(text, lang, element, options) {
+	convert_lang(text, lang, element, etc) {
 		if (element instanceof Element) {
 			element.classList.add(this.css_class)
 		} else if (element!=undefined)
@@ -47,7 +47,7 @@ let Markup = {
 		
 		let tree, err
 		try {
-			tree = this.langs.parse(text, lang)
+			tree = this.langs.parse(text, lang, etc)
 			element = this.renderer.render(tree, element)
 		} catch (error) {
 			if (!element)
