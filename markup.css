@@ -2,6 +2,11 @@ L + ratio {
 	
 }
 
+.Markup * {
+	white-space: pre-wrap;
+	word-break: break-word; /* ⚠ very important to prevent overflow ⚠ */
+}
+
 /*******************/
 /** DEFAULT THEME **/
 /*******************/
@@ -65,11 +70,6 @@ so existing themes won't need to be updated.
 /** aa */
 
 .Markup {
-	/* control text rendering */
-	white-space: pre-wrap;
-	word-break: normal;
-	overflow-wrap: break-word;
-	
 	color: var(--T-col);
 	background: var(--T-bg);
 	font: var(--T-font);
@@ -81,8 +81,6 @@ so existing themes won't need to be updated.
 .Markup * {
 	/* (override the defaults) */
 	font-family: inherit;
-	word-break: inherit;
-	white-space: inherit;
 	/*line-height: inherit;*/
 	
 	margin: 0;
@@ -94,14 +92,16 @@ so existing themes won't need to be updated.
 .Markup img, .Markup video, .Markup youtube-embed,
 .M-spoiler-label,
 .Markup pre {
-	display: block;
+	/* if using `overflow-wrap: anywhere` / `word-break: break-word` */
+	display: table;
+	
+	/* if using `overflow-wrap: break-word` */
+	/*display: block;
 	width: max-content;
-	/* this feature is widely supported */
-	/* but wasn't standard until recently: */
-	max-width: 100%; /* fallback */
+	max-width: 100%;
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
-	max-width: stretch; /* no browser supports this value yet */
+	max-width: stretch;*/
 }
 
 /************/
@@ -129,9 +129,9 @@ so existing themes won't need to be updated.
 }
 /* before loading, assume image will be larger than --image-max-height */
 /* unless --height is set */
-.Markup img[data-loading], .Markup video[data-loading] {
+/*.Markup img[data-loading], .Markup video[data-loading] {
 	height: var(--height, var(--T-embed-height));
-}
+}*/
 
 /* ruby text doesn't work if set to white-space: pre */
 .Markup rt {
@@ -233,12 +233,17 @@ so existing themes won't need to be updated.
 /***********/
 /** Table **/
 /***********/
+.M-table-outer {
+	overflow-x: auto;
+}
 .Markup table, .Markup td, .Markup th {
 	border: 1px solid var(--T-col);
 	border-collapse: collapse;
 }
 .Markup td, .Markup th {
 	padding: 0.2em 0.3em;
+	/* alternate text wrap mode, produces better table widths (somewhat) */
+	word-break: normal; overflow-wrap: break-word;
 }
 
 /**********************/

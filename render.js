@@ -148,7 +148,7 @@ class Markup_Render_Dom { constructor() {
 		table: function() {
 			let e = this()
 			return e.firstChild
-		}.bind(𐀶`<table><tbody>`),
+		}.bind(𐀶`<div class='M-table-outer'><table><tbody>`),
 		
 		table_row: 𐀶`<tr>`,
 		
