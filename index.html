@@ -9,32 +9,49 @@
 <script src=render.js></script>
 <script src=runtime.js></script>
 <script src=helpers.js></script>
-<script src=from-html.js></script>
 
 <link rel=stylesheet href=markup.css>
 
-<select id=$lang>
-	<option> 12y2
-	<option> 12y
-	<option> bbcode
-	<option> plaintext
-</select>
+<style>
+	html, body {position:fixed;overflow:hidden;top:0;left:0;right:0;bottom:0;}
+	body { display: flex; /*todo grid*/ }
+	body > * { min-width: 0; flex-basis: 0; flex-grow: 1; }
+	.Markup { overflow-y: auto; }
+	.Col { display: flex; flex-direction: column; }
+	.Col > * { flex-shrink: 0; }
+	.Col > .limit { flex-shrink: 1; min-height: 0; }
+	#\$output { border: 3px solid black; padding: 2px; }
+	
+	[data-hil] { outline: 1px solid red; }
+	c-r { outline: 1px solid red; }
+</style>
 
-<textarea-container>
-	<textarea id=$input></textarea>
-</textarea-container>
+
 
-<table border>
-	<tr>
-		<th> <th> parse <th> render <th> total
-	<tr>
-		<th> time (ms)
-		<td> <time id=$time1 datetime=Z></time>
-		<td> <time id=$time2 datetime=Z></time>
-		<td> <time id=$time3 datetime=Z></time>
-</table>
-
-<div id=$output class="Markup" style="border: 3px solid black; padding: 2px;"></div>
+<input-pane class='Col'>
+	<select id=$lang>
+		<option> 12y2
+		<option> 12y
+		<option> bbcode
+		<option> plaintext
+	</select>
+	<textarea-container class='limit'>
+		<textarea id=$input></textarea>
+	</textarea-container>
+</input-pane>
+<output-pane class='Col'>
+	<table border>
+		<tr>
+			<th> <th> parse <th> render <th> total
+		<tr>
+			<th> time (ms)
+			<td> <time id=$time1 datetime=Z></time>
+			<td> <time id=$time2 datetime=Z></time>
+			<td> <time id=$time3 datetime=Z></time>
+	</table>
+	
+	<div id=$output class='Markup limit'></div>
+</output-pane>
 
 <script>
 	function show_time(elem, ms) {
@@ -42,10 +59,22 @@
 		elem.textContent = ms.toFixed(1)
 	}
 	
+	function debounce(callback) {
+		let ready = true
+		return e=>{
+			if (!ready) return
+			ready = false
+			window.setTimeout(()=>{
+				ready = true
+				callback(e)
+			})
+		}
+	}
+	let pos = -1
 	function update() {
 		//Markup.convert_lang($input.value, $lang.value, $output)
 		let t0 = performance.now()
-		let tree = Markup.langs.parse($input.value, $lang.value)
+		let tree = Markup.langs.parse($input.value, $lang.value, {cursor:true})
 		let t1 = performance.now()
 		Markup.renderer.render(tree, $output)
 		let t2 = performance.now()
@@ -53,10 +82,72 @@
 		show_time($time2, t2-t1)
 		show_time($time3, t2-t0)
 		window.tree = tree
-	}
+		put_cursor($output, $input.selectionStart)
+		pos = $input.selectionStart
+	}	
 	
-	$input.oninput = update
+	let cel = document.createElement('c-r')
+	let found
+	let before, after
+	function put_cursor(elem, cursor) {
+		if (found) {
+			delete found.dataset.hil
+		}
+		if (before) {
+			before.appendData(after.data)
+			after.remove()
+			before = null
+			after = null
+			cel.remove()
+		}
+		function put(i) {
+			i.before(cel)
+			before = after = null
+		}
+		found=false
+		let prev
+		for (let i of elem.querySelectorAll('[data-cursor]')) {
+			let start = +i.dataset.cursor
+			if (start>cursor && !found)
+				found = prev
+			prev = i
+			if (cursor<start) continue
+			let b = i.firstChild
+			if (!(b instanceof Text)) {
+				if (cursor==start) {
+					found = i
+					//found.dataset.hil = true
+					break
+				}
+				continue
+			}
+			let length = b.textContent.length
+			if (cursor>start+length) {
+				continue
+			}
+			//console.log(cursor, start, length)
+			before = b
+			after = before.splitText(cursor-start)
+			before.after(cel)
+			break
+		}
+		if (found) {
+			found.dataset.hil = true
+		}
+	}
+	$input.oninput = debounce(update)
 	$lang.onchange = update
+	
+	;['keydown', 'keyup', 'keypress', 'mousedown', 'mouseup', 'touchstart', 'paste', 'cut', 'mousemove', 'select', 'selectstart', 'selectionchange'].forEach(x=>{
+		$input.addEventListener(x, check)
+	})
+	function check() {
+		let newPos = $input.selectionStart
+		if (newPos==pos) return
+		pos = newPos
+		
+		put_cursor($output, newPos)
+	}
 	update()
 </script>
 
@@ -68,7 +159,6 @@
 		display: block;
 		box-sizing: content-box;
 		min-height: 5em;
-		max-height: 15em;
 		height: 0;
 		font: 1em monospace;
 	}
@@ -96,7 +186,8 @@
 	{
 		let resize = (t)=>{
 			t.style.height = "0"
-			t.parentNode.style.height = t.style.height = `${t.scrollHeight+1}px`
+			t.parentNode.style.height = `${t.scrollHeight+1}px`
+			t.style.height = "100%"
 		}
 		document.addEventListener('input', function(e) {
 			let t = e.target

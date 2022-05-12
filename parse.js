@@ -410,10 +410,22 @@ class Markup_12y2 { constructor() {
 		// todo: wait, we don't find a cell, we just killed all those blocks even though this tag isn't valid ??
 	}
 	
-	function parse(text) {
+	// idea: consider a message like "hello\nabc"
+	// we don't even need to parse the newline here
+	
+	function parse(text, ext) {
+		let cursor
+		if (ext)
+			cursor = ext.cursor
 		let tree = {type:'ROOT', token:"", content:[], prev:'all_newline'}
 		current = tree
 		brackets = 0
+		
+		let adjust = 0
+		function mark(x) {
+			if (cursor)
+				current.content.push(+x+adjust)
+		}
 		
 		// MAIN LOOP //
 		let prev = -1
@@ -424,6 +436,7 @@ class Markup_12y2 { constructor() {
 				throw ["INFINITE LOOP", match]
 			prev = match.index
 			// 1: insert the text from after previous token
+			mark(last)
 			TEXT(text.substring(last, match.index))
 			// 2: figure out which token type was matched
 			let token_text = match[0]
@@ -471,9 +484,11 @@ class Markup_12y2 { constructor() {
 					args = parse_args(args)
 					start_line = body
 				}
+				mark(match.index)
 				PROCESS(type, full_token, args, body, token_text)
 				// word
 				if (undefined!==word) {
+					mark(match.index) //todo
 					TEXT(word.replace(/\\([^])/g, "$1"))
 					CLOSE()
 					start_line = false
@@ -482,12 +497,14 @@ class Markup_12y2 { constructor() {
 			}
 			// 5: handle start-of-line
 			if (start_line) {
+				adjust += last
 				text = text.substring(last)
 				last = REGEX.lastIndex = 0
 				prev = -1
 			}
 		} // end of main loop
 		
+		mark(last)
 		TEXT(text.substring(last)) // text after last token
 		
 		while ('ROOT'!==current.type)

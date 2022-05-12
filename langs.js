@@ -77,10 +77,10 @@ class Markup_Langs {
 		@param {(string|*)} lang - markup language name
 		@return {Tree} - ast
 	*/
-	parse(text, lang) {
+	parse(text, lang, ext) {
 		if ('string'!=typeof text)
 			throw new TypeError("parse: text is not a string")
-		return this.get(lang)(text)
+		return this.get(lang)(text, ext)
 	}
 }
 
