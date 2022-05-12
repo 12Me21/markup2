@@ -237,19 +237,9 @@ class Markup_Render_Dom { constructor() {
 	}
 	
 	function fill_branch(branch, leaves) {
-		let n
 		for (let leaf of leaves) {
 			if ('string'==typeof leaf) {
-				if (n!=null) {
-					let node = document.createElement('span')
-					node.textContent = leaf
-					node.dataset.cursor = n
-					n = null
-					branch.append(node)
-				} else
-					branch.append(leaf)
-			} else if ('number'==typeof leaf) {
-				n = leaf	
+				branch.append(leaf)
 			} else {
 				let creator = CREATE[leaf.type]
 				if (!creator) {
@@ -261,12 +251,7 @@ class Markup_Render_Dom { constructor() {
 				let node = creator(leaf.args)
 				if (leaf.content)
 					fill_branch(node, leaf.content)
-				node = node.getRootNode()
-				if (n!=null) {
-					node.dataset.cursor = n
-					n = null
-				}
-				branch.append(node)
+				branch.append(node.getRootNode())
 			}
 		}
 	}
