@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang=en-QS>
-<meta charset="utf-8">
+<meta id=ݽ charset=utf-8>
 <title>Markup2 Demo</title>
+
+<meta name=viewport content="width=device-width, initial-scale=1, height=device-height">
 
 <script src=langs.js></script>
 <script src=parse.js></script>
@@ -9,34 +11,79 @@
 <script src=render.js></script>
 <script src=runtime.js></script>
 <script src=helpers.js></script>
-<script src=from-html.js></script>
 
 <link rel=stylesheet href=markup.css>
+<style>
+	html { word-break: break-word; }
+	
+	html, body { position:fixed; top:0;left:0;right:0;bottom:0; }
+	
+	html, select { font: var(--T-font); }
+	
+	table.times, table.times td, table.times th {
+		border: 1px solid currentColor;
+		border-spacing: 0;
+	}
+	table.times td, table.times th {
+		padding: 2px 5px;
+		word-break: normal; overflow-wrap: break-word;
+	}
+	table.times th {
+		font-weight: bold;
+		color: white;
+		background: black;
+	}
+	table-overflow {
+		overflow-x: auto;
+	}
+	
+	#\$output {
+		border: 3px solid black;
+		padding: 2px;
+		overflow-y: auto;
+	}
+	
+	body {
+		display: flex;
+	}
+	body > * {
+		width: 50%;
+	}
+	.Col { display: flex; flex-direction: column; }
+	.Col > * { flex-shrink: 0; }
+	.Col > .limit { flex-shrink: 1; min-height: 0; }
+</style>
 
-<select id=$lang>
-	<option> 12y2
-	<option> 12y
-	<option> bbcode
-	<option> plaintext
-</select>
+<input-pane class='Col'>
+	<select id=$lang>
+		<option> 12y2
+		<option> 12y
+		<option> bbcode
+		<option> plaintext
+	</select>
+	
+	<textarea-container class='limit'>
+		<textarea id=$input></textarea>
+	</textarea-container>
+</input-pane>
 
-<textarea-container>
-	<textarea id=$input></textarea>
-</textarea-container>
-
-<table border>
-	<tr>
-		<th> <th> parse <th> render <th> total
-	<tr>
-		<th> time (ms)
-		<td> <time id=$time1 datetime=Z></time>
-		<td> <time id=$time2 datetime=Z></time>
-		<td> <time id=$time3 datetime=Z></time>
-</table>
-
-<div id=$output class="Markup" style="border: 3px solid black; padding: 2px;"></div>
-
+<output-pane class='Col'>
+	<table-overflow><table class=times>
+		<tr>
+			<th> <th> parse <th> render <th> total
+		<tr>
+			<th> time (ms)
+			<td> <time id=$time1 datetime=Z></time>
+			<td> <time id=$time2 datetime=Z></time>
+			<td> <time id=$time3 datetime=Z></time>
+	</table></table-overflow>
+	<span id=$count></span>
+	<div id=$output class='Markup limit'></div>
+</output-pane>
+	
 <script>
+	let batch = (cb,w=0)=>e=>w++||setTimeout(_=>cb(e,w=0))
+		
 	function show_time(elem, ms) {
 		elem.dateTime = (ms/1000).toFixed(4)+' s'
 		elem.textContent = ms.toFixed(1)
@@ -55,7 +102,9 @@
 		window.tree = tree
 	}
 	
-	$input.oninput = update
+	$input.addEventListener('input', batch(update), {passive:true})
+	
+	//$input.oninput = update
 	$lang.onchange = update
 	update()
 </script>
@@ -68,7 +117,6 @@
 		display: block;
 		box-sizing: content-box;
 		min-height: 5em;
-		max-height: 15em;
 		height: 0;
 		font: 1em monospace;
 	}
@@ -96,7 +144,8 @@
 	{
 		let resize = (t)=>{
 			t.style.height = "0"
-			t.parentNode.style.height = t.style.height = `${t.scrollHeight+1}px`
+			t.parentNode.style.height = `${t.scrollHeight+1}px`
+			t.style.height = "100%"
 		}
 		document.addEventListener('input', function(e) {
 			let t = e.target
