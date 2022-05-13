@@ -112,8 +112,11 @@ so existing themes won't need to be updated.
 	border: 1px solid var(--T-border-col);
 }
 /* before loading, assume image will be larger than --image-max-height */
-.Markup img[data-loading], .Markup video[data-loading] {
+.Markup img[data-state="loading"], .Markup video[data-state="loading"] {
 	height: var(--T-embed-height);
+}
+.Markup img[data-state="loaded"] {
+	height: auto;
 }
 
 /* ruby text doesn't work if set to white-space: pre */

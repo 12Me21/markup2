@@ -59,6 +59,10 @@ class Markup_Render_Dom { constructor() {
 		}
 	}
 	
+	let img_onload = function(e) {
+		this.dataset.state = e.type=='load' ? 'loaded' : 'error'
+	}
+	
 	let CREATE = {
 		newline: 𐀶`<br>`,
 		
@@ -95,20 +99,20 @@ class Markup_Render_Dom { constructor() {
 			e.src = filter_url(url)
 			if (alt!=null) e.alt = alt
 			if (width) e.width = width
-			if (height) e.height = height
+			if (height) {
+				e.height = height
+				e.dataset.state = 'size'
+			}
 			// check whether the image is "available" (i.e. size is known)
 			// https://html.spec.whatwg.org/multipage/images.html#img-available
 			if (e.naturalHeight) {
 				e.width = e.naturalWidth
 				e.height = e.naturalHeight
-			} else {
-				e.dataset.loading = ""
-				e.onerror = e.onload = ()=>{
-					delete e.dataset.loading
-				}
+				e.dataset.state = 'size'
 			}
+			e.onerror = e.onload = img_onload
 			return e
-		}.bind(𐀶`<img data-shrink tabindex=-1>`),
+		}.bind(𐀶`<img data-state=loading data-shrink tabindex=-1>`),
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
 		
