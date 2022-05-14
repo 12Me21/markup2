@@ -97,7 +97,6 @@ YoutubeEmbedElement.template = template`
 		border: 2px solid gray;
 		display: flex !important;
 		--height: 135px;
-		width: min-content;
 	}
 	:host([data-big]) {
 		--height: 270px;
