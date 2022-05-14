@@ -37,30 +37,33 @@ class Markup_Render_Dom { constructor() {
 	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
 	// for embeds, need separate handlers for normal urls and embeds and
 	let URL_SCHEME = {
-		"sbs:"(url) {
+		"sbs:"(url, thing) {
 			return "#"+url.pathname+url.search+url.hash
 		},
-		"no-scheme:"(url) {
-			url.protocol = "https:"
-			return url.href
+		"https:"(url, thing) { return url.href },
+		"http:"(url, thing) { return url.href },
+		"javascript:"(url, thing) { return "about:blank#.no" },
+		DEFAULT(url, thing) { return "about:blank#"+url.href },
+		// these take a url string instead of URL
+		RELATIVE(href, thing) {
+			return href.replace(/^[/]{0,2}/, "https://")
 		},
-		"javascript:"(url) {
-			return "about:blank"
-		}
+		ERROR(href, thing) { return "about:blank#"+url.href },
 	}
 	
-	function filter_url(url) {
+	function filter_url(url, thing) {
+		let ret = "about:blank"
 		try {
 			let u = new URL(url, "no-scheme:/")
-			let f = URL_SCHEME[u.protocol]
-			return f ? f(u) : u.href
+			if (u.protocol=='no-scheme:')
+				ret = URL_SCHEME.RELATIVE(url, thing)
+			else
+				ret = (URL_SCHEME[u.protocol] || URL_SCHEME.DEFAULT)(u, thing)
 		} catch(e) {
-			return "about:blank"
+			ret = URL_SCHEME.ERROR(url, thing)
+		} finally {
+			return ret
 		}
-	}
-	
-	let img_onload = function(e) {
-		this.dataset.state = e.type=='load' ? 'loaded' : 'error'
 	}
 	
 	let CREATE = {
@@ -90,13 +93,13 @@ class Markup_Render_Dom { constructor() {
 				e.textContent = text
 				e.className += ' M-link-custom'
 			}
-			e.href = filter_url(url)
+			e.href = filter_url(url, 'link')
 			return e
 		}.bind(𐀶`<a href="" target=_blank>`),
 		
 		image: function({url, alt, width, height}) {
-			let e = this()
-			e.src = filter_url(url)
+			let e = this.elem()
+			e.src = filter_url(url, 'image')
 			if (alt!=null) e.alt = alt
 			if (width) e.width = width
 			if (height) {
@@ -110,9 +113,14 @@ class Markup_Render_Dom { constructor() {
 				e.height = e.naturalHeight
 				e.dataset.state = 'size'
 			}
-			e.onerror = e.onload = img_onload
+			e.onerror = e.onload = this.onload
 			return e
-		}.bind(𐀶`<img data-state=loading data-shrink tabindex=-1>`),
+		}.bind({
+			elem: 𐀶`<img data-state=loading data-shrink tabindex=-1>`,
+			onload: (e)=>{
+				e.target.dataset.state = e.type=='load' ? 'loaded' : 'error'
+			},
+		}),
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
 		
@@ -122,7 +130,7 @@ class Markup_Render_Dom { constructor() {
 			e.controls = true
 			e.preload = 'none'
 			
-			e.src = filter_url(url)
+			e.src = filter_url(url, 'audio')
 			return e
 		},
 		
@@ -132,10 +140,11 @@ class Markup_Render_Dom { constructor() {
 			e.preload = 'none'
 			e.dataset.shrink = ""
 			
-			e.src = filter_url(url)
+			e.src = filter_url(url, 'video')
 			// for clients that expand images/video when clicked:
 			// mousedown events don't happen on <video>,
 			// so instead I throw a fake event when the video plays
+			// todo: ew
 			e.onplaying = (event)=>{
 				let e2 = new Event('videoclicked', {bubbles:true, cancellable:true})
 				event.target.dispatchEvent(e2)
@@ -193,7 +202,7 @@ class Markup_Render_Dom { constructor() {
 		
 		link: function({url}) {
 			let e = this()
-			e.href = filter_url(url)
+			e.href = filter_url(url, 'link')
 			return e
 		}.bind(𐀶`<a class='M-link-custom' target=_blank href="">`),
 		
@@ -298,6 +307,7 @@ class Markup_Render_Dom { constructor() {
 		@type {Object<string,function>}
 	*/
 	this.url_scheme = URL_SCHEME
+	
 }}
 
 if ('object'==typeof module && module) module.exports = Markup_Render_Dom
