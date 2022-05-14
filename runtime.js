@@ -54,7 +54,7 @@ class YoutubeEmbedElement extends HTMLElement {
 		this._link.href = url
 		
 		let [, id, query] = /^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/])([\w-]{11,})(?:[&?](.*))?$/.exec(url)
-		this._query = query
+		this._query = query && query.replace(/\b[st]=/, "start=")
 		
 		// display video info
 		if (this._id == id)
@@ -97,6 +97,7 @@ YoutubeEmbedElement.template = template`
 		border: 2px solid gray;
 		display: flex !important;
 		--height: 135px;
+flex-direction: column;
 	}
 	:host([data-big]) {
 		--height: 270px;
@@ -109,11 +110,9 @@ YoutubeEmbedElement.template = template`
 		min-width:0;
 		flex-grow:1;
 		border: none;
-		width: calc(var(--height) * 16 / 9);
 		height: var(--height);
 	}
 	#link {
-		width: calc(var(--height) * 16 / 9);
 		height: var(--height);
 		padding: 4px;
 		overflow-y: auto;
