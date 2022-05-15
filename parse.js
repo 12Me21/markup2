@@ -519,3 +519,5 @@ class Markup_12y2 { constructor() {
 	// \tag{ ...  {heck} ... } <- closes here
 	
 }}
+
+if ('object'==typeof module) module.exports = Markup_12y2
