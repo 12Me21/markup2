@@ -24,7 +24,7 @@ class Markup_Render_Html { constructor() {
 	// todo: catch mistakes like `<a href=${url}>` (unquoted attr)
 	function html([str, ...strs], ...values) {
 		strs.forEach((s,i)=>{
-			str += values[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")+s
+			str += /&/g[Symbol.replace](values[i], "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")+s
 		})
 		return str
 	}
