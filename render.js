@@ -2,22 +2,6 @@
 	@typedef {(Element|DocumentFragment|Document)} ParentNode
 */
 
-//todo: i really don't like the whole getrootnode thing.
-// maybe should pass the parent to the CREATE function and
-// have it handle appending, then return the new branch node.
-// return parent=>parent.appendChild(elem.cloneNode(true))
-// and then you call this(parent)
-// however, then the node gets appended immediately, before it's initialized...
-// so really the function process should be
-// func(parent, args) {
-//   let e = template()
-//   ...
-//   parent.appendChild(e)
-//   return e.firstChild
-// }
-// also: is it more efficient if the templates are in the current document? or somehow cloned INTO it rather than cloned and then adopted...
-// yes! importNode
-
 /**
 	AST -> HTML DOM Node renderer
 */
@@ -37,32 +21,24 @@ class Markup_Render_Dom { constructor() {
 	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
 	// for embeds, need separate handlers for normal urls and embeds and
 	let URL_SCHEME = {
-		"sbs:"(url, thing) {
-			return "#"+url.pathname+url.search+url.hash
-		},
-		"https:"(url, thing) { return url.href },
-		"http:"(url, thing) { return url.href },
-		"javascript:"(url, thing) { return "about:blank#.no" },
-		DEFAULT(url, thing) { return "about:blank#"+url.href },
+		"sbs:": (url, thing)=> "#"+url.pathname+url.search+url.hash,
+		"https:": (url, thing)=> url.href,
+		"http:": (url, thing)=> url.href,
+		DEFAULT: (url, thing)=> "about:blank#"+url.href,
 		// these take a url string instead of URL
-		RELATIVE(href, thing) {
-			return href.replace(/^[/]{0,2}/, "https://")
-		},
-		ERROR(href, thing) { return "about:blank#"+url.href },
+		RELATIVE: (url, thing)=> href.replace(/^[/]{0,2}/, "https://"),
+		ERROR: (url, thing)=> "about:blank#"+url.href,
 	}
 	
 	function filter_url(url, thing) {
-		let ret = "about:blank"
 		try {
 			let u = new URL(url, "no-scheme:/")
 			if (u.protocol=='no-scheme:')
-				ret = URL_SCHEME.RELATIVE(url, thing)
+				return URL_SCHEME.RELATIVE(url, thing)
 			else
-				ret = (URL_SCHEME[u.protocol] || URL_SCHEME.DEFAULT)(u, thing)
+				return (URL_SCHEME[u.protocol] || URL_SCHEME.DEFAULT)(u, thing)
 		} catch(e) {
-			ret = URL_SCHEME.ERROR(url, thing)
-		} finally {
-			return ret
+			return URL_SCHEME.ERROR(url, thing)
 		}
 	}
 	
@@ -193,6 +169,7 @@ class Markup_Render_Dom { constructor() {
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
 		
 		youtube: function({url}) {
+			// todo: do we filter the url here or?
 			let e = this()
 			e.firstChild.textContent = url
 			e.firstChild.href = url

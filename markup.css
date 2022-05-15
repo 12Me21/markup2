@@ -1,48 +1,17 @@
-L + ratio {
-	
-}
+L + ratio {}
 
 .Markup, .Markup * {
 	white-space: pre-wrap;
 	word-break: break-word; /* ⚠ very important to prevent overflow ⚠ */
 }
 
-/*******************/
-/** DEFAULT THEME **/
-/*******************/
+/**************************
+ **   Theme Variables    **
+ ** (see doc/themes.txt) **
+ **************************/
 
-/*
-***********
-** DRAFT **
-***********
-
-## Theme variable names
-
-- prefixed with “--T-”
-- words are separated by hyphens
-- “color” and “background[-color]” are abbreviated to “col” and “bg”
-- should generally be structured like “--T-❬thing❭-❬property❭”
- - ex: “--T-link-col”, “--T-font-size”, “--T-quote-border-radius”, etc.
-
-## Default values
-
-I've tried to choose colors that work with dark and light themes
-(assuming you set `col` and `bg`)
-
-If any new theme variables are added, their default values will always either:
-
-- work on both light and dark backgrounds
-  - ex: `--T-box-bg: #AAA2;` (`#AAA2` is `rgba(170, 170, 170, 0.133)`)
-
-- be defined based on existing properties
-  - ex: `--T-icode-col: var(--T-col);`
-
-so existing themes won't need to be updated.
-*/
 *:not(*>*) { /* this selects :root with 0 specificity */
-	/*.Markup:not([data-theme] *)*/
 	/* normal colors */
-	
 	--T-col: black;
 	--T-bg: white;
 	
