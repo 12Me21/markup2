@@ -83,6 +83,7 @@ L + ratio {}
 /* before loading, assume image will be larger than --image-max-height */
 .Markup img[data-state="loading"], .Markup video[data-state="loading"] {
 	height: var(--T-embed-height);
+	min-width: 2em;
 }
 .Markup img[data-state="loaded"] {
 	height: auto;

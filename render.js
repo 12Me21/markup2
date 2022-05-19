@@ -11,11 +11,10 @@ class Markup_Render_Dom { constructor() {
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
 	
+	let temp = document.createElement('template')
 	function 𐀶([html]) {
-		let temp = document.createElement('template')
-		temp.innerHTML = html.replace(/\s*\n\s*/g,"")
-		let elem = temp.content.firstChild
-		return document.importNode.bind(document, elem, true)
+		temp.innerHTML = html.replace(/\s*?\n\s*/g, "")
+		return document.importNode.bind(document, temp.content.firstChild, true)
 	}
 	
 	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
@@ -41,6 +40,8 @@ class Markup_Render_Dom { constructor() {
 			return URL_SCHEME.ERROR(url, thing)
 		}
 	}
+	
+	let intersection_observer
 	
 	let CREATE = {
 		newline: 𐀶`<br>`,
@@ -75,26 +76,43 @@ class Markup_Render_Dom { constructor() {
 		
 		image: function({url, alt, width, height}) {
 			let e = this.elem()
-			e.src = filter_url(url, 'image')
+			let src = filter_url(url, 'image')
+			if (intersection_observer) {
+				e.dataset.src = src
+				intersection_observer.observe(e)
+			} else {
+				e.src = src
+			}
 			if (alt!=null) e.alt = alt
-			if (width) e.width = width
+			if (width) {
+				e.width = width
+				e.style.setProperty('--width', height)
+			}
 			if (height) {
 				e.height = height
+				e.style.setProperty('--height', height)
 				e.dataset.state = 'size'
 			}
 			// check whether the image is "available" (i.e. size is known)
 			// https://html.spec.whatwg.org/multipage/images.html#img-available
 			if (e.naturalHeight) {
-				e.width = e.naturalWidth
-				e.height = e.naturalHeight
-				e.dataset.state = 'size'
+				this.set_size(e, 'size')
 			}
-			e.onerror = e.onload = this.onload
+			e.onerror = (event)=>{
+				event.target.dataset.state = 'error'
+			}
+			e.onload = (event)=>{
+				this.set_size(event.target, 'loaded')
+			}
 			return e
 		}.bind({
 			elem: 𐀶`<img data-state=loading data-shrink tabindex=-1>`,
-			onload: (e)=>{
-				e.target.dataset.state = e.type=='load' ? 'loaded' : 'error'
+			set_size: (e, state)=>{
+				e.dataset.state = state
+				e.width = e.naturalWidth
+				e.height = e.naturalHeight
+				e.style.setProperty('--width', e.naturalWidth)
+				e.style.setProperty('--height', e.naturalHeight)
 			},
 		}),
 		
@@ -243,7 +261,7 @@ class Markup_Render_Dom { constructor() {
 		key: 𐀶`<kbd>`,
 	}
 	
-	function fill_branch(branch, leaves) {
+	function fill_branch(branch, leaves, options) {
 		for (let leaf of leaves) {
 			if ('string'==typeof leaf) {
 				branch.append(leaf)
@@ -255,9 +273,9 @@ class Markup_Render_Dom { constructor() {
 					else
 						throw new TypeError("unknown node type: "+typeof leaf)
 				}
-				let node = creator(leaf.args)
+				let node = creator(leaf.args, options)
 				if (leaf.content)
-					fill_branch(node, leaf.content)
+					fill_branch(node, leaf.content, options)
 				branch.append(node.getRootNode())
 			}
 		}
@@ -269,9 +287,10 @@ class Markup_Render_Dom { constructor() {
 		@param {ParentNode} [node=document.createDocumentFragment()] - destination node
 		@return {ParentNode} - node with rendered contents. same as `node` if passed, otherwise is a new DocumentFragment.
 	 */
-	this.render = function({args, content}, node=document.createDocumentFragment()) {
+	this.render = function({args, content}, node=document.createDocumentFragment(), options={}) {
+		intersection_observer = options.intersection_observer
 		node.textContent = "" //mmnn
-		fill_branch(node, content)
+		fill_branch(node, content, options)
 		return node
 	}
 	/**

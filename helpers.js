@@ -48,7 +48,7 @@ let Markup = {
 		let tree, err
 		try {
 			tree = this.langs.parse(text, lang, etc)
-			element = this.renderer.render(tree, element)
+			element = this.renderer.render(tree, element, etc)
 		} catch (error) {
 			if (!element)
 				element = document.createDocumentFragment()

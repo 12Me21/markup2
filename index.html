@@ -83,7 +83,19 @@
 	
 <script>
 	let batch = (cb,w=0)=>e=>w++||setTimeout(_=>cb(e,w=0))
-		
+	
+	let intersection_observer = new IntersectionObserver((data)=>{
+		console.log(data)
+		for (let {target, isIntersecting} of data) {
+			if (!isIntersecting) continue
+			if (!target.src) {
+				console.log('load', target.dataset.src)
+				target.src = target.dataset.src
+				intersection_observer.unobserve(target)
+			}
+		}
+	})
+	
 	function show_time(elem, ms) {
 		elem.dateTime = (ms/1000).toFixed(4)+' s'
 		elem.textContent = ms.toFixed(1)
@@ -94,7 +106,7 @@
 		let t0 = performance.now()
 		let tree = Markup.langs.parse($input.value, $lang.value)
 		let t1 = performance.now()
-		Markup.renderer.render(tree, $output)
+		Markup.renderer.render(tree, $output, {intersection_observer})
 		let t2 = performance.now()
 		show_time($time1, t1-t0)
 		show_time($time2, t2-t1)
