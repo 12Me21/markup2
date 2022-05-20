@@ -1,16 +1,13 @@
+//export\\ default
 /**
-	@typedef {(Element|DocumentFragment|Document)} ParentNode
-*/
-
-/**
-	AST -> HTML DOM Node renderer
-*/
+	DOM node renderer (for use in browsers)
+	factory class
+**/
 class Markup_Render_Dom { constructor() {
 	// This tag-function parses an HTML string, and returns a function
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>` 
 	//  - create() acts like document.createElement('div')
-	
 	let temp = document.createElement('template')
 	function 𐀶([html]) {
 		temp.innerHTML = html.replace(/\s*?\n\s*/g, "")
@@ -280,30 +277,29 @@ class Markup_Render_Dom { constructor() {
 			}
 		}
 	}
-	
 	/**
-		render function
+		Render function (closure method)
 		@param {Tree} ast - input ast
 		@param {ParentNode} [node=document.createDocumentFragment()] - destination node
+		@param {?object} options - render options
 		@return {ParentNode} - node with rendered contents. same as `node` if passed, otherwise is a new DocumentFragment.
-	 */
-	this.render = function({args, content}, node=document.createDocumentFragment(), options={}) {
-		intersection_observer = options.intersection_observer
+	**/
+	this.render = function({args, content}, node=document.createDocumentFragment(), options) {
+		intersection_observer = options && options.intersection_observer
 		node.textContent = "" //mmnn
 		fill_branch(node, content, options)
 		return node
 	}
 	/**
-		node create function map
-		@type {Object<string,function>}
-	*/
+		block rendering functions
+		@member {Object<string,function>}
+	**/
 	this.create = CREATE
 	/**
-		url scheme handler map
-		@type {Object<string,function>}
-	*/
+		URL processing functions
+		@member {Object<string,function>}
+	**/
 	this.url_scheme = URL_SCHEME
-	
 }}
 
 if ('object'==typeof module && module) module.exports = Markup_Render_Dom

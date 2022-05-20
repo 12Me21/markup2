@@ -1,17 +1,14 @@
+//export\\ default
 /**
-	legacy parser collection
-	@implements Langs_Mixin
-	@hideconstructor
+	Legacy parsers factory
+	@implements Parser_Collection
 */
 class Markup_Legacy { constructor() {
-	"use strict"
-	
 	/**
-		@instance
-		@type {Object}
-		@property {Parser_Function} 12y - 12y parser
-		@property {Parser_Function} bbcode - bbcode parser
-		@property {Parser_Function} plaintext - plaintext parser/autolinker
+		@type {Object<string,Parser>}
+		@property {Parser} 12y - 12y parser
+		@property {Parser} bbcode - bbcode parser
+		@property {Parser} plaintext - plaintext parser/autolinker
 	*/
 	this.langs = {}
 	
@@ -1106,8 +1103,7 @@ class Markup_Legacy { constructor() {
 	
 	/**
 		default markup language (plaintext)
-		@instance
-		@type {Parser_Function}
+		@type {Parser}
 	*/
 	this.default_lang = this.langs['plaintext']
 }}

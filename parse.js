@@ -10,6 +10,11 @@
 // Block 🏷 Object - has .type .args .contents
 // CurrentBlock 🏷 Object - block + other fields
 
+//export\\ default
+/**
+	12y2 markup parser factory
+	@implements Parser_Collection
+*/
 class Markup_12y2 { constructor() {
 	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
@@ -497,17 +502,17 @@ class Markup_12y2 { constructor() {
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
-	//this.regex = REGEX
+	
 	/**
-		parser
-		@instance
-		@type {Parser_Function}
+		Parser function
+		(closure method)
+		@type {Parser}
+		@kind function
 	*/
 	this.parse = parse
 	/**
-		@instance
-		@type {Object}
-		@property {Parser_Function} 12y2 - same as .parse
+		@type {Object<string,Parser>}
+		@property {Parser} 12y2 - same as .parse
 	*/
 	this.langs = {'12y2': parse}
 	

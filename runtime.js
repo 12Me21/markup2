@@ -1,9 +1,24 @@
-function template([html]) {
-	let temp = document.createElement('template')
-	temp.innerHTML = html.replace(/\s*\n\s*/g, "")
-	return temp.content.cloneNode.bind(temp.content, true)
-}
-
+//export\\ default
+/**
+	<youtube-embed> custom html element
+	This acts as a preview for youtube's <iframe> embed player.
+	It's gross and I hate it, but it's necessary,
+	because their site is WAY too bloated for us to load it automatically.
+	
+	Usage:
+	<youtube-embed href="https://youtu.be/URe5ihr2ow9"></youtube-embed>
+	`href` can be any valid youtube video or youtube shorts url
+	Known query parameters are:
+	• t=, start= - start time (in seconds)
+	• end= - end time (in seconds)
+	• loop - enable looping
+	
+	When generating html, you may want to do something like this:
+	<youtube-embed href="{url}">
+		<a href="{url}">{url}</a>
+	</youtube-embed>
+	That way, it's still accessible if the custom element isn't installed.
+**/
 class YoutubeEmbedElement extends HTMLElement {
 	constructor() {
 		super()
@@ -45,6 +60,8 @@ class YoutubeEmbedElement extends HTMLElement {
 		this._id = null
 	}
 	async update_href(url) {
+		if (!url)
+			return // todo: allow setting back to unloaded state?
 		url = url.replace("/shorts/", "/watch?v=") // 🤮
 		if (this._href == url)
 			return
@@ -92,7 +109,13 @@ class YoutubeEmbedElement extends HTMLElement {
 // intern these?
 YoutubeEmbedElement.requests = {}
 YoutubeEmbedElement.observedAttributes = ['href']
-YoutubeEmbedElement.template = template`
+{
+	let template = ([html])=>{
+		let temp = document.createElement('template')
+		temp.innerHTML = html.replace(/\s*\n\s*/g, "")
+		return document.importNode.bind(document, temp.content, true)
+	}
+	YoutubeEmbedElement.template = template`
 <a target=_blank id=link>
 	<cite id=caption>
 		<span id=title></span>
@@ -147,5 +170,6 @@ flex-direction: column;
 	}
 </style>
 `
+}
 
 customElements.define('youtube-embed', YoutubeEmbedElement)

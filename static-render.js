@@ -1,3 +1,9 @@
+//export\\ default
+/**
+	HTML string renderer (for server-side rendering)
+	Use at your own risk! May generate illegal structures which won't parse correctly.
+	factory class
+**/
 class Markup_Render_Html { constructor() {
 	let URL_SCHEME = {
 		"sbs:": (url, thing)=> "#"+url.pathname+url.search+url.hash,
@@ -166,13 +172,23 @@ class Markup_Render_Html { constructor() {
 		}
 		return html
 	}
-	
+	/**
+		Render function (closure method)
+		@param {Tree} ast - input ast
+		@return {string} - HTML string
+	**/
 	this.render = function({args, content}) {
 		return draw_branch(content)
 	}
-	
+	/**
+		block rendering functions
+		@member {Object<string,function>}
+	**/
 	this.create = CREATE
-	
+	/**
+		URL processing functions
+		@member {Object<string,function>}
+	**/
 	this.url_scheme = URL_SCHEME
 }}
 
