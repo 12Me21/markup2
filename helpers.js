@@ -45,7 +45,7 @@ let Markup = {
 		} else if (element != undefined)
 			throw new TypeError("Markup.convert_lang: element is not an Element")
 		
-		let tree, err
+		let tree
 		try {
 			tree = this.langs.parse(text, lang, etc)
 			element = this.renderer.render(tree, element, etc)

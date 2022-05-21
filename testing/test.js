@@ -88,8 +88,8 @@ class Test {
 		//let text = await fetch(url).then(x=>x.text())
 		text = text.replace(/\r/g, "")
 		// todo: indent? (\t*) and then \1 backref match on other lines
-		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*({.*)$|(🟩)/mg
-		let m, l
+		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*({.*)$|(🟩)/gum
+		let m
 		while (m = r.exec(text)) {
 			let [, name, input, output, fail] = m
 			if (fail) {
@@ -173,7 +173,7 @@ class Comparator {
 			return t
 		if (t=='object') {
 			if (Array.isArray(x)) return 'array'
-			if (is_object(x)) return 'object'
+			if (this.is_object(x)) return 'object'
 		}
 		throw new InvalidTree("value has illegal type")
 	}

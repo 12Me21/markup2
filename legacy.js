@@ -112,7 +112,7 @@ class Markup_Legacy { constructor() {
 			}
 		else {
 			while (c) {
-				if (/[-\w\$\.+!*',;/\?:@=&#%~]/.test(c)) {
+				if (/[-\w$.+!*',;/?:@=&#%~]/.test(c)) {
 					scan()
 				} else if (eatChar("(")) {
 					depth++
@@ -125,7 +125,7 @@ class Markup_Legacy { constructor() {
 					break
 			}
 			let last = code[i-1]
-			if (/[,\.?!:]/.test(last)) {
+			if (/[,.?!:]/.test(last)) {
 				i-=2
 				scan()
 			}
@@ -487,7 +487,7 @@ class Markup_Legacy { constructor() {
 			if (eatChar("[")) {
 				if (eatChar("[")) {
 					// read url:
-					let start = i
+					let start = i // todo bug: are we supposed to use this?
 					let after = false
 					let url = readUrl(true)
 					if (eatChar("]")) {
@@ -1080,7 +1080,7 @@ class Markup_Legacy { constructor() {
 	this.langs['plaintext'] = function(text) {
 		let root = {type:'ROOT', content:[]}
 		
-		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w\$\.+!*'(),;/\?:@=&#%]*/g
+		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w$.+!*'(),;/?:@=&#%]*/g
 		let result
 		let last = 0
 		while (result = linkRegex.exec(text)) {

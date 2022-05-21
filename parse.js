@@ -14,7 +14,7 @@
 /**
 	12y2 markup parser factory
 	@implements Parser_Collection
-*/
+**/
 class Markup_12y2 { constructor() {
 	// idea: maybe instead of this separate parse step, we should just do something like
 	// go back to using ex: /^><args>?[{ ]/
@@ -27,7 +27,7 @@ class Markup_12y2 { constructor() {
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
-	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
+	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))
 	
 	// BlockType -> (set)
 	const CAN_CANCEL = MAP({style:1, table_cell:1})
@@ -79,7 +79,7 @@ class Markup_12y2 { constructor() {
 	T`{BOL}#{1,4}${{ HEADING :ARGS_HEADING}}`
 	T`{BOL}---+{EOL}${{ DIVIDER :0}}`
 	T`([*][*]|__|~~|[/])(?=\w${{ STYLE_START :0}}|${{ STYLE_END :0}})`
-	T`[\\]\w+${{ TAG :0}}`
+	T`[\\]\[a-z]+(?!\w)${{ TAG :0}}`
 	T`\}${{ BLOCK_END :0}}`
 	T`[\\]\{${{ NULL_ENV :0}}`
 	T`[\\][^]${{ ESCAPED :0}}`
@@ -294,7 +294,6 @@ class Markup_12y2 { constructor() {
 		if (!type) {
 			//let u = new URL(url, "x-relative:/")
 			//let ext = /[.]([a-z0-9A-Z]{3,4})(?!\w)[^.]*$/.exec(url)
-			let m
 			if (/[.](mp3|ogg|wav|m4a)(?!\w)/i.test(url))
 				type = 'audio'
 			else if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
@@ -508,12 +507,12 @@ class Markup_12y2 { constructor() {
 		(closure method)
 		@type {Parser}
 		@kind function
-	*/
+	**/
 	this.parse = parse
 	/**
 		@type {Object<string,Parser>}
 		@property {Parser} 12y2 - same as .parse
-	*/
+	**/
 	this.langs = {'12y2': parse}
 	
 	// what if you want to write like, "{...}". well that's fine

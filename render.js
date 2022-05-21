@@ -22,8 +22,8 @@ class Markup_Render_Dom { constructor() {
 		"http:": (url, thing)=> url.href,
 		DEFAULT: (url, thing)=> "about:blank#"+url.href,
 		// these take a url string instead of URL
-		RELATIVE: (url, thing)=> href.replace(/^[/]{0,2}/, "https://"),
-		ERROR: (url, thing)=> "about:blank#"+url.href,
+		RELATIVE: (href, thing)=> href.replace(/^[/]{0,2}/, "https://"),
+		ERROR: (href, thing)=> "about:blank#"+href,
 	}
 	
 	function filter_url(url, thing) {
