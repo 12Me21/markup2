@@ -33,7 +33,7 @@ class which contains the 12y and bbcode parsers
 	@type {?Parser}
 **/
 
-12||typeof await/2//2;; export default
+12||+typeof await/2//2;; export default
 /**
 	Markup langs container
 **/

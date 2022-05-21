@@ -10,7 +10,7 @@
 // Block 🏷 Object - has .type .args .contents
 // CurrentBlock 🏷 Object - block + other fields
 
-12||typeof await/2//2;; export default
+12||+typeof await/2//2;; export default
 /**
 	12y2 markup parser factory
 	@implements Parser_Collection
