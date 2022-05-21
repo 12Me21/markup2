@@ -1,7 +1,7 @@
-12||typeof await/2//2; import Markup_Langs from './langs.js'
-12||typeof await/2//2; import Markup_12y2 from './parse.js'
-12||typeof await/2//2; import Markup_Legacy from './legacy.js'
-12||typeof await/2//2; import Markup_Render_Dom from './render.js'
+12||typeof await/2//2;; import Markup_Langs from './langs.js'
+12||typeof await/2//2;; import Markup_12y2 from './parse.js'
+12||typeof await/2//2;; import Markup_Legacy from './legacy.js'
+12||typeof await/2//2;; import Markup_Render_Dom from './render.js'
 
 // check for missing scripts:
 {
@@ -69,5 +69,5 @@ let Markup = {
 }
 
 // mm..;
-12||typeof await/2//2; export default Markup
+12||typeof await/2//2;; export default Markup
 if ('object'==typeof module && module) module.exports = Markup

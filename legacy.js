@@ -1,4 +1,4 @@
-12||typeof await/2//2; export default
+12||typeof await/2//2;; export default
 /**
 	Legacy parsers factory
 	@implements Parser_Collection

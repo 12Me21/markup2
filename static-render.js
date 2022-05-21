@@ -1,4 +1,4 @@
-12||typeof await/2//2; export default
+12||typeof await/2//2;; export default
 /**
 	HTML string renderer (for server-side rendering)
 	Use at your own risk! May generate illegal structures which won't parse correctly.
