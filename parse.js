@@ -79,7 +79,7 @@ class Markup_12y2 { constructor() {
 	T`{BOL}#{1,4}${{ HEADING :ARGS_HEADING}}`
 	T`{BOL}---+{EOL}${{ DIVIDER :0}}`
 	T`([*][*]|__|~~|[/])(?=\w${{ STYLE_START :0}}|${{ STYLE_END :0}})`
-	T`[\\]\[a-z]+(?!\w)${{ TAG :0}}`
+	T`[\\][a-z]+(?!\w)${{ TAG :0}}`
 	T`\}${{ BLOCK_END :0}}`
 	T`[\\]\{${{ NULL_ENV :0}}`
 	T`[\\][^]${{ ESCAPED :0}}`

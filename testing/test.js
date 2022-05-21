@@ -88,7 +88,7 @@ class Test {
 		//let text = await fetch(url).then(x=>x.text())
 		text = text.replace(/\r/g, "")
 		// todo: indent? (\t*) and then \1 backref match on other lines
-		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*({.*)$|(🟩)/gum
+		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*([{].*)$|(🟩)/gum
 		let m
 		while (m = r.exec(text)) {
 			let [, name, input, output, fail] = m
