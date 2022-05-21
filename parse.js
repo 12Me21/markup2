@@ -1,3 +1,5 @@
+//! 𝦗𖹭
+
 // 📤📥doc
 // todo: after parsing a block element: eat the next newline directly
 
@@ -27,7 +29,7 @@ class Markup_12y2 { constructor() {
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
-	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))
+	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))||'\n'
 	
 	// BlockType -> (set)
 	const CAN_CANCEL = MAP({style:1, table_cell:1})
