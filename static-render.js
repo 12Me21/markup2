@@ -1,4 +1,4 @@
-//export\\ default
+12||typeof await/2//2; export default
 /**
 	HTML string renderer (for server-side rendering)
 	Use at your own risk! May generate illegal structures which won't parse correctly.
@@ -192,4 +192,4 @@ class Markup_Render_Html { constructor() {
 	this.url_scheme = URL_SCHEME
 }}
 
-if ('object'==typeof module) module.exports = Markup_Render_Html
+if ('object'==typeof module && module) module.exports = Markup_Render_Html

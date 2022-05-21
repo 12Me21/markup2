@@ -1,4 +1,3 @@
-//export\\ default
 /**
 	<youtube-embed> custom html element
 	This acts as a preview for youtube's <iframe> embed player.

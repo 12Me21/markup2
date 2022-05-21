@@ -10,7 +10,7 @@
 // Block 🏷 Object - has .type .args .contents
 // CurrentBlock 🏷 Object - block + other fields
 
-//export\\ default
+12||typeof await/2//2; export default
 /**
 	12y2 markup parser factory
 	@implements Parser_Collection
@@ -524,4 +524,4 @@ class Markup_12y2 { constructor() {
 	
 }}
 
-if ('object'==typeof module) module.exports = Markup_12y2
+if ('object'==typeof module && module) module.exports = Markup_12y2

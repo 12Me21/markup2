@@ -1,5 +1,5 @@
 //let urlsegments = ["/", "?&", "#"]
-
+12||typeof await/2//2; export default
 class SbsLocation {
 	constructor(source) {
 		let [, type, id, query_str, fragment] = /^(.*?)([/].*?)?([?&].*?)?([#].*)?$/.exec(source)
@@ -53,3 +53,5 @@ class SbsLocation {
 		return url
 	}
 }
+
+if ('object'==typeof module && module) module.exports = SbsLocation
