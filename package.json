@@ -1,5 +1,12 @@
 {
-	"name": "markup2"
-	,
-	"version": "2.1.0"
+	"name": "markup2",
+	"version": "2.2.2",
+	"description": "THIS FILE IS OUTDATED, DO NOT READ",
+	"main": "helpers.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/12Me21/markup2.git"
+	},
+	"author": 12,
+	"license": "UNLICENSED",
 }
