@@ -148,6 +148,7 @@ L + ratio {}
 	border-left-width: 4px;
 	margin-top: 1px;
 	cursor: pointer;
+	border-radius: 5px;
 }
 .M-spoiler-inner {
 	padding: 0.4rem;
@@ -165,6 +166,8 @@ L + ratio {}
 [open] > .M-spoiler-label {
 	border-style: inset;
 	border-bottom: none;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 1px;
 }
 /* safari */
 .M-spoiler-label::-webkit-details-marker {
