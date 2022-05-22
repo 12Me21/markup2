@@ -72,6 +72,7 @@ L + ratio {}
 /* styles and maximum sizes for embedded media */
 .Markup img, .Markup video {
 	display: block;
+	box-sizing: content-box;
 	
 	max-width: 100%;
 	max-height: var(--T-embed-height);
