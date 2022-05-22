@@ -1,8 +1,9 @@
-L + ratio {}
+L + ratio { }
 
 .Markup, .Markup * {
 	white-space: pre-wrap;
-	word-break: break-word; /* ⚠ very important to prevent overflow ⚠ */
+	/* ⚠ very important to prevent overflow ⚠ */
+	word-break: break-word;
 }
 
 /**************************
@@ -68,13 +69,17 @@ L + ratio {}
 /************/
 .Markup audio {
 	display: block;
+	width: 100%;
 }
 /* styles and maximum sizes for embedded media */
 .Markup img, .Markup video {
 	display: block;
 	box-sizing: content-box;
 	
-	max-width: 100%;
+	max-width: -webkit-fill-available;
+	max-width: -moz-available;
+	max-width: stretch;
+	
 	max-height: var(--T-embed-height);
 	width: auto;
 	
@@ -124,9 +129,12 @@ L + ratio {}
 }
 /* inline */
 .Markup code {
-	background: rgba(192,192,192,0.5);
-	padding: 0 0.2em;
+	line-break: anywhere;
 	vertical-align: 1px;
+	background: #CCC8;
+	padding: 0 0.2em;
+	border-radius: 4px;
+	margin: 0 0.1em;
 }
 /* block */
 .Markup pre {
