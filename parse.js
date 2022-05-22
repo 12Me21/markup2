@@ -1,18 +1,7 @@
-//! 𝦗𖹭
+/*! 𝦗𖹭
+*/
 
-// 📤📥doc
-// todo: after parsing a block element: eat the next newline directly
-
-// TokenType 🏷 enum
-// BlockType 🏷 enum
-// Text 🏷 string 📝 from input text
-// ArgPattern 🏷 RegExp
-// GroupNum 🏷 number - regex capturing group num
-// RawArgs 🏷 Array - array with .named field
-// Block 🏷 Object - has .type .args .contents
-// CurrentBlock 🏷 Object - block + other fields
-
-12||0;if(0)+typeof await/2//2;; export default
+12||+typeof await/2//2;; export default
 /**
 	12y2 markup parser factory
 	@implements Parser_Collection
@@ -25,13 +14,21 @@ class Markup_12y2 { constructor() {
 	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
 	
 
+	// TokenType 🏷 enum
+	// BlockType 🏷 enum
+	// Text 🏷 string 📝 from input text
+	// ArgPattern 🏷 RegExp
+	// GroupNum 🏷 number - regex capturing group num
+	// RawArgs 🏷 Array - array with .named field
+	// Block 🏷 Object - has .type .args .contents
+	// CurrentBlock 🏷 Object - block + other fields
 	
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
 	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))||'\n'
 	
-	// BlockType -> (set)
+	// BlockType -> boolean
 	const CAN_CANCEL = MAP({style:1, table_cell:1})
 	// elements which can survive an eol (without a body)
 	const SURVIVE_EOL = MAP({ROOT:1, table_cell:1})
@@ -50,54 +47,54 @@ class Markup_12y2 { constructor() {
 	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
 	ARGS_CODE._raw = true
 	
-	const GROUPS = [] // GroupNum -> TokenType
-	const ARGTYPES = [] // GroupNum -> ArgPattern
-	const SPECIAL = [] // ??
-	
-	let regi = []
-	function T({raw}, ...groups) {
-		let part = raw.join("()").replace("\\`", "`")
-		// replace "(" with "(?:" - except for "(?" and "()"
-			.replace(/[(](?![?)])/g, "(?:")
-		// replace {TAG}s
-			.replace(/[{]([A-Z_]+)[}]/g, (m, tag)=>({
-				EOL: "(?![^\\n])",
-				BOL: "^",
-				URL_TEXT: "[-\\w/%&=#+~@$*')(!?,.;:]*[-\\w/%&=#+~@$*')(]"
-			}[tag]))
-		regi.push(part)
-		for (let g of groups) {
-			let [key, arg] = Object.entries(g)[0]
-			let special = 0
-			if (g.raw)
-				special |= 1
-			GROUPS.push(key)
-			ARGTYPES.push(arg)
-			SPECIAL.push(special)
+	// RegExp
+	// GroupNum -> TokenType
+	// GroupNum -> ArgPattern
+	function DEF_TOKENS({raw}, ...groups) {
+		const MACROS = {
+			'{EOL}': "(?![^\\n])",
+			'{BOL}': "^",
+			'{ANY}': "[^]",
+			'{URL_TEXT}': "[-\\w/%&=#+~@$*')(!?,.;:]*[-\\w/%&=#+~@$*')(]",
 		}
+		return [
+			new RegExp(
+				raw.join("()").slice(1, -1)
+					.replace(/\n/g, "|").replace(/\\`/g, "`")
+					.replace(/[(](?![?)])/g, "(?:")
+					.replace(/[{][A-Z_]+[}]/g, match=>MACROS[match]),
+				"g",
+			),
+			groups.map(x=>Object.keys(x)[0]),
+			groups.map(x=>Object.values(x)[0]),
+		]
 	}
+	const [REGEX, GROUPS, ARGTYPES] = DEF_TOKENS`
+[\n]${{ NEWLINE :0}}
+{BOL}[#]{1,4}${{ HEADING :ARGS_HEADING}}
+{BOL}[-]{3,}{EOL}${{ DIVIDER :0}}
+([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START :0}}|${{ STYLE_END :0}})
+[\\][a-z]+(?![a-zA-Z0-9])${{ TAG :0}}
+[}]${{ BLOCK_END :0}}
+[\\][{]${{ NULL_ENV :0}}
+[\\]{ANY}${{ ESCAPED :0}}
+{BOL}[>]${{ QUOTE :ARGS_HEADING}}
+{BOL}[\`]{3}${{ CODE_BLOCK :ARGS_CODE}}
+[\`]${{ INLINE_CODE :ARGS_ICODE}}
+([!]${{ EMBED :ARGS_BODYLESS}})?(https?://|sbs:){URL_TEXT}${{ LINK :ARGS_NORMAL}}
+ *[|] *[\n][|]${{ TABLE_ROW :ARGS_TABLE}}
+ *[|] *{EOL}${{ TABLE_END :0}}
+{BOL} *[|]${{ TABLE_START :ARGS_TABLE}}
+ *[|]${{ TABLE_CELL :ARGS_TABLE}}
+`
 	
-	T`\n${{ NEWLINE :0}}`
-	T`{BOL}#{1,4}${{ HEADING :ARGS_HEADING}}`
-	T`{BOL}---+{EOL}${{ DIVIDER :0}}`
-	T`([*][*]|__|~~|[/])(?=\w${{ STYLE_START :0}}|${{ STYLE_END :0}})`
-	T`[\\][a-z]+(?!\w)${{ TAG :0}}`
-	T`\}${{ BLOCK_END :0}}`
-	T`[\\]\{${{ NULL_ENV :0}}`
-	T`[\\][^]${{ ESCAPED :0}}`
-	T`{BOL}>${{ QUOTE :ARGS_HEADING}}`
-	T`{BOL}\`\`\`${{ CODE_BLOCK :ARGS_CODE}}`
-	T`\`${{ INLINE_CODE :ARGS_ICODE}}`
-	T`(!${{ EMBED :ARGS_BODYLESS}})?(https?:[/][/]|sbs:){URL_TEXT}${{ LINK :ARGS_NORMAL}}`
-	T` *[|] *\n[|]${{ TABLE_ROW :ARGS_TABLE}}`
-	T` *[|] *{EOL}${{ TABLE_END :0}}`
-	T`{BOL} *[|]${{ TABLE_START :ARGS_TABLE}}`
+	/*	T` *[|]\n[|]${{ TABLE_ROW :ARGS_TABLE}}`
+	T` *[|]{EOL}${{ TABLE_END :0}}`
+	T`{BOL}[|]${{ TABLE_START :ARGS_TABLE}}`
 	T` *[|]${{ TABLE_CELL :ARGS_TABLE}}`
-	
-	Object.freeze(GROUPS)
-	Object.freeze(ARGTYPES)
-	Object.freeze(SPECIAL)
-	const REGEX = new RegExp(regi.join("|"), 'g')
+	// todo: why do the existing patterns allow whitespace in many places?
+	T` *[|](\n[|]${{ TABLE_ROW :ARGS_TABLE}}|{EOL}${{ TABLE_END :0}})`
+	T`({BOL}${{ TABLE_START :ARGS_TABLE}}| *)[|]${{ TABLE_CELL :ARGS_TABLE}}`*/
 	
 	// TokenType -> ArgRegex
 	const TAGS = MAP({
@@ -524,6 +521,7 @@ class Markup_12y2 { constructor() {
 	// or match paired {}s :  
 	// \tag{ ...  {heck} ... } <- closes here
 	
+	// todo: after parsing a block element: eat the next newline directly
 }}
 
 if ('object'==typeof module && module) module.exports = Markup_12y2
