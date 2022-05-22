@@ -120,9 +120,7 @@ class Markup_12y2 { constructor() {
 			throw new TypeError("unknown token type: "+_token_type)
 			// error
 		} break; case 'NEWLINE': {
-			while (!current.body && !SURVIVE_EOL[current.type])
-				CLOSE(true)
-			NEWLINE()
+			NEWLINE(true)
 		} break; case 'HEADING': {
 			let level = base_token.length
 			let args = {level}
@@ -147,7 +145,10 @@ class Markup_12y2 { constructor() {
 			TEXT(token)
 		} break; case 'BLOCK_END': {
 			if (brackets<=0) {
-				TEXT(token)
+				// hack:
+				if (token=="\n}")
+					NEWLINE(true)
+				TEXT("}")
 				return
 			}
 			// only runs if at least 1 element has a body, so this won't fail:
@@ -160,7 +161,7 @@ class Markup_12y2 { constructor() {
 			OPEN('null_env', token, null, true)
 		} break; case 'ESCAPED': {
 			if ("\\\n"===token)
-				NEWLINE()
+				NEWLINE(false)
 			else
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
@@ -400,7 +401,11 @@ class Markup_12y2 { constructor() {
 		current.content.push({type, args})
 		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
-	function NEWLINE() {
+	function NEWLINE(real) {
+		if (real)
+			// todo: this while condition is excessive
+			while (!current.body && !SURVIVE_EOL[current.type])
+				CLOSE(true)
 		if ('block'!==current.prev)
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)
