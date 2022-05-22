@@ -35,10 +35,10 @@ class Markup_12y2 { constructor() {
 	const IS_BLOCK = MAP({code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1})
 	
 	// ArgPattern
-	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({)?/y      // [...]?{?
-	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
-	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
-	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({)| )/y // [...]?( |{)
+	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({\n?)?/y      // [...]?{?
+	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({\n?| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
+	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({\n?)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
+	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({\n?)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
 	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
 	
@@ -70,13 +70,13 @@ class Markup_12y2 { constructor() {
 		]
 	}
 	const [REGEX, GROUPS, ARGTYPES] = DEF_TOKENS`
+[\n]?[}]${{ BLOCK_END :0}}
 [\n]${{ NEWLINE :0}}
 {BOL}[#]{1,4}${{ HEADING :ARGS_HEADING}}
 {BOL}[-]{3,}{EOL}${{ DIVIDER :0}}
 ([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START :0}}|${{ STYLE_END :0}})
 [\\][a-z]+(?![a-zA-Z0-9])${{ TAG :0}}
-[}]${{ BLOCK_END :0}}
-[\\][{]${{ NULL_ENV :0}}
+[\\][{][\n]?${{ NULL_ENV :0}}
 [\\]{ANY}${{ ESCAPED :0}}
 {BOL}[>]${{ QUOTE :ARGS_HEADING}}
 {BOL}[\`]{3}${{ CODE_BLOCK :ARGS_CODE}}

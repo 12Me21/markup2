@@ -107,7 +107,7 @@ abc
 \sub[a]{
 abc}
 }
-🟩 {"type":"ROOT","tag":"","content":[{"type":"subscript","tag":"\\env{","content":["\n","abc","\n",{"type":"subscript","tag":"\\env[a]{","content":["\n","abc"],"body":true},"\n","\n"],"body":true},"\n"]}
+🟩 {"type":"ROOT","tag":"","content":[{"type":"subscript","tag":"\\env{","content":["abc","\n",{"type":"subscript","tag":"\\env[a]{","content":["abc"],"body":true}],"body":true}]}
 
 🟩 curly brackets
 }
@@ -260,4 +260,4 @@ def`
 🟩 idk..env close
 >{
 \spoiler abc}heck
-🟩 {"type":"ROOT","tag":"","content":[{"type":"quote","tag":">{","content":["\n",{"type":"spoiler","tag":"\\spoiler ","content":["abc"],"args":{"label":"spoiler"}}],"body":true,"args":{}},"heck"]}
+🟩 {"type":"ROOT","tag":"","content":[{"type":"quote","tag":">{","content":[{"type":"spoiler","tag":"\\spoiler ","content":["abc"],"args":{"label":"spoiler"}}],"body":true,"args":{}},"heck"]}
