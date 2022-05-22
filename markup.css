@@ -142,26 +142,16 @@ L + ratio {}
 /*************/
 .M-spoiler-label {
 	display: table; /* width... */
-	padding: 0 0.3em;
 	background: var(--T-box-bg);
-	border: 2px solid var(--T-border-col);
-	border-left-width: 4px;
-	margin-top: 1px;
 	cursor: pointer;
-	border-radius: 5px;
-}
-.M-spoiler-inner {
-	padding: 0.4rem;
+	padding: 0 0.3em;
 	border: 2px solid var(--T-border-col);
 	border-left-width: 4px;
-	background: var(--T-box-bg);
-	margin-bottom: 1px;
+	border-radius: 5px;
+	margin-top: 1px;
 }
 .M-spoiler-label::before {
 	content: "Show ";
-}
-[open] > .M-spoiler-label::before {
-	content: "Hide ";
 }
 [open] > .M-spoiler-label {
 	border-style: inset;
@@ -169,7 +159,17 @@ L + ratio {}
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 1px;
 }
-/* safari */
+[open] > .M-spoiler-label::before {
+	content: "Hide ";
+}
+.M-spoiler-inner {
+	background: var(--T-box-bg);
+	padding: 0.4rem;
+	border: 2px solid var(--T-border-col);
+	border-left-width: 4px;
+	margin-bottom: 1px;
+}
+/* hide the ▼/▶ icon in safari */
 .M-spoiler-label::-webkit-details-marker {
 	display: none;
 }
@@ -178,9 +178,9 @@ L + ratio {}
 /** Quote **/
 /***********/
 .M-quote {
-	border: 2px solid var(--T-border-col);
-	padding: 0.3rem;
 	background: var(--T-box-bg);
+	padding: 0.3rem;
+	border: 2px solid var(--T-border-col);
 }
 .M-quote-label {
 	unicode-bidi: embed;
