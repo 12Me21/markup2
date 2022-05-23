@@ -57,12 +57,20 @@ L + ratio { }
 	margin: 0;
 }
 
-/*display: block;
-	width: max-content;
+/* fit */
+/* {
+	width: unset;
+	width: fit-content;
+	width: -moz-fit-content;
+}*/
+/* stretch */
+/* {
+	display: block;
 	max-width: 100%;
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
-	max-width: stretch;*/
+	max-width: stretch;
+}*/
 
 /************/
 /** Embeds **/
@@ -131,7 +139,7 @@ L + ratio { }
 .Markup code {
 	line-break: anywhere;
 	vertical-align: 1px;
-	background: #CCC8;
+	background: #C0C0C080;
 	padding: 0 0.2em;
 	border-radius: 4px;
 	margin: 0 0.1em;
