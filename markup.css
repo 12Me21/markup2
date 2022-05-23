@@ -1,4 +1,5 @@
 L + ratio { }
+:root { --Markup-loaded: yeah; }
 
 .Markup, .Markup * {
 	white-space: pre-wrap;

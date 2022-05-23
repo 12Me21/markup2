@@ -184,7 +184,6 @@ class Markup_Render_Dom { constructor() {
 		}.bind([𐀶`<td>`,𐀶`<th>`]),
 		
 		youtube: function({url}) {
-			// todo: do we filter the url here or?
 			let e = this()
 			e.firstChild.textContent = url
 			e.firstChild.href = url
