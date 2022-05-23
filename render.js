@@ -239,7 +239,6 @@ class Markup_Render_Dom { constructor() {
 	<summary class='M-spoiler-label'></summary>
 	<div class='M-spoiler-inner'></div>
 </details>`),
-		//}.bind(𐀶`<details><summary></summary><div>`),
 		
 		background_color: function({color}) {
 			let e = this()
