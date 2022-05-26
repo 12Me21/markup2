@@ -12,14 +12,9 @@ class Markup_Legacy { constructor() {
 	*/
 	this.langs = {}
 	
-	const MAP = x=>Object.freeze(Object.create(null, Object.getOwnPropertyDescriptors(x)))
+	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))
 	
-	let BLOCKS = MAP({
-		divider:1, code:1, audio:1, video:1, youtube:1,
-		heading:1, quote:1, list:1, list_item:1,
-		table:1, table_row:1, image:1, error:1,
-		align:1, spoiler:1
-	})
+	let BLOCKS = MAP({divider: 1, code: 1, audio: 1, video: 1, youtube: 1, heading: 1, quote: 1, list: 1, list_item: 1, table: 1, table_row: 1, image: 1, error: 1, align: 1, spoiler: 1})
 	
 	function convert_cell_args(props, h) {
 		let args = {
@@ -50,7 +45,7 @@ class Markup_Legacy { constructor() {
 		startOfLine = true
 		leadingSpaces = 0
 	}
-	function scan() {	
+	function scan() {
 		if (c == "\n" || !c)
 			lineStart()
 		else if (c != " ")
@@ -61,7 +56,7 @@ class Markup_Legacy { constructor() {
 		c = code.charAt(i)
 	}
 	function stack_top() {
-		return stack[stack.length-1]	
+		return stack[stack.length-1]
 	}
 	
 	function init(text) {
@@ -71,8 +66,8 @@ class Markup_Legacy { constructor() {
 		startOfLine = true
 		skipNextLineBreak = false
 		textBuffer = ""
-		tree = curr = {type:'ROOT', content:[]}
-		stack = [{node:curr, type:'ROOT'}]
+		tree = curr = {type: 'ROOT', content: []}
+		stack = [{node: curr, type: 'ROOT'}]
 		restore(0)
 	}
 	// move to pos
@@ -213,7 +208,7 @@ class Markup_Legacy { constructor() {
 	
 	function start_block(type, args, data) {
 		if (type) {
-			let node = {type, args, content:[]}
+			let node = {type, args, content: []}
 			data.type = type
 			openBlocks++
 			if (openBlocks > 10)
@@ -285,7 +280,7 @@ class Markup_Legacy { constructor() {
 						headingLevel = 3
 					
 					if (eatChar(" "))
-						start_block('heading', {level:headingLevel}, {})
+						start_block('heading', {level: headingLevel}, {})
 					else
 						addText('*'.repeat(headingLevel))
 				} else {
@@ -326,7 +321,7 @@ class Markup_Legacy { constructor() {
 					// - ... list
 				} else if (eatChar(" ")) {
 					start_block('list', {}, {level: leadingSpaces})
-					start_block('list_item', null, {level:leadingSpaces})
+					start_block('list_item', null, {level: leadingSpaces})
 					//---------------
 					// - normal char
 				} else
@@ -371,7 +366,7 @@ class Markup_Legacy { constructor() {
 							cells++
 							return span-1
 						}).filter(span => span>0)
-						row = start_block('table_row', null, {table:table, cells:cells})
+						row = start_block('table_row', null, {table: table, cells: cells})
 						row.header = eatChar("*")
 						// start cell
 						startCell(row)
@@ -379,7 +374,7 @@ class Markup_Legacy { constructor() {
 						// | next cell or table end
 					} else {
 						row.cells++
-						textBuffer = textBuffer.replace(/ *$/,"") //strip trailing spaces (TODO: allow \<space>)
+						textBuffer = textBuffer.replace(/ *$/, "") //strip trailing spaces (TODO: allow \<space>)
 						// end of table
 						// table ends when number of cells in current row = number of cells in first row
 						// single-row tables are not easily possible ..
@@ -432,7 +427,7 @@ class Markup_Legacy { constructor() {
 						
 						i = code.indexOf("```", i)
 						let text = code.substring(start, i!=-1 ? i : code.length)
-						add_block('code', {lang:language||'sb', text})
+						add_block('code', {lang: language||'sb', text})
 						skipNextLineBreak = eaten
 						restore(i==-1 ? code.length : i+3)
 						//------------
@@ -456,7 +451,7 @@ class Markup_Legacy { constructor() {
 						codeText += c
 						scan()
 					}
-					add_block('icode', {text:codeText})
+					add_block('icode', {text: codeText})
 					scan()
 				}
 				//
@@ -487,7 +482,7 @@ class Markup_Legacy { constructor() {
 			if (eatChar("[")) {
 				if (eatChar("[")) {
 					// read url:
-					let start = i // todo bug: are we supposed to use this?
+					//let start = i // todo bug: are we supposed to use this?
 					let after = false
 					let url = readUrl(true)
 					if (eatChar("]")) {
@@ -557,7 +552,7 @@ class Markup_Legacy { constructor() {
 				} else if (name=='sup') {
 					start_block('superscript', null, {})
 				} else {
-					add_block('invalid', {text:code.substring(start, i), reason:"invalid tag"})
+					add_block('invalid', {text: code.substring(start, i), reason: "invalid tag"})
 				}
 				/*if (displayBlock({type:name}))
 				  skipNextLineBreak = true //what does this even do?*/
@@ -591,7 +586,7 @@ class Markup_Legacy { constructor() {
 			if (n == -1)
 				return [string, null]
 			else
-				return [string.substr(0,n), string.substr(n+sep.length)]
+				return [string.substr(0, n), string.substr(n+sep.length)]
 		}
 		
 		function readTagName() {
@@ -757,7 +752,7 @@ class Markup_Legacy { constructor() {
 				return ["youtube", {url}]
 			let size = /^([^#]*)#(\d+)x(\d+)$/.exec(url)
 			if (size)
-				return ["image", {url:size[1], width:+size[2], height:+size[3]}]
+				return ["image", {url: size[1], width: +size[2], height: +size[3]}]
 			return ["image", {url}]
 		}
 		
@@ -834,13 +829,13 @@ class Markup_Legacy { constructor() {
 			return ['anchor', {name: args['']}]
 		},
 		h1(args) {
-			return ['heading', {level:1}]
+			return ['heading', {level: 1}]
 		},
 		h2(args) {
-			return ['heading', {level:2}]
+			return ['heading', {level: 2}]
 		},
 		h3(args) {
-			return ['heading', {level:3}]
+			return ['heading', {level: 3}]
 		},
 		url(args) {
 			return ['link', {url: args['']}]
@@ -856,15 +851,15 @@ class Markup_Legacy { constructor() {
 		code(args, contents) {
 			let inline = args[""] == 'inline'
 			if (inline)
-				return ['icode', {text:contents}]
+				return ['icode', {text: contents}]
 			else {
 				if (contents[0]=="\n")
 					contents = contents.substr(1)
-				return ['code', {text:contents, lang:args.lang||'sb'}]
+				return ['code', {text: contents, lang: args.lang||'sb'}]
 			}
 		},
 		url(args, contents) {
-			return ['simple_link', {url:contents}]
+			return ['simple_link', {url: contents}]
 		},
 		youtube(args, contents) {
 			return ['youtube', {url: args['']}] // TODO: set id here
@@ -877,7 +872,7 @@ class Markup_Legacy { constructor() {
 		},
 		img(args, contents) {
 			return ['audio', {url: args['']}]
-		},	
+		},
 	})
 	
 	this.langs['bbcode'] = function(codeInput) {
@@ -907,7 +902,7 @@ class Markup_Legacy { constructor() {
 						if (greedyCloseTag(name)) {
 							// eat whitespace between table cells
 							if (name == 'td' || name == 'th' || name == 'tr')
-								while(eatChar(' ')||eatChar('\n')){
+								while (eatChar(' ')||eatChar('\n')) {
 								}
 						} else {
 							// ignore invalid block
@@ -924,7 +919,7 @@ class Markup_Legacy { constructor() {
 								endBlock(point)
 							let top = stack_top()
 							if (top.type == "list")
-								start_block('list_item', null, {bbcode:'item'})
+								start_block('list_item', null, {bbcode: 'item'})
 							else
 								cancel()
 						} else
@@ -974,13 +969,13 @@ class Markup_Legacy { constructor() {
 								
 								let tx = block_translate[name]
 								if (typeof tx == 'string')
-									start_block(tx, null, {bbcode:name})
+									start_block(tx, null, {bbcode: name})
 								else {
 									let [t, a] = tx(args)
-									start_block(t, a, {bbcode:name})
+									start_block(t, a, {bbcode: name})
 								}
 							} else
-								add_block('invalid', {text: code.substring(point, i), message:"invalid tag"})
+								add_block('invalid', {text: code.substring(point, i), message: "invalid tag"})
 						} else
 							cancel()
 					}
@@ -1078,7 +1073,7 @@ class Markup_Legacy { constructor() {
 	}
 	
 	this.langs['plaintext'] = function(text) {
-		let root = {type:'ROOT', content:[]}
+		let root = {type: 'ROOT', content: []}
 		
 		let linkRegex = /\b(?:https?:\/\/|sbs:)[-\w$.+!*'(),;/?:@=&#%]*/g
 		let result
@@ -1090,7 +1085,7 @@ class Markup_Legacy { constructor() {
 				root.content.push(before)
 			// generate link
 			let url = result[0]
-			root.content.push({type:'simple_link', args:{url}})
+			root.content.push({type: 'simple_link', args: {url}})
 			last = result.index + result[0].length
 		}
 		// text after last link (or entire message if no links were found)

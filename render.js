@@ -6,7 +6,7 @@
 class Markup_Render_Dom { constructor() {
 	// This tag-function parses an HTML string, and returns a function
 	//  which creates a copy of that HTML DOM tree when called.
-	// ex: let create = 𐀶`<div></div>` 
+	// ex: let create = 𐀶`<div></div>`
 	//  - create() acts like document.createElement('div')
 	let temp = document.createElement('template')
 	function 𐀶([html]) {
@@ -29,11 +29,11 @@ class Markup_Render_Dom { constructor() {
 	function filter_url(url, thing) {
 		try {
 			let u = new URL(url, "no-scheme:/")
-			if (u.protocol=='no-scheme:')
+			if ('no-scheme:'==u.protocol)
 				return URL_SCHEME.RELATIVE(url, thing)
 			else
 				return (URL_SCHEME[u.protocol] || URL_SCHEME.DEFAULT)(u, thing)
-		} catch(e) {
+		} catch (e) {
 			return URL_SCHEME.ERROR(url, thing)
 		}
 	}
@@ -137,7 +137,7 @@ class Markup_Render_Dom { constructor() {
 			// so instead I throw a fake event when the video plays
 			// todo: ew
 			e.onplaying = (event)=>{
-				let e2 = new Event('videoclicked', {bubbles:true, cancellable:true})
+				let e2 = new Event('videoclicked', {bubbles: true, cancellable: true})
 				event.target.dispatchEvent(e2)
 			}
 			return e
@@ -153,7 +153,7 @@ class Markup_Render_Dom { constructor() {
 		
 		heading: function({level}) {
 			return this[level-1]()
-		}.bind([𐀶`<h2>`,𐀶`<h3>`,𐀶`<h4>`,𐀶`<h5>`]),
+		}.bind([𐀶`<h2>`, 𐀶`<h3>`, 𐀶`<h4>`, 𐀶`<h5>`]),
 		
 		quote: function({cite}) {
 			if (cite==null)
@@ -163,7 +163,7 @@ class Markup_Render_Dom { constructor() {
 			return e.lastChild
 		}.bind([
 			𐀶`<blockquote class='M-quote'>`,
-			𐀶`<blockquote class='M-quote'><cite class='M-quote-label'></cite>:<div class='M-quote-inner'></div></blockquote>` // should we have -outer class?
+			𐀶`<blockquote class='M-quote'><cite class='M-quote-label'></cite>:<div class='M-quote-inner'></div></blockquote>`, // should we have -outer class?
 		]),
 		
 		table: function() {
@@ -181,7 +181,7 @@ class Markup_Render_Dom { constructor() {
 			if (rowspan) e.rowSpan = rowspan
 			if (align) e.style.textAlign = align
 			return e
-		}.bind([𐀶`<td>`,𐀶`<th>`]),
+		}.bind([𐀶`<td>`, 𐀶`<th>`]),
 		
 		youtube: function({url}) {
 			let e = this()

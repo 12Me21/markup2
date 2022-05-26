@@ -1,4 +1,4 @@
-/* 
+/*
 class which contains the 12y and bbcode parsers
 */
 
@@ -46,9 +46,9 @@ class Markup_Langs {
 		this.langs = Object.create(null)
 		/** @member {Parser} **/
 		this.default_lang = function(text) {
-			return {type:'ROOT', content:[text]}
+			return {type: 'ROOT', content: [text]}
 		}
-		for (let m of include) 
+		for (let m of include)
 			this.include(m)
 	}
 	/**

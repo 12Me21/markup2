@@ -1,7 +1,7 @@
 /*! 𝦗𖹭
 */
 
-12||+typeof await/2//2;; export default
+12||+typeof await/2//2;; export default // eslint-disable-line semi, no-extra-semi
 /**
 	12y2 markup parser factory
 	@implements Parser_Collection
@@ -29,10 +29,10 @@ class Markup_12y2 { constructor() {
 	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))||'\n'
 	
 	// BlockType -> boolean
-	const CAN_CANCEL = MAP({style:1, table_cell:1})
+	const CAN_CANCEL = MAP({style: 1, table_cell: 1})
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = MAP({ROOT:1, table_cell:1})
-	const IS_BLOCK = MAP({code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, error:1, youtube:1})
+	const SURVIVE_EOL = MAP({ROOT: 1, table_cell: 1})
+	const IS_BLOCK = MAP({code: 1, divider: 1, ROOT: 1, heading: 1, quote: 1, table: 1, table_cell: 1, image: 1, video: 1, audio: 1, spoiler: 1, align: 1, list: 1, list_item: 1, error: 1, youtube: 1})
 	
 	// ArgPattern
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({\n?)?/y      // [...]?{?
@@ -63,29 +63,29 @@ class Markup_12y2 { constructor() {
 					.replace(/\n/g, "|").replace(/\\`/g, "`")
 					.replace(/[(](?![?)])/g, "(?:")
 					.replace(/[{][A-Z_]+[}]/g, match=>MACROS[match]),
-				"g",
+				"g"
 			),
 			groups.map(x=>Object.keys(x)[0]),
 			groups.map(x=>Object.values(x)[0]),
 		]
 	}
 	const [REGEX, GROUPS, ARGTYPES] = DEF_TOKENS`
-[\n]?[}]${{ BLOCK_END :0}}
-[\n]${{ NEWLINE :0}}
-{BOL}[#]{1,4}${{ HEADING :ARGS_HEADING}}
-{BOL}[-]{3,}{EOL}${{ DIVIDER :0}}
-([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START :0}}|${{ STYLE_END :0}})
-[\\][a-z]+(?![a-zA-Z0-9])${{ TAG :0}}
-[\\][{][\n]?${{ NULL_ENV :0}}
-[\\]{ANY}${{ ESCAPED :0}}
-{BOL}[>]${{ QUOTE :ARGS_HEADING}}
-{BOL}[\`]{3}${{ CODE_BLOCK :ARGS_CODE}}
-[\`]${{ INLINE_CODE :ARGS_ICODE}}
-([!]${{ EMBED :ARGS_BODYLESS}})?(https?://|sbs:){URL_TEXT}${{ LINK :ARGS_NORMAL}}
- *[|] *[\n][|]${{ TABLE_ROW :ARGS_TABLE}}
- *[|] *{EOL}${{ TABLE_END :0}}
-{BOL} *[|]${{ TABLE_START :ARGS_TABLE}}
- *[|]${{ TABLE_CELL :ARGS_TABLE}}
+[\n]?[}]${{ BLOCK_END: 0}}
+[\n]${{ NEWLINE: 0}}
+{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}
+{BOL}[-]{3,}{EOL}${{ DIVIDER: 0}}
+([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START: 0}}|${{ STYLE_END: 0}})
+[\\][a-z]+(?![a-zA-Z0-9])${{ TAG: 0}}
+[\\][{][\n]?${{ NULL_ENV: 0}}
+[\\]{ANY}${{ ESCAPED: 0}}
+{BOL}[>]${{ QUOTE: ARGS_HEADING}}
+{BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
+[\`]${{ INLINE_CODE: ARGS_ICODE}}
+([!]${{ EMBED: ARGS_BODYLESS}})?(https?://|sbs:){URL_TEXT}${{ LINK: ARGS_NORMAL}}
+ *[|] *[\n][|]${{ TABLE_ROW: ARGS_TABLE}}
+ *[|] *{EOL}${{ TABLE_END: 0}}
+{BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
+ *[|]${{ TABLE_CELL: ARGS_TABLE}}
 `
 	
 	/*	T` *[|]\n[|]${{ TABLE_ROW :ARGS_TABLE}}`
@@ -113,10 +113,10 @@ class Markup_12y2 { constructor() {
 	// 📥 token 🏷 Text 📝 token text, including arguments
 	// 📥 rarys 🏷 RawArgs 📝 raw arguments
 	// 📥 body 🏷 Text 📝 argmatch[2] (varies)
-	// 📥 base_token 🏷 Text 📝 token text, without arguments 
+	// 📥 base_token 🏷 Text 📝 token text, without arguments
 	function PROCESS(_token_type, token, rargs, body, base_token) {
 		//console.log('process', arguments)
-		switch(_token_type) { default: {
+		switch (_token_type) { default: {
 			throw new TypeError("unknown token type: "+_token_type)
 			// error
 		} break; case 'NEWLINE': {
@@ -131,7 +131,7 @@ class Markup_12y2 { constructor() {
 		} break; case 'STYLE_START': {
 			OPEN('style', token)
 		} break; case 'STYLE_END': {
-			while ('style'===current.type) { 
+			while ('style'===current.type) {
 				if (token===current.token) { // found opening
 					current.type = {
 						'**': 'bold', '__': 'underline',
@@ -146,7 +146,7 @@ class Markup_12y2 { constructor() {
 		} break; case 'BLOCK_END': {
 			if (brackets<=0) {
 				// hack:
-				if (token=="\n}")
+				if ("\n}"==token)
 					NEWLINE(true)
 				TEXT("}")
 				return
@@ -169,9 +169,9 @@ class Markup_12y2 { constructor() {
 		} break; case 'CODE_BLOCK': {
 			let lang = rargs
 			// idea: strip leading indent from code?
-			BLOCK('code', {text:body, lang})
+			BLOCK('code', {text: body, lang})
 		} break; case 'INLINE_CODE': {
-			BLOCK('icode', {text:body})
+			BLOCK('icode', {text: body})
 		} break; case 'EMBED': {
 			let url = base_token.substr(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
@@ -218,9 +218,9 @@ class Markup_12y2 { constructor() {
 			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
 		} break; case 'INVALID_TAG': {
 			if (body)
-				OPEN('invalid', token, {text: token, reason:"invalid tag"}, body)
+				OPEN('invalid', token, {text: token, reason: "invalid tag"}, body)
 			else
-				BLOCK('invalid', {text: token, reason:"invalid tag"})
+				BLOCK('invalid', {text: token, reason: "invalid tag"})
 
 		} break; case '\\sub': {
 			OPEN('subscript', token, null, body)
@@ -238,7 +238,7 @@ class Markup_12y2 { constructor() {
 			OPEN('quote', token, {cite: rargs[0]}, body)
 		} break; case '\\align': {
 			let a = rargs[0]
-			if (!(a==='left' || a==='right' || a==='center'))
+			if (!['left', 'right', 'center'].includes(a))
 				a = 'center'
 			OPEN('align', token, {align: a}, body)
 		} break; case '\\spoiler': {
@@ -249,7 +249,7 @@ class Markup_12y2 { constructor() {
 			OPEN('ruby', token, {text}, body)
 		} break; case '\\key': {
 			OPEN('key', token, null, body)
-		}}
+		} }
 	}
 	
 	function arg0(rargs, def) {
@@ -266,7 +266,7 @@ class Markup_12y2 { constructor() {
 	// todo: do we even need named args?
 	function parse_args(arglist) {
 		// note: checks undefined AND "" (\tag AND \tag[])
-		if (!arglist) 
+		if (!arglist)
 			return null_args
 		
 		let list = [], named = {}
@@ -286,7 +286,7 @@ class Markup_12y2 { constructor() {
 	// returns [type: String, args: Object]
 	function process_embed(url, rargs) {
 		let type
-		let args = {url, alt:rargs.named.alt}
+		let args = {url, alt: rargs.named.alt}
 		for (let arg of rargs)
 			if ('video'===arg || 'audio'===arg || 'image'===arg)
 				type = arg
@@ -324,7 +324,7 @@ class Markup_12y2 { constructor() {
 			let m
 			if ('*'===arg)
 				ret.header = true
-			else if (['red','orange','yellow','green','blue','purple','gray'].includes(arg))
+			else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
 				ret.color = arg
 			else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
 				let [, w, h] = m
@@ -384,7 +384,7 @@ class Markup_12y2 { constructor() {
 			if ('newline'===o.prev)
 				o.content.push("\n")
 			current.content.push({
-				type:o.type, args:o.args, content:o.content
+				type: o.type, args: o.args, content: o.content,
 			})
 			current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 		}
@@ -419,7 +419,7 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function parse(text) {
-		let tree = {type:'ROOT', token:"", content:[], prev:'all_newline'}
+		let tree = {type: 'ROOT', token: "", content: [], prev: 'all_newline'}
 		current = tree
 		brackets = 0
 		
@@ -523,10 +523,10 @@ class Markup_12y2 { constructor() {
 	// BUT if you are inside a tag, the } will close it.
 	// maybe closing tags should need some kind of special syntax?
 	// \tag{ ... \}  >{...\} idk..
-	// or match paired {}s :  
+	// or match paired {}s :
 	// \tag{ ...  {heck} ... } <- closes here
 	
 	// todo: after parsing a block element: eat the next newline directly
-}}
+} }
 
 if ('object'==typeof module && module) module.exports = Markup_12y2

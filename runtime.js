@@ -58,7 +58,7 @@ class YoutubeEmbedElement extends HTMLElement {
 	disconnectedCallback() {
 		this._id = null
 	}
-	async update_href(url) {
+	update_href(url) {
 		if (!url)
 			return // todo: allow setting back to unloaded state?
 		url = url.replace("/shorts/", "/watch?v=") // 🤮
@@ -92,13 +92,14 @@ class YoutubeEmbedElement extends HTMLElement {
 			// todo: cancel these when node is disconnected?
 			YoutubeEmbedElement.requests[id] = f = fetch(`https://www.youtube.com/oembed?url=https%3A//youtube.com/watch%3Fv%3D${id}&format=json`).then(x=>x.json()).catch(x=>null)
 		}
-		let data = await f
-		if (this._id != id)
-			return // if the video changed
-		if (!data)
-			data = {title: "unknown video"}
-		this._title.textContent = data.title
-		this._author.textContent = data.author_name
+		f.then(data=>{
+			if (this._id != id)
+				return // if the video changed
+			if (!data)
+				data = {title: "unknown video"}
+			this._title.textContent = data.title
+			this._author.textContent = data.author_name
+		})
 	}
 	attributeChangedCallback(name, old, value) {
 		if (name=='data-href')
