@@ -1,23 +1,76 @@
 {
-	"name": "markup2",
-	"version": "0.6.1",
-	"author": 12,
-	"contributors": [
-		"y",
-		"cherry",
-		"nicole"
-	],
+	"name": "markup2", "version": "0.6.1",
+	"author": 12, "contributors": ["y", "cherry", "nicole"],
 	"description": "sbs/qcs markup parser",
-	"keywords": [
-		"markup",
-		"12y2",
-		"12y",
-		"bbcode"
-	],
+	"keywords": ["markup", "12y2", "12y", "bbcode"],
 	"license": "only my friends are allowed to use this",
-	"repository": "github:12Me21/markup2",
-	"": 0,
-	"devDependencies": {
-		"eslint": "^8.16.0"
-	}
-}
+		"repository": "github:12Me21/markup2",
+	
+	"eslintConfig": {
+		"ignorePatterns": [
+			"*",
+			"!parse.js", "!langs.js", "!legacy.js", "!render.js",
+			"!helpers.js", "!runtime.js", "!static-parse.js"
+		],
+		"parserOptions": {
+			"ecmaVersion": 6,
+			"sourceType": "script"
+		},
+		"env": {
+			"shared-node-browser": true
+		},
+		"globals": {
+			"module": "readonly"
+		},
+		"overrides": [{
+			"files": ["render.js", "helpers.js", "runtime.js"],
+			"env": {"browser": true}
+		}, {
+			"files": ["helpers.js"],
+			"globals": {
+				"Markup_Langs": "readonly",
+				"Markup_12y2": "readonly",
+				"Markup_Legacy": "readonly",
+				"Markup_Render_Dom": "readonly"
+			}
+		}],
+		"extends": "eslint:recommended",
+		"rules": {
+			"semi": ["warn", "never"],
+			"semi-style": ["warn", "first"],
+			"no-irregular-whitespace": ["off"],
+			"indent": ["error", "tab"],
+			"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
+			"linebreak-style": ["error"],
+			"no-unreachable": ["off"],
+			"no-cond-assign": ["off"],
+			"no-unused-vars": ["error", {"args": "none"}],
+			"no-empty": ["off"],
+			"no-constant-condition": ["off"],
+			"no-unsafe-finally": ["off"],
+			"no-var": ["error"],
+			"array-bracket-newline": ["warn", "consistent"],
+			"array-bracket-spacing": ["warn", "never"],
+			"block-spacing": ["warn", "always"],
+			"comma-dangle": ["warn", {
+				"arrays": "always-multiline",
+				"objects": "always-multiline",
+				"functions": "never"
+			}],
+			"comma-spacing": ["warn"],
+			"comma-style": ["warn"],
+			"computed-property-spacing": ["warn"],
+			"dot-location": ["error", "property"],
+			"func-call-spacing": ["error"],
+			"key-spacing": ["warn"],
+			"keyword-spacing": ["warn"],
+			"max-len": ["error", {"code": 400}],
+			"new-parens": ["warn"],
+			"no-extra-parens": ["warn"],
+			"no-trailing-spaces": ["warn", {"skipBlankLines": true}],
+			"no-whitespace-before-property": ["error"],
+			"object-curly-newline": ["warn"],
+			"operator-linebreak": ["error"]
+		}
+	},
+"": 0}
