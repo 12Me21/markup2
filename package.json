@@ -4,23 +4,25 @@
 	"description": "sbs/qcs markup parser",
 	"keywords": ["markup", "12y2", "12y", "bbcode"],
 	"license": "only my friends are allowed to use this",
-		"repository": "github:12Me21/markup2",
+	"repository": "github:12Me21/markup2",
 	
 	"eslintConfig": {
 		"ignorePatterns": [
 			"*",
 			"!parse.js", "!langs.js", "!legacy.js", "!render.js",
-			"!helpers.js", "!runtime.js", "!static-parse.js"
+			"!helpers.js", "!runtime.js", "!static-render.js"
 		],
-		"parserOptions": {
-			"ecmaVersion": 6,
-			"sourceType": "script"
-		},
 		"env": {
 			"shared-node-browser": true
 		},
+		"parserOptions": {
+			"ecmaVersion": 2015,
+			"sourceType": "script",
+			"//": "alternatively, ecmaVersion=2022 and sourceType=module"
+		},
 		"globals": {
-			"module": "readonly"
+			"module": "readonly",
+			"Symbol": "readonly"
 		},
 		"overrides": [{
 			"files": ["render.js", "helpers.js", "runtime.js"],
@@ -38,6 +40,7 @@
 		"rules": {
 			"semi": ["warn", "never"],
 			"semi-style": ["warn", "first"],
+			"no-extra-semi": ["off"],
 			"no-irregular-whitespace": ["off"],
 			"indent": ["error", "tab"],
 			"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],

@@ -1,4 +1,4 @@
-12||+typeof await/2//2;; export default
+12||+typeof await/2//2; export default
 /**
 	HTML string renderer (for server-side rendering)
 	Use at your own risk! May generate illegal structures which won't parse correctly.
@@ -11,8 +11,8 @@ class Markup_Render_Html { constructor() {
 		"http:": (url, thing)=> url.href,
 		DEFAULT: (url, thing)=> "about:blank#"+url.href,
 		// these take a url string instead of URL
-		RELATIVE: (url, thing)=> href.replace(/^[/]{0,2}/, "https://"),
-		ERROR: (url, thing)=> "about:blank#"+url.href,
+		RELATIVE: (href, thing)=> href.replace(/^[/]{0,2}/, "https://"),
+		ERROR: (href, thing)=> "about:blank#"+href,
 	}
 	
 	function filter_url(url, thing) {
@@ -22,14 +22,14 @@ class Markup_Render_Html { constructor() {
 				return URL_SCHEME.RELATIVE(url, thing)
 			else
 				return (URL_SCHEME[u.protocol] || URL_SCHEME.DEFAULT)(u, thing)
-		} catch(e) {
+		} catch (e) {
 			return URL_SCHEME.ERROR(url, thing)
 		}
 	}
 	
 	// todo: catch mistakes like `<a href=${url}>` (unquoted attr)
 	function html([str, ...strs], ...values) {
-		strs.forEach((s,i)=>{
+		strs.forEach((s, i)=>{
 			str += /&/g[Symbol.replace](values[i], "&amp;").replace(/</g, "&lt;").replace(/'/g, "&apos;")+s
 		})
 		return str
@@ -63,7 +63,7 @@ class Markup_Render_Html { constructor() {
 			return x + ">"
 		},
 		
-		error() { return `<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯` }, 
+		error() { return `<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯` },
 		
 		audio({url}) {
 			return html`<audio controls preload=none src='${filter_url(url, 'audio')}'></audio>`
