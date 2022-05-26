@@ -1,5 +1,5 @@
 {
-	"name": "markup2", "version": "0.6.1",
+	"name": "markup2", "version": "0.6.2",
 	"author": 12, "contributors": ["y", "cherry", "nicole"],
 	"description": "sbs/qcs markup parser",
 	"keywords": ["markup", "12y2", "12y", "bbcode"],

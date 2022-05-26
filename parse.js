@@ -1,7 +1,7 @@
 /*! 𝦗𖹭
 */
 
-12||+typeof await/2//2;; export default // eslint-disable-line semi, no-extra-semi
+12||+typeof await/2//2;; export default
 /**
 	12y2 markup parser factory
 	@implements Parser_Collection
