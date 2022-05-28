@@ -20,6 +20,7 @@ class Markup_Render_Dom { constructor() {
 		"sbs:": (url, thing)=> "#"+url.pathname+url.search+url.hash,
 		"https:": (url, thing)=> url.href,
 		"http:": (url, thing)=> url.href,
+		"data:": (url, thing)=> url.href,
 		DEFAULT: (url, thing)=> "about:blank#"+url.href,
 		// these take a url string instead of URL
 		RELATIVE: (href, thing)=> href.replace(/^[/]{0,2}/, "https://"),
