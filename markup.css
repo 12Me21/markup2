@@ -255,3 +255,14 @@ L + ratio { }
 .Markup .M-link-custom[href]:hover {
 	text-decoration-style: double; /* s*/
 }
+
+/***********/
+/** Lists **/
+/***********/
+.Markup ul {
+	padding-left: 1.3em;
+}
+
+.Markup ul > ul {
+	padding-left: 1em;
+}
