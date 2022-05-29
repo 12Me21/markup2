@@ -206,6 +206,8 @@ class Markup_Render_Dom { constructor() {
 			return e
 		}.bind([𐀶`<ul>`, 𐀶`<ol>`]),
 		
+		/* todo: list bullets suck, because you can't select/copy them
+we should create our own fake bullet elements instead.*/
 		list_item: 𐀶`<li>`,
 		
 		align: function({align}) {
