@@ -24,6 +24,8 @@
 	}
 </script>
 
+<!-- plaintext goes until EOF, i put a fake closing tag
+so it doesn't get indented -->
 <plaintext hidden id=$data></plaintext>
 🟩 123
 ### heading
@@ -31,75 +33,75 @@ the `sand` can /be/ eaten
 ```
 code block
 ```
-🟩 {"type":"ROOT","tag":"","content":[{"type":"heading","tag":"### ","content":["heading"],"args":{"level":3}},"the ",{"type":"icode","tag":"`sand`","args":{"text":"sand"}}," can ",{"type":"italic","tag":"/","content":["be"]}," eaten","\n",{"type":"code","tag":"```code block```","args":{"text":"code block\n"}}]}
+🟩 {"type":"ROOT","content":[{"type":"heading","content":["heading"],"args":{"level":3}},"the ",{"type":"icode","args":{"text":"sand"}}," can ",{"type":"italic","content":["be"]}," eaten","\n",{"type":"code","args":{"text":"code block\n"}}]}
 
 🟩 123
 |table|
-🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|","content":["table"],"args":{}}]}]}]}
+🟩 {"type":"ROOT","content":[{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","content":["table"],"args":{}}]}]}]}
 
 🟩 123
 |[red] hack|
-🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|[red] ","content":["hack"],"args":{"color":"red"}}]}]}]}
+🟩 {"type":"ROOT","content":[{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","content":["hack"],"args":{"color":"red"}}]}]}]}
 
 🟩 123
 |[red] hack|a
 bcdefa
-🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|[red] ","content":["hack"],"args":{"color":"red"}}]}]},"a","\n","bcdefa"]}
+🟩 {"type":"ROOT","content":[{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","content":["hack"],"args":{"color":"red"}}]}]},"a","\n","bcdefa"]}
 
 🟩 unclosed icode
 `eabcn
-🟩 {"type":"ROOT","tag":"","content":[{"type":"icode","tag":"`eabcn","args":{"text":"eabcn"}}]}
+🟩 {"type":"ROOT","content":[{"type":"icode","args":{"text":"eabcn"}}]}
 
 🟩 image embed
 !https://example.com
-🟩 {"type":"ROOT","tag":"","content":[{"type":"image","tag":"!https://example.com","args":{"url":"https://example.com"}}]}
+🟩 {"type":"ROOT","content":[{"type":"image","args":{"url":"https://example.com"}}]}
 
 🟩 audio embed
 !https://example.com[audio]
-🟩 {"type":"ROOT","tag":"","content":[{"type":"audio","tag":"!https://example.com[audio]","args":{"url":"https://example.com"}}]}
+🟩 {"type":"ROOT","content":[{"type":"audio","args":{"url":"https://example.com"}}]}
 
 🟩 video embed
 !https://example.mp4
-🟩 {"type":"ROOT","tag":"","content":[{"type":"video","tag":"!https://example.mp4","args":{"url":"https://example.mp4"}}]}
+🟩 {"type":"ROOT","content":[{"type":"video","args":{"url":"https://example.mp4"}}]}
 
 🟩 fake header
 ##### test
-🟩 {"type":"ROOT","tag":"","content":["##### test"]}
+🟩 {"type":"ROOT","content":["##### test"]}
 
 🟩 h2
 ## test
-🟩 {"type":"ROOT","tag":"","content":[{"type":"heading","tag":"## ","content":["test"],"args":{"level":2}}]}
+🟩 {"type":"ROOT","content":[{"type":"heading","content":["test"],"args":{"level":2}}]}
 
 🟩 table in env
 \{|table|}
-🟩 {"type":"ROOT","tag":"","content":[{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|","content":["table"],"args":{}}]}]}]}
+🟩 {"type":"ROOT","content":[{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","content":["table"],"args":{}}]}]}]}
 
 🟩 not table
 a |table|
-🟩 {"type":"ROOT","tag":"","content":["a"," |","table","|"]}
+🟩 {"type":"ROOT","content":["a"," |","table","|"]}
 
 🟩 single bar
 |
 a|
-🟩 {"type":"ROOT","tag":"","content":["|","\n","a","|"]}
+🟩 {"type":"ROOT","content":["|","\n","a","|"]}
 
 🟩 single backslash
 \
-🟩 {"type":"ROOT","tag":"","content":["\\"]}
+🟩 {"type":"ROOT","content":["\\"]}
 
 🟩 esc newline
 \
 
-🟩 {"type":"ROOT","tag":"","content":["\n"]}
+🟩 {"type":"ROOT","content":["\n"]}
 
 🟩 esc newline no table
 \
 |table|
-🟩 {"type":"ROOT","tag":"","content":["\n","|","table","|"]}
+🟩 {"type":"ROOT","content":["\n","|","table","|"]}
 
 🟩 random escapes
 \\ \@ \~
-🟩 {"type":"ROOT","tag":"","content":["\\"," ","@"," ","~"]}
+🟩 {"type":"ROOT","content":["\\"," ","@"," ","~"]}
 
 🟩 env with body
 \sub{
@@ -107,27 +109,27 @@ abc
 \sub[a]{
 abc}
 }
-🟩 {"type":"ROOT","tag":"","content":[{"type":"subscript","tag":"\\env{","content":["abc","\n",{"type":"subscript","tag":"\\env[a]{","content":["abc"],"body":true}],"body":true}]}
+🟩 {"type":"ROOT","content":[{"type":"subscript","content":["abc","\n",{"type":"subscript","content":["abc"]}]}]}
 
 🟩 curly brackets
 }
 {}}{]{_}{}{}{}{
-🟩 {"type":"ROOT","tag":"","content":["}","\n","{","}","}","{]{_","}","{","}","{","}","{","}","{"]}
+🟩 {"type":"ROOT","content":["}","\n","{","}","}","{]{_","}","{","}","{","}","{","}","{"]}
 
 🟩 empty
 
-🟩 {"type":"ROOT","tag":"","content":[]}
+🟩 {"type":"ROOT","content":[]}
 
 🟩 newline
 
 
-🟩 {"type":"ROOT","tag":"","content":["\n"]}
+🟩 {"type":"ROOT","content":["\n"]}
 
 🟩 quotes
 > hecko
 >[] uuw
 >{haa}
-🟩 {"type":"ROOT","tag":"","content":[{"type":"quote","tag":"> ","content":["hecko"],"args":{}},{"type":"quote","tag":">[] ","content":["uuw"],"args":{}},{"type":"quote","tag":">{","content":["haa"],"body":true,"args":{}}]}
+🟩 {"type":"ROOT","content":[{"type":"quote","content":["hecko"],"args":{}},{"type":"quote","content":["uuw"],"args":{}},{"type":"quote","content":["haa"],"args":{}}]}
 
 🟩 not quotes
 >:(
@@ -135,7 +137,7 @@ abc}
 heck > abc
 aa >{dwz}
 >[]abc
-🟩 {"type":"ROOT","tag":"","content":[">:(","\n",">abc","\n","heck > abc","\n","aa >{dwz","}","\n",">[]abc"]}
+🟩 {"type":"ROOT","content":[">:(","\n",">abc","\n","heck > abc","\n","aa >{dwz","}","\n",">[]abc"]}
 
 🟩 weird url args
 http://example.com[]
@@ -144,7 +146,7 @@ http://example.com[a]
 http://example.com[=]
 http://example.com[;]
 http://example.com[a=1]
-🟩 {"type":"ROOT","tag":"","content":[{"type":"simple_link","tag":"http://example.com[]","args":{"url":"http://example.com"}},"\n",{"type":"simple_link","tag":"http://example.com","args":{"url":"http://example.com"}},"[","\n",{"type":"simple_link","tag":"http://example.com[a]","args":{"url":"http://example.com","text":"a"}},"\n",{"type":"simple_link","tag":"http://example.com[=]","args":{"url":"http://example.com","text":""}},"\n",{"type":"simple_link","tag":"http://example.com[;]","args":{"url":"http://example.com","text":""}},"\n",{"type":"simple_link","tag":"http://example.com[a=1]","args":{"url":"http://example.com"}}]}
+🟩 {"type":"ROOT","content":[{"type":"simple_link","args":{"url":"http://example.com"}},"\n",{"type":"simple_link","args":{"url":"http://example.com"}},"[","\n",{"type":"simple_link","args":{"url":"http://example.com","text":"a"}},"\n",{"type":"simple_link","args":{"url":"http://example.com","text":""}},"\n",{"type":"simple_link","args":{"url":"http://example.com","text":""}},"\n",{"type":"simple_link","args":{"url":"http://example.com"}}]}
 
 🟩 dividers
 ---
@@ -159,19 +161,19 @@ http://example.com[a=1]
 a
 \{---
 ^ is that correct?
-🟩 {"type":"ROOT","tag":"","content":[{"type":"divider","tag":"---"},"\n","--","\n",{"type":"divider","tag":"-------"}," ---","\n","--- ","\n","---","\n","----","\n","- --- ","\n","a","\n",{"type":"divider","tag":"---"},"^ is that correct?"]}
+🟩 {"type":"ROOT","content":[{"type":"divider"},"\n","--","\n",{"type":"divider"}," ---","\n","--- ","\n","---","\n","----","\n","- --- ","\n","a","\n",{"type":"divider"},"^ is that correct?"]}
 
 🟩 env missing body
 \sup
 \sup[]a
 \sup.
-🟩 {"type":"ROOT","tag":"","content":["\\sup","\n","\\sup[]a","\n","\\sup."]}
+🟩 {"type":"ROOT","content":["\\sup","\n","\\sup[]a","\n","\\sup."]}
 
 🟩 env word
 abc\sup abc
 abc\sup 
 abc\sup qwe\{}rty
-🟩 {"type":"ROOT","tag":"","content":["abc",{"type":"superscript","tag":"\\sup abc","content":["abc"],"body":true},"\n","abc",{"type":"superscript","tag":"\\sup ","content":[],"body":true},"\n","abc",{"type":"superscript","tag":"\\sup qwe","content":["qwe"],"body":true},"rty"]}
+🟩 {"type":"ROOT","content":["abc",{"type":"superscript","content":["abc"]},"\n","abc",{"type":"superscript","content":[]},"\n","abc",{"type":"superscript","content":["qwe"]},"rty"]}
 
 🟩 ``` code blocks
 ```
@@ -198,13 +200,13 @@ heck```abc
 ```
 unclosed
 
-🟩 {"type":"ROOT","tag":"","content":[{"type":"code","tag":"```\nnormal\ncodeblock\nabc\n```","args":{"text":"normal\ncodeblock\nabc\n"}},{"type":"code","tag":"``` c++ 11 \nlang\naaa\n```","args":{"text":"lang\naaa\n","lang":"c++ 11"}},{"type":"code","tag":"```inline```","args":{"text":"inline"}},{"type":"code","tag":"```js\nno lb```","args":{"text":"no lb","lang":"js"}},{"type":"code","tag":"```\n\nblank lines\n\n```","args":{"text":"\nblank lines\n\n"}},"not at start ","`","`",{"type":"icode","tag":"`abc`","args":{"text":"abc"}},"`","`","\n",{"type":"code","tag":"```\nend not at start\nheck```","args":{"text":"end not at start\nheck"}},"abc","\n",{"type":"code","tag":"```\nunclosed\n","args":{"text":"unclosed\n"}}]}
+🟩 {"type":"ROOT","content":[{"type":"code","args":{"text":"normal\ncodeblock\nabc\n"}},{"type":"code","args":{"text":"lang\naaa\n","lang":"c++ 11"}},{"type":"code","args":{"text":"inline"}},{"type":"code","args":{"text":"no lb","lang":"js"}},{"type":"code","args":{"text":"\nblank lines\n\n"}},"not at start ","`","`",{"type":"icode","args":{"text":"abc"}},"`","`","\n",{"type":"code","args":{"text":"end not at start\nheck"}},"abc","\n",{"type":"code","args":{"text":"unclosed\n"}}]}
 
 🟩 paragraphs
 paragraph1
 
 paragraph2
-🟩 {"type":"ROOT","tag":"","content":["paragraph1","\n","\n","paragraph2"]}
+🟩 {"type":"ROOT","content":["paragraph1","\n","\n","paragraph2"]}
 
 🟩 heading spacing
 some text idk
@@ -214,13 +216,13 @@ some text idk
 some more text
 ## heading
 yeah
-🟩 {"type":"ROOT","tag":"","content":["some text idk","\n","\n",{"type":"heading","tag":"# ","content":["heading"],"args":{"level":1}},"\n","some more text","\n",{"type":"heading","tag":"## ","content":["heading"],"args":{"level":2}},"yeah"]}
+🟩 {"type":"ROOT","content":["some text idk","\n","\n",{"type":"heading","content":["heading"],"args":{"level":1}},"\n","some more text","\n",{"type":"heading","content":["heading"],"args":{"level":2}},"yeah"]}
 
-🟩 keys
+🟩 keys, word parsing
 \key abc
 \key a b
 \key c\key c \key c
-🟩 {"type":"ROOT","tag":"","content":[{"type":"key","tag":"\\key abc","content":["abc"],"body":true},"\n",{"type":"key","tag":"\\key a ","content":["a"],"body":true},"b","\n",{"type":"key","tag":"\\key c","content":["c"],"body":true},{"type":"key","tag":"\\key c ","content":["c"],"body":true},{"type":"key","tag":"\\key c","content":["c"],"body":true}]}
+🟩 {"type":"ROOT","content":[{"type":"key","content":["abc"]},"\n",{"type":"key","content":["a"]}," b","\n",{"type":"key","content":["c"]},{"type":"key","content":["c"]}," ",{"type":"key","content":["c"]}]}
 
 🟩 align
 \align[right] test
@@ -231,7 +233,7 @@ yeah
 \align[] ddd
 \align[aaa
 \align[aaa{}
-🟩 {"type":"ROOT","tag":"","content":[{"type":"align","tag":"\\align[right] test","content":["test"],"body":true,"args":{"align":"right"}},{"type":"align","tag":"\\align heck","content":["heck"],"body":true,"args":{"align":"center"}},{"type":"align","tag":"\\align[","content":["["],"body":true,"args":{"align":"center"}},{"type":"align","tag":"\\align[]","content":[],"args":{"align":"center"}},{"type":"align","tag":"\\align[] d","content":["d"],"body":true,"args":{"align":"center"}},{"type":"align","tag":"\\align[] ddd","content":["ddd"],"body":true,"args":{"align":"center"}},{"type":"align","tag":"\\align[aaa","content":["[aaa"],"body":true,"args":{"align":"center"}},{"type":"align","tag":"\\align[aaa{}","content":["[aaa{","}"],"body":true,"args":{"align":"center"}}]}
+🟩 {"type":"ROOT","content":[{"type":"align","content":["test"],"args":{"align":"right"}},{"type":"align","content":["heck"],"args":{"align":"center"}},{"type":"align","content":["["],"args":{"align":"center"}},{"type":"align","content":[],"args":{"align":"center"}},{"type":"align","content":["d"],"args":{"align":"center"}},{"type":"align","content":["ddd"],"args":{"align":"center"}},{"type":"align","content":["[aaa"],"args":{"align":"center"}},{"type":"align","content":["[aaa{","}"],"args":{"align":"center"}}]}
 
 🟩 stuff
 
@@ -255,12 +257,12 @@ a/
 `abc
 def`
 
-🟩 {"type":"ROOT","tag":"","content":["\n","\n",{"type":"table","tag":"","content":[{"type":"table_row","tag":"","content":[{"type":"table_cell","tag":"|[gray] ","content":["abc"],"args":{"color":"gray"}},{"type":"table_cell","tag":"[blue] ","content":["abc"],"args":{"color":"blue"}}]}]}," ",{"type":"icode","tag":"`test`","args":{"text":"test"}}," ","\n",{"type":"image","tag":"!https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true","args":{"url":"https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true"}},"the sand can be eatena","\n","\tabc","\n",{"type":"spoiler","tag":"\\spoiler","content":["abc defaaaa ",{"type":"spoiler","tag":"\\spoiler","content":["a"],"args":{"label":"spoiler"}}],"args":{"label":"spoiler"}},"aaaaaa","\n",{"type":"align","tag":"\\align[right]","content":["heck"],"args":{"align":"right"}},{"type":"align","tag":"\\align","content":["| ","table"," |"],"args":{"align":"center"}},{"type":"divider","tag":"---"},{"type":"key","tag":"\\key{","content":[{"type":"key","tag":"\\key a","content":["a"],"body":true},{"type":"key","tag":"\\key b","content":["b"],"body":true},"\n",{"type":"key","tag":"\\key ctrl","content":["ctrl"],"body":true},{"type":"invalid","tag":"\\abcdef[aaa]{","content":[" ha","}"],"body":true,"args":{"text":"\\abcdef[aaa]{","reason":"invalid tag"}},"\n",{"type":"key","tag":"\\key shift","content":["shift"],"body":true},"\n",{"type":"key","tag":"\\key ctrl","content":["ctrl"],"body":true},"+",{"type":"key","tag":"\\key shift","content":["shift"],"body":true},"+",{"type":"key","tag":"\\key M","content":["M"],"body":true}],"body":true},"\n",{"type":"spoiler","tag":"\\spoiler","content":["abc"],"args":{"label":"spoiler"}},"/","test","\n","a","/","\n",{"type":"icode","tag":"`abc","args":{"text":"abc"}},"\n","def","`","\n","\n"]}
+🟩 {"type":"ROOT","content":["\n","\n",{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","content":["abc"],"args":{"color":"gray"}},{"type":"table_cell","content":["abc"],"args":{"color":"blue"}}]}]}," ",{"type":"icode","args":{"text":"test"}}," ","\n",{"type":"image","args":{"url":"https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true"}},"the sand can be eatena","\n","\tabc","\n",{"type":"spoiler","content":["abc defaaaa ",{"type":"spoiler","content":["a"],"args":{"label":"spoiler"}}],"args":{"label":"spoiler"}},"aaaaaa","\n",{"type":"align","content":["heck"],"args":{"align":"right"}},{"type":"align","content":["| ","table"," |"],"args":{"align":"center"}},{"type":"divider"},{"type":"key","content":[{"type":"key","content":["a"]},{"type":"key","content":["b"]},"\n",{"type":"key","content":["ctrl"]},{"type":"invalid","content":[" ha","}"],"args":{"text":"\\abcdef[aaa]{","reason":"invalid tag"}},"\n",{"type":"key","content":["shift"]},"\n",{"type":"key","content":["ctrl"]},"+",{"type":"key","content":["shift"]},"+",{"type":"key","content":["M"]}]},"\n",{"type":"spoiler","content":["abc"],"args":{"label":"spoiler"}},"/","test","\n","a","/","\n",{"type":"icode","args":{"text":"abc"}},"\n","def","`","\n","\n"]}
 
 🟩 idk..env close
 >{
 \spoiler abc}heck
-🟩 {"type":"ROOT","tag":"","content":[{"type":"quote","tag":">{","content":[{"type":"spoiler","tag":"\\spoiler ","content":["abc"],"args":{"label":"spoiler"}}],"body":true,"args":{}},"heck"]}
+🟩 {"type":"ROOT","content":[{"type":"quote","content":[{"type":"spoiler","content":["abc"],"args":{"label":"spoiler"}}],"args":{}},"heck"]}
 
 🟩 spit it out
 /abc

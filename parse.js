@@ -36,7 +36,7 @@ class Markup_12y2 { constructor() {
 	
 	// ArgPattern
 	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({\n?)?/y      // [...]?{?
-	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({\n?| (\w*) ?)/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
+	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({\n?| ([-\w]*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
 	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({\n?)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
 	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({\n?)| )/y // [...]?( |{)
 	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
