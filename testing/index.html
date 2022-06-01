@@ -268,3 +268,14 @@ def`
 /abc
 }def/
 🟩 {"type":"ROOT","content":["/","abc","\n","}","def","/"]}
+
+🟩 null escape
+test\b 123\.aaaaa
+test\b 123 aaaaa
+test\b 123\i aaaaa
+heck\b\.heck, heck\b \.heck, heck\b  \.heck
+https://example\.com
+>{\.}
+|\.|
+| |
+🟩 {"type":"ROOT","content":["test",{"type":"bold","content":["123"]},"aaaaa","\n","test",{"type":"bold","content":["123"]}," aaaaa","\n","test",{"type":"bold","content":["123"]},{"type":"italic","content":["aaaaa"]},"\n","heck","\\b","heck, heck",{"type":"bold","content":[]},"heck, heck",{"type":"bold","content":[]}," ","heck","\n",{"type":"simple_link","args":{"url":"https://example"}},"com","\n",{"type":"quote","args":{},"content":[]},{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","args":{},"content":[]}]},{"type":"table_row","content":[{"type":"table_cell","args":{},"content":[]}]}]}]}
