@@ -162,7 +162,7 @@ class Markup_12y2 { constructor() {
 		} break; case 'ESCAPED': {
 			if ("\\\n"===token)
 				NEWLINE(false)
-			else
+			else if ("\\."!==token) // \. is a no-op
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
 			OPEN('quote', token, {cite: rargs[0]}, body)
