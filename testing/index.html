@@ -285,3 +285,15 @@ https://example\.com
 | table /test | /italic | abc/ |
 abc /heck |
 🟩 {"type":"ROOT","content":[{"type":"italic","content":["italic"," | ","abc"]},"\n",{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","args":{},"content":["table ","/","test"]},{"type":"table_cell","args":{},"content":["/","italic"]},{"type":"table_cell","args":{},"content":["abc","/"]}]}]},"abc ","/","heck"," |"]}
+
+🟩 list
+- abc
+lol haha
+- def
+- ghi
+  - hhhh
+- abc
+  - ack
+ - q
+anc
+🟩 {"type":"ROOT","content":[{"type":"list","args":{"indent":0},"content":[{"type":"list_item","args":{"indent":0},"content":["abc"]}]},"lol haha","\n",{"type":"list","args":{"indent":0},"content":[{"type":"list_item","args":{"indent":0},"content":["def"]},{"type":"list_item","args":{"indent":0},"content":["ghi"]},{"type":"list","args":{"indent":2},"content":[{"type":"list_item","args":{"indent":2},"content":["hhhh"]}]},{"type":"list_item","args":{"indent":0},"content":["abc"]},{"type":"list","args":{"indent":2},"content":[{"type":"list_item","args":{"indent":2},"content":["ack"]}]},{"type":"list_item","args":{"indent":1},"content":["q"]}]},"anc"]}

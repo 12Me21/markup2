@@ -237,54 +237,46 @@ class Markup_12y2 { constructor() {
 				token = token.substr(1)
 			}
 			let indent = token.indexOf("-")
-			fuck: while (1) {
-				not_list: if ('list_item'!==current.type) {
-					if (nl) {
-						EOL()
-						if ('list_item'===current.type)
-							break not_list
-						NEWLINE()
-					}
-					OPEN('list', token, {})
+			not_list: if ('list_item'!==current.type) {
+				if (nl) {
+					EOL(true)
+					if ('list_item'===current.type)
+						break not_list
+					NEWLINE()
+				}
+				OPEN('list', token, {indent})
+				OPEN('list_item', token, {indent})
+				break
+			}
+			let indent2 = current.args.indent
+			CLOSE() // list_item
+			if (indent==indent2) {
+				OPEN('list_item', token, {indent})
+				break
+			}
+			if (indent > indent2) {
+				OPEN('list', token, {indent})
+				OPEN('list_item', token, {indent})
+				break
+			}
+			// INDENT DECREASE
+			console.log('current', current.type)
+			// find the right list
+			while (1) {
+				// no more lists, start a new one
+				if (current.type!=='list') {
+					OPEN('list', token, {indent})
 					OPEN('list_item', token, {indent})
 					break
 				}
-				let indent2 = current.args.indent
-				if (indent==indent2) {
-					CLOSE()
+				let last = current.content[0]
+				let indent3 = last.args.indent
+				console.log('indent3;', current, last, indent3)
+				if (indent3 <= indent) { // ok
 					OPEN('list_item', token, {indent})
 					break
-				} else if (indent > indent2) {
-					CLOSE()
-					OPEN('list', token, {})
-					OPEN('list_item', token, {indent})
-					break
-				} else { // INDENT DECREASE
-					CLOSE()
-					// find the right list
-					while (1) {
-						if (current.type=='list') {
-							let last = current.content[current.content.length-1]
-							let indent3 = last.args.indent
-							if (indent3==indent) { // ok
-								OPEN('list_item', token, {indent})
-								break fuck
-							} else if (indent3 > indent) { // not there yet
-								// keep going
-							} else { // fuck fuck we passed it. pretend we didn't
-								//OPEN('list', token, {})
-								OPEN('list_item', token, {indent})
-								break fuck
-							}
-						} else {
-							OPEN('list', token, {})
-							OPEN('list_item', token, {indent})
-							break fuck
-							// no more lists, start a new one
-						}
-						CLOSE()
-					}
 				}
+				CLOSE()
 			}
 
 		} break; case '\\sub': {
