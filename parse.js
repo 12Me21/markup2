@@ -244,34 +244,33 @@ class Markup_12y2 { constructor() {
 				if (nl)
 					NEWLINE()
 				OPEN('list', "", {indent})
-				OPEN('list_item', token)
-				break
-			}
-			// inside a list:
-			let list_indent = current.parent.args.indent
-			CLOSE() // close list_item
-			// indent increase, create nested list
-			if (indent > list_indent)
-				OPEN('list', "", {indent})
-			// indent decrease, close lists
-			else if (indent < list_indent) {
-				while (1) {
-					// no more lists, start a new one
-					if ('list' !== current.type) {
-						OPEN('list', "", {indent})
-						break
+			} else {
+				// inside a list:
+				CLOSE() // close block 'list_item'
+				let list_indent = current.args.indent
+				// indent increase, create nested list
+				if (indent > list_indent)
+					OPEN('list', "", {indent})
+				// indent decrease, close lists
+				else if (indent < list_indent) {
+					while (1) {
+						// no more lists, start a new one
+						if ('list' !== current.type) {
+							OPEN('list', "", {indent})
+							break
+						}
+						// found the right list, or went too far?
+						list_indent = current.args.indent
+						if (indent > list_indent) // too far
+							current.args.indent = indent
+						if (indent >= list_indent)
+							break
+						// keep serching
+						CLOSE()
 					}
-					// found the right list, or went too far?
-					list_indent = current.args.indent
-					if (indent >= list_indent) {
-						current.args.indent = indent
-						break
-					}
-					// keep serching
-					CLOSE()
 				}
 			}
-			// FALLTHROUGH
+			// FALLTHROUGH, create the new list item
 			OPEN('list_item', token)
 
 		} break; case '\\sub': {
