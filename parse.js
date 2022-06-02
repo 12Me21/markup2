@@ -28,8 +28,6 @@ class Markup_12y2 { constructor() {
 	
 	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))||'\n'
 	
-	// BlockType -> boolean
-	const CAN_CANCEL = MAP({style: 1, table_cell: 1})
 	// elements which can survive an eol (without a body)
 	const SURVIVE_EOL = MAP({ROOT: 1, table_cell: 1})
 	const IS_BLOCK = MAP({code: 1, divider: 1, ROOT: 1, heading: 1, quote: 1, table: 1, table_cell: 1, image: 1, video: 1, audio: 1, spoiler: 1, align: 1, list: 1, list_item: 1, error: 1, youtube: 1})
@@ -129,7 +127,7 @@ class Markup_12y2 { constructor() {
 		} break; case 'DIVIDER': {
 			BLOCK('divider')
 		} break; case 'STYLE_START': {
-			OPEN('style', token)
+			OPEN('style', token, null, 0n)
 		} break; case 'STYLE_END': {
 			while ('style'===current.type) {
 				if (token===current.token) { // found opening
@@ -194,7 +192,7 @@ class Markup_12y2 { constructor() {
 			CLOSE() // cell
 			CLOSE() // row
 			OPEN('table_row', "")
-			OPEN('table_cell', token.replace(/^ *\n/, ""), args, body)
+			OPEN('table_cell', token.replace(/^ *\n/, ""), args, body||0n)
 		} break; case 'TABLE_END': {
 			if (REACH_CELL()) {
 				CLOSE()
@@ -207,7 +205,7 @@ class Markup_12y2 { constructor() {
 			let args = table_args(rargs)
 			OPEN('table', "")
 			OPEN('table_row', "")
-			OPEN('table_cell', token, args, body)
+			OPEN('table_cell', token, args, body||0n)
 		} break; case 'TABLE_CELL': {
 			if (!REACH_CELL()) {
 				TEXT(token)
@@ -215,7 +213,7 @@ class Markup_12y2 { constructor() {
 			}
 			let args = table_args(rargs)
 			CLOSE() // cell
-			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
+			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body||0n)
 		} break; case 'INVALID_TAG': {
 			if (body)
 				OPEN('invalid', token, {text: token, reason: "invalid tag"}, body)
@@ -363,12 +361,15 @@ class Markup_12y2 { constructor() {
 		current.content.push(...content)
 		current.prev = prev
 	}
+	function can_cancel(o) {
+		return 0n===o.body
+	}
 	// complete current block
 	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
 		
-		if (cancel && !o.body && o.type in CAN_CANCEL) {
+		if (cancel && can_cancel(o)) {
 			// todo: maybe instead of THIS, we could open a temporary table cell block, then turn it into a real one if the table ends up having more content
 			if ('table_cell'===o.type) {
 				// close table row (cancel if empty)
@@ -412,10 +413,14 @@ class Markup_12y2 { constructor() {
 			current.prev = 'newline'
 	}
 	function REACH_CELL() {
-		while ('style'===current.type)
-			CLOSE(true)
-		return 'table_cell'===current.type
-		// todo: wait, we don't find a cell, we just killed all those blocks even though this tag isn't valid ??
+		for (let c=current; can_cancel(c); c=c.parent) {
+			if (c.type==='table_cell') {
+				while (current.type!=='table_cell')
+					CLOSE(true)
+				return true
+			}
+		}
+		return false
 	}
 	
 	function parse(text) {
