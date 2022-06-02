@@ -237,47 +237,42 @@ class Markup_12y2 { constructor() {
 				token = token.substr(1)
 			}
 			let indent = token.indexOf("-")
-			not_list: if ('list_item'!==current.type) {
-				if (nl) {
-					EOL(true)
-					if ('list_item'===current.type)
-						break not_list
+			if (nl)
+				EOL(true)
+			// not inside a list, start a new one
+			if ('list_item' !== current.type) {
+				if (nl)
 					NEWLINE()
-				}
-				OPEN('list', token, {indent})
-				OPEN('list_item', token, {indent})
+				OPEN('list', "", {indent})
+				OPEN('list_item', token)
 				break
 			}
-			let indent2 = current.args.indent
-			CLOSE() // list_item
-			if (indent==indent2) {
-				OPEN('list_item', token, {indent})
-				break
-			}
-			if (indent > indent2) {
-				OPEN('list', token, {indent})
-				OPEN('list_item', token, {indent})
-				break
-			}
-			// INDENT DECREASE
-			console.log('current', current.type)
-			// find the right list
-			while (1) {
-				// no more lists, start a new one
-				if (current.type!=='list') {
-					OPEN('list', token, {indent})
-					OPEN('list_item', token, {indent})
-					break
+			// inside a list:
+			let list_indent = current.parent.args.indent
+			CLOSE() // close list_item
+			// indent increase, create nested list
+			if (indent > list_indent)
+				OPEN('list', "", {indent})
+			// indent decrease, close lists
+			else if (indent < list_indent) {
+				while (1) {
+					// no more lists, start a new one
+					if ('list' !== current.type) {
+						OPEN('list', "", {indent})
+						break
+					}
+					// found the right list, or went too far?
+					list_indent = current.args.indent
+					if (indent >= list_indent) {
+						current.args.indent = indent
+						break
+					}
+					// keep serching
+					CLOSE()
 				}
-				let last = current.content[0]
-				let indent3 = last.args.indent
-				console.log('indent3;', current, last, indent3)
-				if (indent3 <= indent) { // ok
-					OPEN('list_item', token, {indent})
-					break
-				}
-				CLOSE()
 			}
+			// FALLTHROUGH
+			OPEN('list_item', token)
 
 		} break; case '\\sub': {
 			OPEN('subscript', token, null, body)
@@ -461,6 +456,8 @@ class Markup_12y2 { constructor() {
 		current.content.push({type, args})
 		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
+	// this is used for closing blocks at the end of a line
+	// if `list` is true, don't close "list_item" blocks
 	function EOL(list) {
 		// todo: this while condition is excessive
 		while (!current.body && !(SURVIVE_EOL[current.type] || (list && current.type==='list_item')))
