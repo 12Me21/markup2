@@ -127,8 +127,7 @@ class Markup_12y2 { constructor() {
 			throw new TypeError("unknown token type: "+_token_type)
 			// error
 		} break; case 'NEWLINE': {
-			EOL()
-			NEWLINE()
+			NEWLINE(true)
 		} break; case 'HEADING': {
 			let level = base_token.length
 			let args = {level}
@@ -155,8 +154,7 @@ class Markup_12y2 { constructor() {
 			if (brackets<=0) {
 				// hack:
 				if ("\n}"==token) {
-					EOL()
-					NEWLINE()
+					NEWLINE(true)
 				}
 				TEXT("}")
 				return
@@ -171,7 +169,7 @@ class Markup_12y2 { constructor() {
 			OPEN('null_env', token, null, true)
 		} break; case 'ESCAPED': {
 			if ("\\\n"===token)
-				NEWLINE()
+				NEWLINE(false)
 			else if ("\\."!==token) // \. is a no-op
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
@@ -307,9 +305,9 @@ class Markup_12y2 { constructor() {
 		if (!type) {
 			//let u = new URL(url, "x-relative:/")
 			//let ext = /[.]([a-z0-9A-Z]{3,4})(?!\w)[^.]*$/.exec(url)
-			if (/[.](mp3|ogg|wav|m4a)(?!\w)/i.test(url))
+			if (/[.](mp3|ogg|wav|m4a)\b/i.test(url))
 				type = 'audio'
-			else if (/[.](mp4|mkv|mov)(?!\w)/i.test(url))
+			else if (/[.](mp4|mkv|mov)\b/i.test(url))
 				type = 'video'
 			else if (/^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/]|youtube.com[/]shorts[/])[\w-]{11}/.test(url)) {
 				// todo: accept [start-end] args maybe?
@@ -366,7 +364,10 @@ class Markup_12y2 { constructor() {
 		current = current.parent
 		return o
 	}
+	
 	// sketchy...
+	// this is necessary because, when contents are merged, a newline
+	// could get placed after a block, where it should be eaten.
 	function merge(content, prev, token) {
 		if (token)
 			current.content.push(token)
@@ -401,36 +402,36 @@ class Markup_12y2 { constructor() {
 		} else if ('null_env'===o.type) {
 			merge(o.content, o.prev)
 			
-		} else if ('list_item'===o.type) {
-			if ('newline'===o.prev)
-				o.content.push("\n")
-			let indent = o.args.indent
-			let node = {type: o.type, args: null, content: o.content}
-			let curr = current
-			while (1) {
-				let last = curr.content[curr.content.length-1]
-				if (!last || last.type!=='list' || last.args.indent > indent) {
-					// create a new level in the list
-					last = {type:'list', args:{indent}, content:[node]}
-					curr.content.push(last)
-					break
-				} else if (last.args.indent == indent) {
-					// add item to current list
-					last.content.push(node)
-					break
-				}
-				// keep searching
-				curr = last
-			}
-			current.prev = 'block'
-			
 		} else {
 			// otherwise, we have a normal block:
 			let node = {type: o.type, args: o.args, content: o.content}
 			if ('newline'===o.prev)
 				o.content.push("\n")
-			current.content.push(node)
-			current.prev = o.type in IS_BLOCK ? 'block' : o.prev
+			if (o.type=='list_item') {
+				node.args = null
+				let indent = o.args.indent
+				let curr = current
+				while (1) {
+					let last = curr.content[curr.content.length-1]
+					if (!last || last.type!=='list' || last.args.indent > indent) {
+						// create a new level in the list
+						last = {type:'list', args:{indent}, content:[node]}
+						// safe because there's no newline
+						curr.content.push(last)
+						break
+					} else if (last.args.indent == indent) {
+						// add item to current list
+						last.content.push(node)
+						break
+					}
+					// keep searching
+					curr = last
+				}
+				current.prev = 'block'
+			} else {
+				current.content.push(node)
+				current.prev = o.type in IS_BLOCK ? 'block' : o.prev
+			}
 		}
 	}
 	
@@ -446,14 +447,11 @@ class Markup_12y2 { constructor() {
 		current.content.push({type, args})
 		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
-	// this is used for closing blocks at the end of a line
-	// if `list` is true, don't close "list_item" blocks
-	function EOL(list) {
-		// todo: this while condition is excessive
-		while (!current.body && !(SURVIVE_EOL[current.type] || (list && current.type==='list_item')))
-			CLOSE(true)
-	}
+	
 	function NEWLINE(real) {
+		while (real && !current.body && !(SURVIVE_EOL[current.type])) {
+			CLOSE(true)
+		}
 		if ('block'!==current.prev)
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)

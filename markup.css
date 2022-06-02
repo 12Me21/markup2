@@ -261,11 +261,23 @@ L + ratio { }
 /***********/
 .Markup ul {
 	padding-left: 1.3em;
-	border: 4px solid transparent;
-	border-left: 4px solid var(--T-border-col);
+	/*border: 4px solid transparent;
+	border-left: 4px solid var(--T-border-col);*/
 }
 
 /* todo: this isn't valid, need to change how we generate this */
 .Markup ul > ul {
 	padding-left: 1em;
+}
+
+.Markup li:first-child {
+	position: relative;
+}
+.Markup li:first-child::before {
+	color: red;
+	content: "×";
+	left: -2em;
+	top: 0;
+	font-size: 0.5em;
+	position: absolute;
 }
