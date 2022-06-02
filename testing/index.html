@@ -136,8 +136,8 @@ abc}
 >abc
 heck > abc
 aa >{dwz}
->[]abc
-🟩 {"type":"ROOT","content":[">:(","\n",">abc","\n","heck > abc","\n","aa >{dwz","}","\n",">[]abc"]}
+>[abc
+🟩 {"type":"ROOT","content":[">:(","\n",">abc","\n","heck > abc","\n","aa >{dwz","}","\n",">[abc"]}
 
 🟩 weird url args
 http://example.com[]
@@ -161,13 +161,7 @@ http://example.com[a=1]
 a
 \{---
 ^ is that correct?
-🟩 {"type":"ROOT","content":[{"type":"divider"},"\n","--","\n",{"type":"divider"}," ---","\n","--- ","\n","---","\n","----","\n","- --- ","\n","a","\n",{"type":"divider"},"^ is that correct?"]}
-
-🟩 env missing body
-\sup
-\sup[]a
-\sup.
-🟩 {"type":"ROOT","content":["\\sup","\n","\\sup[]a","\n","\\sup."]}
+🟩 {"type":"ROOT","content":[{"type":"divider"},"\n","--","\n",{"type":"divider"}," ---","\n","--- ","\n","---","\n","----","\n",{"type":"list","args":{"indent":0},"content":[{"type":"list_item","content":["--- "]}]},"a","\n",{"type":"divider"},"^ is that correct?"]}
 
 🟩 env word
 abc\sup abc
@@ -223,17 +217,6 @@ yeah
 \key a b
 \key c\key c \key c
 🟩 {"type":"ROOT","content":[{"type":"key","content":["abc"]},"\n",{"type":"key","content":["a"]}," b","\n",{"type":"key","content":["c"]},{"type":"key","content":["c"]}," ",{"type":"key","content":["c"]}]}
-
-🟩 align
-\align[right] test
-\align heck
-\align[
-\align[]
-\align[] d
-\align[] ddd
-\align[aaa
-\align[aaa{}
-🟩 {"type":"ROOT","content":[{"type":"align","content":["test"],"args":{"align":"right"}},{"type":"align","content":["heck"],"args":{"align":"center"}},{"type":"align","content":["["],"args":{"align":"center"}},{"type":"align","content":[],"args":{"align":"center"}},{"type":"align","content":["d"],"args":{"align":"center"}},{"type":"align","content":["ddd"],"args":{"align":"center"}},{"type":"align","content":["[aaa"],"args":{"align":"center"}},{"type":"align","content":["[aaa{","}"],"args":{"align":"center"}}]}
 
 🟩 stuff
 
@@ -314,3 +297,22 @@ anc
 \{- def}
 - ghi
 🟩 {"type":"ROOT","content":[{"type":"list","args":{"indent":0},"content":[{"type":"list_item","content":["abc"]}]},{"type":"list","args":{"indent":0},"content":[{"type":"list_item","content":["def"]},{"type":"list_item","content":["ghi"]}]}]}
+
+🟩 bodyless tag reqd space
+\ruby[a] 🧚‍♀️,
+\ruby[a]🧚‍♀️=
+\ruby 🧚‍♀️:
+\ruby{🧚‍♀️a bc}
+\ruby🧚‍♀️ - no
+🟩 {"type":"ROOT","content":[{"type":"ruby","args":{"text":"a"},"content":["🧚‍♀️"]},",","\n",{"type":"ruby","args":{"text":"a"},"content":["🧚‍♀️"]},"=","\n",{"type":"ruby","args":{"text":"true"},"content":["🧚‍♀️"]},":","\n",{"type":"ruby","args":{"text":"true"},"content":["🧚‍♀️a bc"]},"\n","\\ruby🧚‍♀️ - no"]}
+
+🟩 bad args + align
+\align[right] test
+\align heck
+\align[
+\align[]
+\align[] d
+\align[] ddd
+\align[aaa
+\align[aaa{}
+🟩 {"type":"ROOT","content":[{"type":"align","args":{"align":"right"},"content":["test"]},{"type":"align","args":{"align":"center"},"content":["heck"]},"\\align[","\n",{"type":"align","args":{"align":"center"},"content":[]},{"type":"align","args":{"align":"center"},"content":["d"]},{"type":"align","args":{"align":"center"},"content":["ddd"]},"\\align[aaa","\n","\\align[aaa{","}"]}
