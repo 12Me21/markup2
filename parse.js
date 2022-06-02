@@ -67,7 +67,16 @@ class Markup_12y2 { constructor() {
 			groups.map(x=>Object.values(x)[0]),
 		]
 	}
+	// style start:
+	// (?<![^ \t\n({'"])([*][*]|[_][_]|[~][~]|[/])(?=[^ \t\n,'"])
+	// style end:
+	// (?<=[^ \t\n,'"])([*][*]|[_][_]|[~][~]|[/])(?![^- \t\n.,:;!?'")}])
+	
+	// problem with improving style parsing:
+	// sometimes a style tag might be valid as both a start and end tag?
+	// and we don't know until we also check the previous char
 	const [REGEX, GROUPS, ARGTYPES] = DEF_TOKENS`
+([\n]|{BOL}) *[-] +${{ LIST_ITEM: 0}}
 [\n]?[}]${{ BLOCK_END: 0}}
 [\n]${{ NEWLINE: 0}}
 {BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}
@@ -118,7 +127,8 @@ class Markup_12y2 { constructor() {
 			throw new TypeError("unknown token type: "+_token_type)
 			// error
 		} break; case 'NEWLINE': {
-			NEWLINE(true)
+			EOL()
+			NEWLINE()
 		} break; case 'HEADING': {
 			let level = base_token.length
 			let args = {level}
@@ -144,8 +154,10 @@ class Markup_12y2 { constructor() {
 		} break; case 'BLOCK_END': {
 			if (brackets<=0) {
 				// hack:
-				if ("\n}"==token)
-					NEWLINE(true)
+				if ("\n}"==token) {
+					EOL()
+					NEWLINE()
+				}
 				TEXT("}")
 				return
 			}
@@ -159,7 +171,7 @@ class Markup_12y2 { constructor() {
 			OPEN('null_env', token, null, true)
 		} break; case 'ESCAPED': {
 			if ("\\\n"===token)
-				NEWLINE(false)
+				NEWLINE()
 			else if ("\\."!==token) // \. is a no-op
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
@@ -219,6 +231,61 @@ class Markup_12y2 { constructor() {
 				OPEN('invalid', token, {text: token, reason: "invalid tag"}, body)
 			else
 				BLOCK('invalid', {text: token, reason: "invalid tag"})
+		} break; case 'LIST_ITEM': {
+			let nl = token[0]==="\n"
+			if (nl) {
+				token = token.substr(1)
+			}
+			let indent = token.indexOf("-")
+			fuck: while (1) {
+				not_list: if ('list_item'!==current.type) {
+					if (nl) {
+						EOL()
+						if ('list_item'===current.type)
+							break not_list
+						NEWLINE()
+					}
+					OPEN('list', token, {})
+					OPEN('list_item', token, {indent})
+					break
+				}
+				let indent2 = current.args.indent
+				if (indent==indent2) {
+					CLOSE()
+					OPEN('list_item', token, {indent})
+					break
+				} else if (indent > indent2) {
+					CLOSE()
+					OPEN('list', token, {})
+					OPEN('list_item', token, {indent})
+					break
+				} else { // INDENT DECREASE
+					CLOSE()
+					// find the right list
+					while (1) {
+						if (current.type=='list') {
+							let last = current.content[current.content.length-1]
+							let indent3 = last.args.indent
+							if (indent3==indent) { // ok
+								OPEN('list_item', token, {indent})
+								break fuck
+							} else if (indent3 > indent) { // not there yet
+								// keep going
+							} else { // fuck fuck we passed it. pretend we didn't
+								//OPEN('list', token, {})
+								OPEN('list_item', token, {indent})
+								break fuck
+							}
+						} else {
+							OPEN('list', token, {})
+							OPEN('list_item', token, {indent})
+							break fuck
+							// no more lists, start a new one
+						}
+						CLOSE()
+					}
+				}
+			}
 
 		} break; case '\\sub': {
 			OPEN('subscript', token, null, body)
@@ -402,17 +469,21 @@ class Markup_12y2 { constructor() {
 		current.content.push({type, args})
 		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
+	function EOL(list) {
+		// todo: this while condition is excessive
+		while (!current.body && !(SURVIVE_EOL[current.type] || (list && current.type==='list_item')))
+			CLOSE(true)
+	}
 	function NEWLINE(real) {
-		if (real)
-			// todo: this while condition is excessive
-			while (!current.body && !SURVIVE_EOL[current.type])
-				CLOSE(true)
 		if ('block'!==current.prev)
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)
 			current.prev = 'newline'
 	}
 	function REACH_CELL() {
+		// awful shit
+		// this also relies on table cells being marked as "weak"
+		// (.body = 0n) to be closed by |
 		for (let c=current; can_cancel(c); c=c.parent) {
 			if (c.type==='table_cell') {
 				while (current.type!=='table_cell')
