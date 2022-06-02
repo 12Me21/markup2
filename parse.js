@@ -32,19 +32,6 @@ class Markup_12y2 { constructor() {
 	const SURVIVE_EOL = MAP({ROOT: 1, table_cell: 1})
 	const IS_BLOCK = MAP({code: 1, divider: 1, ROOT: 1, heading: 1, quote: 1, table: 1, table_cell: 1, image: 1, video: 1, audio: 1, spoiler: 1, align: 1, list: 1, list_item: 1, error: 1, youtube: 1})
 	
-	// ArgPattern
-	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({\n?)?/y      // [...]?{?
-	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({\n?| ([-\w]*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
-	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({\n?)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
-	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({\n?)| )/y // [...]?( |{)
-	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
-	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
-	
-	const ARGS_ICODE    = /(){0}([^\n`]+)`?/y
-	ARGS_ICODE._raw = true
-	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
-	ARGS_CODE._raw = true
-	
 	// RegExp
 	// GroupNum -> TokenType
 	// GroupNum -> ArgPattern
@@ -72,11 +59,23 @@ class Markup_12y2 { constructor() {
 	// style end:
 	// (?<=[^ \t\n,'"])([*][*]|[_][_]|[~][~]|[/])(?![^- \t\n.,:;!?'")}])
 	
+	// ArgPattern
+	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({\n?)?/y      // [...]?{?
+	const ARGS_WORD     = /(?:\[([^\]\n]*)\])?({\n?| ([-\w]*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
+	const ARGS_LINE     = /(?:\[([^\]\n]*)\])?(?:({\n?)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
+	const ARGS_HEADING  = /(?:\[([^\]\n]*)\])?(?:({\n?)| )/y // [...]?( |{)
+	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
+	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
+	
+	const ARGS_ICODE    = /(){0}([^\n`]+)`?/y
+	ARGS_ICODE._raw = true // bad...
+	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
+	ARGS_CODE._raw = true
+	
 	// problem with improving style parsing:
 	// sometimes a style tag might be valid as both a start and end tag?
 	// and we don't know until we also check the previous char
 	const [REGEX, GROUPS, ARGTYPES] = DEF_TOKENS`
-([\n]|{BOL}) *[-] +${{ LIST_ITEM: 0}}
 [\n]?[}]${{ BLOCK_END: 0}}
 [\n]${{ NEWLINE: 0}}
 {BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}
@@ -93,6 +92,7 @@ class Markup_12y2 { constructor() {
  *[|] *{EOL}${{ TABLE_END: 0}}
 {BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
  *[|]${{ TABLE_CELL: ARGS_TABLE}}
+{BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}
 `
 	
 	/*	T` *[|]\n[|]${{ TABLE_ROW :ARGS_TABLE}}`
@@ -232,46 +232,8 @@ class Markup_12y2 { constructor() {
 			else
 				BLOCK('invalid', {text: token, reason: "invalid tag"})
 		} break; case 'LIST_ITEM': {
-			let nl = token[0]==="\n"
-			if (nl) {
-				token = token.substr(1)
-			}
 			let indent = token.indexOf("-")
-			if (nl)
-				EOL(true)
-			// not inside a list, start a new one
-			if ('list_item' !== current.type) {
-				if (nl)
-					NEWLINE()
-				OPEN('list', "", {indent})
-			} else {
-				// inside a list:
-				CLOSE() // close block 'list_item'
-				let list_indent = current.args.indent
-				// indent increase, create nested list
-				if (indent > list_indent)
-					OPEN('list', "", {indent})
-				// indent decrease, close lists
-				else if (indent < list_indent) {
-					while (1) {
-						// no more lists, start a new one
-						if ('list' !== current.type) {
-							OPEN('list', "", {indent})
-							break
-						}
-						// found the right list, or went too far?
-						list_indent = current.args.indent
-						if (indent > list_indent) // too far
-							current.args.indent = indent
-						if (indent >= list_indent)
-							break
-						// keep serching
-						CLOSE()
-					}
-				}
-			}
-			// FALLTHROUGH, create the new list item
-			OPEN('list_item', token)
+			OPEN('list_item', token, {indent}, body)
 
 		} break; case '\\sub': {
 			OPEN('subscript', token, null, body)
@@ -417,7 +379,11 @@ class Markup_12y2 { constructor() {
 	function can_cancel(o) {
 		return 0n===o.body
 	}
+	
 	// complete current block
+	// todo: separate close/cancel functions.
+	// close is only ever used to close specific known types
+	// (i.e. closing table parts)
 	function CLOSE(cancel) {
 		// push the block + move up
 		let o = pop()
@@ -431,18 +397,43 @@ class Markup_12y2 { constructor() {
 				current.content.length ? CLOSE() : TEXT(pop().token)
 			}
 			merge(o.content, o.prev, o.token)
+			
 		} else if ('null_env'===o.type) {
 			merge(o.content, o.prev)
-		} else {
-			// otherwise, we have a normal block:
+			
+		} else if ('list_item'===o.type) {
 			if ('newline'===o.prev)
 				o.content.push("\n")
-			current.content.push({
-				type: o.type, args: o.args, content: o.content,
-			})
+			let indent = o.args.indent
+			let node = {type: o.type, args: null, content: o.content}
+			let curr = current
+			while (1) {
+				let last = curr.content[curr.content.length-1]
+				if (!last || last.type!=='list' || last.args.indent > indent) {
+					// create a new level in the list
+					last = {type:'list', args:{indent}, content:[node]}
+					curr.content.push(last)
+					break
+				} else if (last.args.indent == indent) {
+					// add item to current list
+					last.content.push(node)
+					break
+				}
+				// keep searching
+				curr = last
+			}
+			current.prev = 'block'
+			
+		} else {
+			// otherwise, we have a normal block:
+			let node = {type: o.type, args: o.args, content: o.content}
+			if ('newline'===o.prev)
+				o.content.push("\n")
+			current.content.push(node)
 			current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 		}
 	}
+	
 	// push text
 	function TEXT(text) {
 		if (text!=="") {

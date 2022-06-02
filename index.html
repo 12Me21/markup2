@@ -95,13 +95,13 @@
 		//Markup.convert_lang($input.value, $lang.value, $output)
 		let t0 = performance.now()
 		let tree = Markup.langs.parse($input.value, $lang.value)
+		window.tree = tree
 		let t1 = performance.now()
 		$output.replaceChildren(Markup.renderer.render(tree))
 		let t2 = performance.now()
 		show_time($time1, t1-t0)
 		show_time($time2, t2-t1)
 		show_time($time3, t2-t0)
-		window.tree = tree
 	}
 	
 	$input.addEventListener('input', batch(update), {passive:true})
