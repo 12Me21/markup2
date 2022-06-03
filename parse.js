@@ -60,16 +60,26 @@ class Markup_12y2 { constructor() {
 	// (?<=[^ \t\n,'"])([*][*]|[_][_]|[~][~]|[/])(?![^- \t\n.,:;!?'")}])
 	
 	// ArgPattern
-	const ARGS_NORMAL   = /(?:\[([^\]\n]*)\])?({\n?)?/y      // [...]?{?
-	const ARGS_WORD     = /(?:\[([^\]\n]*)\]|(?=[ {]))({\n?| ?([^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*))/y // [...]?{ or [...]? <word> // todo: more complex rule for word parsing //TODO: does this set the body flag right?
-	const ARGS_LINE     = /(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y      // [...]?{? probably dont need this, we can strip space after { in all cases instead.
-	const ARGS_HEADING  = /(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // [...]?( |{)
-	const ARGS_BODYLESS = /(?:\[([^\]\n]*)\])?/y          // [...]?
-	const ARGS_TABLE    = /(?:\[([^\]\n]*)\])? */y        // [...]? *
+	const ARGS_NORMAL = // /[...]?{?/
+	/(?:\[([^\]\n]*)\])?({\n?)?/y
 	
-	const ARGS_ICODE    = /(){0}([^\n`]+)`?/y
+	const ARGS_WORD = // /[...]?{/ or /[...] ?<word>/ or / <word>/
+	/(?:\[([^\]\n]*)\]|(?=[ {]))({\n?| ?([^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*))/y // todo: more complex rule for word parsing //TODO: does this set the body flag right? //(what did i mean by this?)
+	const ARGS_LINE = // /[...]?{/ or /[...] ?/ or / /
+	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // probably dont need this, we can strip space after { in all cases instead.
+	const ARGS_HEADING = // /[...]?{/ or /[...] ?/ or / /
+	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // [...]?( |{)
+	
+	const ARGS_BODYLESS = // /[...]?/
+	/(?:\[([^\]\n]*)\])?/y
+	const ARGS_TABLE = // /[...]? */
+	/(?:\[([^\]\n]*)\])? */y
+	
+	const ARGS_ICODE = // /...`/ or /...{EOL}/
+	/(){0}([^\n`]+)`?/y
 	ARGS_ICODE._raw = true // bad...
-	const ARGS_CODE     = /(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
+	const ARGS_CODE = // /uhhh
+	/(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
 	ARGS_CODE._raw = true
 	
 	// problem with improving style parsing:
@@ -147,7 +157,7 @@ class Markup_12y2 { constructor() {
 					CLOSE()
 					return
 				}
-				CLOSE(true) // different style (kill)
+				CANCEL() // different style (kill)
 			}
 			TEXT(token)
 		} break; case 'BLOCK_END': {
@@ -161,16 +171,21 @@ class Markup_12y2 { constructor() {
 			}
 			// only runs if at least 1 element has a body, so this won't fail:
 			while (!current.body)
-				CLOSE(true)
+				CANCEL()
 			if ('invalid'===current.type)
 				TEXT("}")
 			CLOSE()
 		} break; case 'NULL_ENV': {
 			OPEN('null_env', token, null, true)
+			current.prev = current.parent.prev
 		} break; case 'ESCAPED': {
 			if ("\\\n"===token)
 				NEWLINE(false)
-			else if ("\\."!==token) // \. is a no-op
+			else if ("\\."===token) { // \. is a no-op
+				// todo: close lists too
+				//current.content.push("")
+				current.prev = 'block'
+			} else
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
 			OPEN('quote', token, {cite: rargs[0]}, body)
@@ -365,76 +380,67 @@ class Markup_12y2 { constructor() {
 		return o
 	}
 	
-	// sketchy...
-	// this is necessary because, when contents are merged, a newline
-	// could get placed after a block, where it should be eaten.
-	function merge(content, prev, token) {
-		if (token)
-			current.content.push(token)
-		else if ('block'===current.prev && "\n"===content[0])
-			content.shift() // strip newline
-		
-		current.content.push(...content)
-		current.prev = prev
-	}
 	function can_cancel(o) {
 		return 0n===o.body
 	}
 	
-	// complete current block
-	// todo: separate close/cancel functions.
-	// close is only ever used to close specific known types
-	// (i.e. closing table parts)
-	function CLOSE(cancel) {
-		// push the block + move up
-		let o = pop()
+	function CANCEL() {
+		if (!can_cancel(current))
+			return CLOSE()
 		
-		if (cancel && can_cancel(o)) {
-			// todo: maybe instead of THIS, we could open a temporary table cell block, then turn it into a real one if the table ends up having more content
-			if ('table_cell'===o.type) {
-				// close table row (cancel if empty)
-				current.content.length ? CLOSE() : pop()
-				// close table (cancel if empty)
-				current.content.length ? CLOSE() : TEXT(pop().token)
-			}
-			merge(o.content, o.prev, o.token)
-			
-		} else if ('null_env'===o.type) {
-			merge(o.content, o.prev)
-			
-		} else {
-			// otherwise, we have a normal block:
-			let node = {type: o.type, args: o.args, content: o.content}
-			if ('newline'===o.prev)
-				o.content.push("\n")
-			if (o.type=='list_item') {
-				node.args = null
-				let indent = o.args.indent
-				let curr = current
-				while (1) {
-					let last = curr.content[curr.content.length-1]
-					if (!last || last.type!=='list' || last.args.indent > indent) {
-						// create a new level in the list
-						last = {type:'list', args:{indent}, content:[node]}
-						// safe because there's no newline
-						curr.content.push(last)
-						break
-					} else if (last.args.indent == indent) {
-						// add item to current list
-						last.content.push(node)
-						break
-					}
-					// keep searching
-					curr = last
-				}
-				current.prev = 'block'
-			} else {
-				current.content.push(node)
-				current.prev = o.type in IS_BLOCK ? 'block' : o.prev
-			}
+		let o = pop()
+		// todo: maybe instead of THIS, we could open a temporary table cell block, then turn it into a real one if the table ends up having more content
+		if ('table_cell'===o.type) {
+			// close table row (cancel if empty)
+			current.content.length ? CLOSE() : pop()
+			// close table (cancel if empty)
+			current.content.length ? CLOSE() : TEXT(pop().token)
 		}
+		if (o.token)
+			current.content.push(o.token)
+		else if ('block'===current.prev && "\n"===o.content[0])
+			o.content.shift() // strip newline
+		
+		current.content.push(...o.content)
+		current.prev = o.prev
 	}
 	
+	function CLOSE() {
+		let o = pop()
+		
+		if ('null_env'===o.type) {
+			current.content.push(...o.content)
+			current.prev = o.prev
+			return
+		}
+		
+		if ('newline'===o.prev)
+			o.content.push("\n")
+		
+		if ('list_item'===o.type) {
+			let node = {type: o.type, args: null, content: o.content}
+			let indent = o.args.indent
+			for (let last, curr=current; true; curr=last) {
+				last = curr.content[curr.content.length-1]
+				if (!last || last.type!=='list' || last.args.indent > indent) {
+					// create a new level in the list
+					last = {type:'list', args:{indent}, content:[node]}
+					// safe because there's no newline
+					curr.content.push(last)
+					break
+				} else if (last.args.indent == indent) {
+					// add item to current list
+					last.content.push(node)
+					break
+				}
+			}
+			current.prev = 'block'
+		} else {
+			let node = {type: o.type, args: o.args, content: o.content}
+			current.content.push(node)
+			current.prev = o.type in IS_BLOCK ? 'block' : o.prev
+		}
+	}
 	// push text
 	function TEXT(text) {
 		if (text!=="") {
@@ -449,14 +455,14 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function NEWLINE(real) {
-		while (real && !current.body && !(SURVIVE_EOL[current.type])) {
-			CLOSE(true)
-		}
+		while (real && !current.body && !SURVIVE_EOL[current.type])
+			CANCEL()
 		if ('block'!==current.prev)
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)
 			current.prev = 'newline'
 	}
+	
 	function REACH_CELL() {
 		// awful shit
 		// this also relies on table cells being marked as "weak"
@@ -464,13 +470,13 @@ class Markup_12y2 { constructor() {
 		for (let c=current; can_cancel(c); c=c.parent) {
 			if (c.type==='table_cell') {
 				while (current.type!=='table_cell')
-					CLOSE(true)
+					CANCEL()
 				return true
 			}
 		}
 		return false
 	}
-	
+
 	function parse(text) {
 		let tree = {type: 'ROOT', token: "", content: [], prev: 'all_newline'}
 		current = tree
@@ -552,7 +558,7 @@ class Markup_12y2 { constructor() {
 		TEXT(text.substring(last)) // text after last token
 		
 		while ('ROOT'!==current.type)
-			CLOSE(true)
+			CANCEL()
 		if ('newline'===current.prev) //todo: this is repeated
 			current.content.push("\n")
 		
