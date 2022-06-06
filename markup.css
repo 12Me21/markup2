@@ -14,7 +14,7 @@ L + ratio { }
 
 *:not(*>*) { /* this selects :root with 0 specificity */
 	/* normal colors */
-	--T-col: black;
+	--T-color: black;
 	--T-bg: white;
 	
 	--T-link-color: #056;
@@ -22,8 +22,10 @@ L + ratio { }
 	--T-link-decoration: underline #AAAA; /* idk..*/
 	--T-custom-link-decoration: underline blue;
 	
-	--T-border-col: gray; /* nnnnn... */
+	--T-border-color: gray; /* nnnnn... */
 	/* these are transparent, so they should work with both dark and light */
+	--T-image-border: 1px solid var(--T-border-color);
+	
 	--T-box-bg: #AAA2;
 	
 	--T-red-bg: #F888;
@@ -46,7 +48,7 @@ L + ratio { }
 /** aa */
 
 .Markup {
-	color: var(--T-col);
+	color: var(--T-color);
 	background: var(--T-bg);
 	font: var(--T-font);
 	-moz-tab-size: var(--T-tab-size);
@@ -93,7 +95,7 @@ L + ratio { }
 	width: auto;
 	
 	object-fit: scale-down; /* just in case */
-	border: 1px solid var(--T-border-col);
+	border: var(--T-image-border);
 }
 /* before loading, assume image will be larger than --image-max-height */
 .Markup img[data-state="loading"], .Markup video[data-state="loading"] {
@@ -119,7 +121,7 @@ L + ratio { }
 	display: inline-block;
 	
 	background: var(--T-box-bg);
-	border: 1px solid var(--T-border-col);
+	border: 1px solid var(--T-border-color);
 	border-radius: 3px;
 	padding: 0.2rem 0.4rem;
 	font: var(--T-monospace-font);
@@ -163,7 +165,7 @@ L + ratio { }
 	background: var(--T-box-bg);
 	cursor: pointer;
 	padding: 0 0.3em;
-	border: 2px solid var(--T-border-col);
+	border: 2px solid var(--T-border-color);
 	border-left-width: 4px;
 	border-radius: 5px;
 	margin-top: 1px;
@@ -183,7 +185,7 @@ L + ratio { }
 .M-spoiler-inner {
 	background: var(--T-box-bg);
 	padding: 0.4rem;
-	border: 2px solid var(--T-border-col);
+	border: 2px solid var(--T-border-color);
 	border-left-width: 4px;
 	margin-bottom: 1px;
 }
@@ -198,7 +200,8 @@ L + ratio { }
 .M-quote {
 	background: var(--T-box-bg);
 	padding: 0.3rem;
-	border: 2px solid var(--T-border-col);
+	border: 2px solid var(--T-border-color);
+	margin: 1px 0;
 }
 .M-quote-label {
 	unicode-bidi: embed;
@@ -216,7 +219,7 @@ L + ratio { }
 	overflow-x: auto;
 }
 .Markup table, .Markup td, .Markup th {
-	border: 1px solid var(--T-col);
+	border: 1px solid var(--T-color);
 	border-collapse: collapse;
 }
 .Markup td, .Markup th {
@@ -262,7 +265,7 @@ L + ratio { }
 .Markup ul {
 	padding-left: 1.3em;
 	/*border: 4px solid transparent;
-	border-left: 4px solid var(--T-border-col);*/
+	border-left: 4px solid var(--T-border-color);*/
 }
 
 /* todo: this isn't valid, need to change how we generate this */
