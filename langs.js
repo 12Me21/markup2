@@ -7,7 +7,7 @@ class which contains the 12y and bbcode parsers
 	@typedef {Object} Tree
 	@property {string} type - Node Type
 	@property {?Object} args - arguments
-	@property {?Array<(Tree|string)>} contents - contents
+	@property {?Array<(Tree|string)>} content - content
 **/
 
 /**
