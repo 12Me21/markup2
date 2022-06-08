@@ -104,7 +104,7 @@ class Markup_Render_Dom { constructor() {
 			}
 			return e
 		}.bind({
-			elem: 𐀶`<img data-state=loading data-shrink tabindex=-1>`,
+			elem: 𐀶`<img data-state=loading data-shrink tabindex=0>`,
 			set_size: (e, state)=>{
 				e.dataset.state = state
 				e.width = e.naturalWidth
@@ -169,7 +169,7 @@ class Markup_Render_Dom { constructor() {
 		
 		table: function() {
 			let e = this()
-			return e.firstChild
+			return e.firstChild.firstChild
 		}.bind(𐀶`<div class='M-table-outer'><table><tbody>`),
 		
 		table_row: 𐀶`<tr>`,
