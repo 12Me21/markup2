@@ -72,19 +72,20 @@
 <output-pane class='Col'>
 	<table-overflow><table class=times>
 		<tr>
-			<th> <th> parse <th> render <th> total
+			<th> <th> parse <th> render <th> layout <th> total
 		<tr>
 			<th> time (ms)
 			<td> <time id=$time1 datetime=Z></time>
 			<td> <time id=$time2 datetime=Z></time>
 			<td> <time id=$time3 datetime=Z></time>
+			<td> <time id=$time4 datetime=Z></time>
 	</table></table-overflow>
 	<span id=$count></span>
 	<div id=$output class='Markup limit'></div>
 </output-pane>
 	
 <script>
-	let batch = (cb,w=0)=>e=>w++||setTimeout(_=>cb(e,w=0))
+	let batch = (cb,w=0)=>e=>w++||requestAnimationFrame(_=>cb(e,w=0))
 	
 	function show_time(elem, ms) {
 		elem.dateTime = (ms/1000).toFixed(4)+' s'
@@ -99,9 +100,12 @@
 		let t1 = performance.now()
 		$output.replaceChildren(Markup.renderer.render(tree))
 		let t2 = performance.now()
+		$output.scrollHeight
+		let t3 = performance.now()
 		show_time($time1, t1-t0)
 		show_time($time2, t2-t1)
-		show_time($time3, t2-t0)
+		show_time($time3, t3-t2)
+		show_time($time4, t3-t0)
 	}
 	
 	$input.addEventListener('input', batch(update), {passive:true})
