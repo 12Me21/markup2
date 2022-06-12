@@ -39,7 +39,7 @@ class Markup_Render_Dom { constructor() {
 		}
 	}
 	
-	let intersection_observer
+	let intersection_observer, preview
 	
 	let CREATE = {
 		newline: 𐀶`<br>`,
@@ -257,6 +257,12 @@ we should create our own fake bullet elements instead.*/
 		}.bind(𐀶`<span class='M-invalid'>`),
 		
 		key: 𐀶`<kbd>`,
+		
+		preview: function(node) {
+			let e = this()
+			e.textContent = node.type
+			return e
+		}.bind(𐀶`<div class='M-preview'>`),
 	}
 	
 	function fill_branch(branch, leaves, options) {
@@ -264,14 +270,19 @@ we should create our own fake bullet elements instead.*/
 			if ('string'==typeof leaf) {
 				branch.append(leaf)
 			} else {
-				let creator = CREATE[leaf.type]
-				if (!creator) {
-					if ('object'==typeof leaf && leaf)
-						throw new RangeError("unknown node .type: ‘"+leaf.type+"’")
-					else
-						throw new TypeError("unknown node type: "+typeof leaf)
+				let node
+				if (preview && (leaf.type=='audio' || leaf.type=='video' || leaf.type=='youtube')) {
+					node = CREATE.preview(leaf)
+				} else {
+					let creator = CREATE[leaf.type]
+					if (!creator) {
+						if ('object'==typeof leaf && leaf)
+							throw new RangeError("unknown node .type: ‘"+leaf.type+"’")
+						else
+							throw new TypeError("unknown node type: "+typeof leaf)
+					}
+					node = creator(leaf.args, options)
 				}
-				let node = creator(leaf.args, options)
 				if (leaf.content)
 					fill_branch(node, leaf.content, options)
 				branch.append(node.getRootNode())
@@ -287,6 +298,7 @@ we should create our own fake bullet elements instead.*/
 	**/
 	this.render = function({args, content}, node=document.createDocumentFragment(), options) {
 		intersection_observer = options && options.intersection_observer
+		preview = options && options.preview
 		node.textContent = "" //mmnn
 		fill_branch(node, content, options)
 		return node
