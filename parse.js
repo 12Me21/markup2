@@ -20,17 +20,15 @@ class Markup_12y2 { constructor() {
 	// ArgPattern 🏷 RegExp
 	// GroupNum 🏷 number - regex capturing group num
 	// RawArgs 🏷 Array - array with .named field
-	// Block 🏷 Object - has .type .args .contents
+	// Block 🏷 Object - has .type .args .content
 	// CurrentBlock 🏷 Object - block + other fields
 	
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
-	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))||'\n'
-	
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = MAP({ROOT: 1, table_cell: 1})
-	const IS_BLOCK = MAP({code: 1, divider: 1, ROOT: 1, heading: 1, quote: 1, table: 1, table_cell: 1, image: 1, video: 1, audio: 1, spoiler: 1, align: 1, list: 1, list_item: 1, error: 1, youtube: 1})
+	const SURVIVE_EOL = {__proto__:null, ROOT:1}
+	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1}
 	
 	// RegExp
 	// GroupNum -> TokenType
@@ -68,7 +66,7 @@ class Markup_12y2 { constructor() {
 	const ARGS_LINE = // /[...]?{/ or /[...] ?/ or / /
 	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // probably dont need this, we can strip space after { in all cases instead.
 	const ARGS_HEADING = // /[...]?{/ or /[...] ?/ or / /
-	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // [...]?( |{)
+	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y
 	
 	const ARGS_BODYLESS = // /[...]?/
 	/(?:\[([^\]\n]*)\])?/y
@@ -98,23 +96,16 @@ class Markup_12y2 { constructor() {
 {BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
 [\`]${{ INLINE_CODE: ARGS_ICODE}}
 ([!]${{ EMBED: ARGS_BODYLESS}})?(https?://|sbs:){URL_TEXT}${{ LINK: ARGS_NORMAL}}
- *[|] *[\n][|]${{ TABLE_ROW: ARGS_TABLE}}
  *[|] *{EOL}${{ TABLE_END: 0}}
 {BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
  *[|]${{ TABLE_CELL: ARGS_TABLE}}
 {BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}
 `
-	
-	/*	T` *[|]\n[|]${{ TABLE_ROW :ARGS_TABLE}}`
-	T` *[|]{EOL}${{ TABLE_END :0}}`
-	T`{BOL}[|]${{ TABLE_START :ARGS_TABLE}}`
-	T` *[|]${{ TABLE_CELL :ARGS_TABLE}}`
-	// todo: why do the existing patterns allow whitespace in many places?
-	T` *[|](\n[|]${{ TABLE_ROW :ARGS_TABLE}}|{EOL}${{ TABLE_END :0}})`
-	T`({BOL}${{ TABLE_START :ARGS_TABLE}}| *)[|]${{ TABLE_CELL :ARGS_TABLE}}`*/
+// org tables separators?
 	
 	// TokenType -> ArgRegex
-	const TAGS = MAP({
+	const TAGS = {
+		__proto__:null,
 		'\\sub': ARGS_WORD, '\\sup': ARGS_WORD,
 		'\\b': ARGS_WORD, '\\i': ARGS_WORD,
 		'\\u': ARGS_WORD, '\\s': ARGS_WORD,
@@ -123,7 +114,7 @@ class Markup_12y2 { constructor() {
 		'\\spoiler': ARGS_LINE,
 		'\\ruby': ARGS_WORD,
 		'\\key': ARGS_WORD,
-	})
+	}
 	
 	// process a token
 	// 📥 _token_type 🏷 TokenType 📝
@@ -151,6 +142,7 @@ class Markup_12y2 { constructor() {
 			while ('style'===current.type) {
 				if (token===current.token) { // found opening
 					current.type = {
+						__proto__:null,
 						'**': 'bold', '__': 'underline',
 						'~~': 'strikethrough', '/': 'italic',
 					}[current.token]
@@ -163,9 +155,8 @@ class Markup_12y2 { constructor() {
 		} break; case 'BLOCK_END': {
 			if (brackets<=0) {
 				// hack:
-				if ("\n}"==token) {
+				if ("\n}"==token)
 					NEWLINE(true)
-				}
 				TEXT("}")
 				return
 			}
@@ -208,37 +199,21 @@ class Markup_12y2 { constructor() {
 				args.text = rargs[0]
 				BLOCK('simple_link', args)
 			}
-		} break; case 'TABLE_ROW': {
-			if (!REACH_CELL()) {
-				TEXT(token)
-				return
-			}
-			let args = table_args(rargs)
+		} break; case 'TABLE_END': {
+			if (!REACH_CELL())
+				return void TEXT(token)
 			CLOSE() // cell
 			CLOSE() // row
-			OPEN('table_row', "")
-			OPEN('table_cell', token.replace(/^ *\n/, ""), args, body||0n)
-		} break; case 'TABLE_END': {
-			if (REACH_CELL()) {
-				CLOSE()
-				CLOSE()
-				CLOSE()
-				return
-			}
-			TEXT(token)
 		} break; case 'TABLE_START': {
 			let args = table_args(rargs)
-			OPEN('table', "")
 			OPEN('table_row', "")
-			OPEN('table_cell', token, args, body||0n)
+			OPEN('table_cell', token, args, body)
 		} break; case 'TABLE_CELL': {
-			if (!REACH_CELL()) {
-				TEXT(token)
-				return
-			}
+			if (!REACH_CELL())
+				return void TEXT(token)
 			let args = table_args(rargs)
 			CLOSE() // cell
-			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body||0n)
+			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
 		} break; case 'INVALID_TAG': {
 			if (body)
 				OPEN('invalid', token, {text: token, reason: "invalid tag"}, body)
@@ -385,24 +360,25 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function CANCEL() {
-		if (!can_cancel(current))
-			return CLOSE()
-		
-		let o = pop()
-		// todo: maybe instead of THIS, we could open a temporary table cell block, then turn it into a real one if the table ends up having more content
-		if ('table_cell'===o.type) {
-			// close table row (cancel if empty)
-			current.content.length ? CLOSE() : pop()
-			// close table (cancel if empty)
-			current.content.length ? CLOSE() : TEXT(pop().token)
-		}
-		if (o.token)
-			current.content.push(o.token)
-		else if ('block'===current.prev && "\n"===o.content[0])
-			o.content.shift() // strip newline
-		
-		current.content.push(...o.content)
-		current.prev = o.prev
+		if (current.body===0n || current.type==='table_cell') {
+			let o = pop()
+			
+			if (o.type==='table_cell')
+				CLOSE() //close the door
+			
+			if (o.token)
+				current.content.push(o.token)
+			else if ('block'===current.prev && "\n"===o.content[0])
+				o.content.shift() // strip newline
+			
+			current.content.push(...o.content)
+			current.prev = o.prev
+		} else
+			CLOSE()
+	}
+	
+	function get_last(block) {
+		return block.content[block.content.length-1]
 	}
 	
 	function CLOSE() {
@@ -416,30 +392,38 @@ class Markup_12y2 { constructor() {
 		
 		if ('newline'===o.prev)
 			o.content.push("\n")
+		let node = {type: o.type, args: o.args, content: o.content}
+		let dest = current
 		
+		// merge list_item with preceeding list
 		if ('list_item'===o.type) {
-			let node = {type: o.type, args: null, content: o.content}
+			node.args = null
 			let indent = o.args.indent
-			for (let last, curr=current; true; curr=last) {
-				last = curr.content[curr.content.length-1]
-				if (!last || last.type!=='list' || last.args.indent > indent) {
+			while (1) {
+				let curr = dest
+				dest = get_last(curr)
+				if (!dest || dest.type!=='list' || dest.args.indent>indent) {
 					// create a new level in the list
-					last = {type:'list', args:{indent}, content:[node]}
+					dest = {type:'list', args:{indent}, content:[]}
 					// safe because there's no newline
-					curr.content.push(last)
-					break
-				} else if (last.args.indent == indent) {
-					// add item to current list
-					last.content.push(node)
+					curr.content.push(dest)
 					break
 				}
+				if (dest.args.indent == indent)
+					break
 			}
-			current.prev = 'block'
-		} else {
-			let node = {type: o.type, args: o.args, content: o.content}
-			current.content.push(node)
-			current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 		}
+		// merge table_row with preceeding table
+		else if ('table_row'===o.type) {
+			dest = get_last(current)
+			if (!dest || 'table'!==dest.type) {
+				dest = {type:'table', args:null, content:[]}
+				current.content.push(dest)
+			}
+		}
+		
+		dest.content.push(node)
+		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 	}
 	// push text
 	function TEXT(text) {
@@ -467,12 +451,13 @@ class Markup_12y2 { constructor() {
 		// awful shit
 		// this also relies on table cells being marked as "weak"
 		// (.body = 0n) to be closed by |
-		for (let c=current; can_cancel(c); c=c.parent) {
-			if (c.type==='table_cell') {
-				while (current.type!=='table_cell')
-					CANCEL()
-				return true
-			}
+		let c
+		for (c=current; can_cancel(c); c=c.parent)
+			;
+		if (c.type==='table_cell') {
+			while (current.type!=='table_cell')
+				CANCEL()
+			return true
 		}
 		return false
 	}

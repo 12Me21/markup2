@@ -17,6 +17,7 @@ class Markup_Render_Dom { constructor() {
 	// todo: this needs to be more powerful. i.e. returning entire elements in some cases etc.  gosh idk.. need to handle like, sbs emotes ? how uh nno that should be the parser's job.. oh and also this should, like,
 	// for embeds, need separate handlers for normal urls and embeds and
 	let URL_SCHEME = {
+		__proto__: null,
 		"sbs:": (url, thing)=> "#"+url.pathname+url.search+url.hash,
 		"https:": (url, thing)=> url.href,
 		"http:": (url, thing)=> url.href,
@@ -42,6 +43,8 @@ class Markup_Render_Dom { constructor() {
 	let intersection_observer, preview
 	
 	let CREATE = {
+		__proto__: null,
+		
 		newline: 𐀶`<br>`,
 		
 		divider: 𐀶`<hr>`,

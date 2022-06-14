@@ -155,6 +155,8 @@ class Comparator {
 	print() {
 		let s = "", i = 0
 		for (let {node, index} of this.stack) {
+			if (!node)
+				break
 			index = index==null ? "" : ".content["+(index+1)+"/"+node.content.length+"]"
 			node = 'string'==typeof node ? JSON.stringify(node) : node.type
 			let prefix = i==0 ? "" : "    ".repeat(i-1)+"└ "
@@ -183,8 +185,9 @@ class Comparator {
 				this.mismatch("node.args", correct, got)
 			return
 		}
-		if (!this.is_object(correct))
-			throw new Error("invalid reference tree")
+		if (!this.is_object(correct)) {
+			this.mismatch("reference tree", 'object', correct)
+		}
 		if (!this.is_object(got))
 			this.mismatch("node.args", correct, got)
 		
@@ -221,8 +224,9 @@ class Comparator {
 				this.mismatch("node", correct, got)
 		} else {
 			// object node
-			if (!this.is_object(correct))
-				throw new Error("invalid reference tree")
+			if (!this.is_object(correct)) {
+				this.mismatch("reference tree", 'object', correct)
+			}
 			if (!this.is_object(got))
 				this.mismatch("node", correct, got)
 			if (got.type !== correct.type)
