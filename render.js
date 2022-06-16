@@ -119,7 +119,6 @@ class Markup_Render_Dom { constructor() {
 		
 		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
 		
-		// todo: we need a preview flag which disables these because they're very slow... invalid images are bad too.
 		audio: function({url}) {
 			let e = this()
 			let audio = document.createElement('audio')
@@ -159,6 +158,47 @@ aaa
 `),
 		
 		video: function({url}) {
+			let e = this()
+			let media = document.createElement('video')
+			media.preload = 'none'
+			media.src = filter_url(url, 'video')
+			media.dataset.shrink = ""
+			e.firstChild.replaceWith(media)
+			let cl = e.lastChild
+			let [play, progress, time] = cl.childNodes
+			play.onclick = e=>{
+				if (media.paused) {
+					media.play()
+					//let e2 = new Event('videoclicked', {bubbles: true, cancellable: true})
+					//media.dispatchEvent(e2)
+				} else
+					media.pause()
+				e.stopPropagation()
+			}
+			media.ondurationchange = e=>{
+				let s = media.duration
+				let m = Math.floor(s / 60)
+				s = s % 60
+				time.textContent = m+":"+(s+100).toFixed(2).substr(1)
+			}
+			media.ontimeupdate = e=>{
+				progress.value = media.currentTime / media.duration * 100
+			}
+			progress.onchange = e=>{
+				media.currentTime = progress.value/100 * media.duration
+			}
+			return e
+		}.bind(𐀶`
+<video-embed>
+aaa
+<div>
+<button>Play</button>
+<input type=range max=100 value=0>
+<span>not loaded</span>
+</div>
+</video-embed>
+`),
+		/*video: function({url}) {
 			let e = document.createElement('video')
 			//e.controls = true
 			//e.preload = 'none'
@@ -175,7 +215,7 @@ aaa
 				event.target.dispatchEvent(e2)
 			}
 			return e
-		},
+		},*/
 		
 		italic: 𐀶`<i>`,
 		
