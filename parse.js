@@ -27,7 +27,6 @@ class Markup_12y2 { constructor() {
 	let current, brackets
 	
 	// elements which can survive an eol (without a body)
-	const SURVIVE_EOL = {__proto__:null, ROOT:1}
 	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1}
 	
 	// RegExp
@@ -38,7 +37,8 @@ class Markup_12y2 { constructor() {
 			'{EOL}': "(?![^\\n])",
 			'{BOL}': "^",
 			'{ANY}': "[^]",
-			'{URL_TEXT}': "[-\\w/%&=#+~@$*')(!?,.;:]*[-\\w/%&=#+~@$*')(]",
+			'{URL_CHARS}': "[-\\w/%&=#+~@$*'!?,.;:]*",
+			'{URL_FINAL}': "[-\\w/%&=#+~@$*']",
 		}
 		return [
 			new RegExp(
@@ -95,7 +95,7 @@ class Markup_12y2 { constructor() {
 {BOL}[>]${{ QUOTE: ARGS_HEADING}}
 {BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
 [\`]${{ INLINE_CODE: ARGS_ICODE}}
-([!]${{ EMBED: ARGS_BODYLESS}})?(https?://|sbs:){URL_TEXT}${{ LINK: ARGS_NORMAL}}
+([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}
  *[|] *{EOL}${{ TABLE_END: 0}}
 {BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
  *[|]${{ TABLE_CELL: ARGS_TABLE}}
@@ -360,11 +360,8 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function CANCEL() {
-		if (current.body===0n || current.type==='table_cell') {
+		if (can_cancel(current)) {
 			let o = pop()
-			
-			if (o.type==='table_cell')
-				CLOSE() //close the door
 			
 			if (o.token)
 				current.content.push(o.token)
@@ -439,8 +436,9 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function NEWLINE(real) {
-		while (real && !current.body && !SURVIVE_EOL[current.type])
-			CANCEL()
+		if (real)
+			while (!current.body && 'ROOT'!=current.type)
+				CANCEL()
 		if ('block'!==current.prev)
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)

@@ -325,3 +325,12 @@ wow |
 the sand | can be eaten |
 heck |
 🟩 {"type":"ROOT","content":["|","\n","wow"," |\n|","abc","\n",{"type":"table","content":[{"type":"table_row","content":[{"type":"table_cell","args":{},"content":["abc"]},{"type":"table_cell","args":{},"content":["abc","\n","the sand"]},{"type":"table_cell","args":{},"content":["can be eaten"]}]}]},"heck"," |"]}
+
+🟩 urls
+aaahttp://example.com
+http://example.com?
+(http://example.com)
+(http://example.com/heck(123))
+http://example.com/heck(123)abc;
+
+🟩 {"type":"ROOT","content":["aaahttp:","/","/","example.com","\n",{"type":"simple_link","args":{"url":"http://example.com"}},"?","\n","(",{"type":"simple_link","args":{"url":"http://example.com"}},")","\n","(",{"type":"simple_link","args":{"url":"http://example.com/heck(123)"}},")","\n",{"type":"simple_link","args":{"url":"http://example.com/heck(123)abc"}},";","\n","\n"]}
