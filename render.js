@@ -121,18 +121,48 @@ class Markup_Render_Dom { constructor() {
 		
 		// todo: we need a preview flag which disables these because they're very slow... invalid images are bad too.
 		audio: function({url}) {
-			let e = document.createElement('audio')
-			e.controls = true
-			e.preload = 'none'
-			
-			e.src = filter_url(url, 'audio')
+			let e = this()
+			let audio = document.createElement('audio')
+			audio.preload = 'none'
+			audio.src = filter_url(url, 'audio')
+			e.firstChild.replaceWith(audio)
+			let cl = e.lastChild
+			let [play, progress, time] = cl.childNodes
+			play.onclick = e=>{
+				if (audio.paused)
+					audio.play()
+				else
+					audio.pause()
+			}
+			audio.ondurationchange = e=>{
+				let s = audio.duration
+				let m = Math.floor(s / 60)
+				s = s % 60
+				time.textContent = m+":"+(s+100).toFixed(2).substr(1)
+			}
+			audio.ontimeupdate = e=>{
+				progress.value = audio.currentTime / audio.duration * 100
+			}
+			progress.onchange = e=>{
+				audio.currentTime = progress.value/100 * audio.duration
+			}
 			return e
-		},
+		}.bind(𐀶`
+<audio-embed>
+aaa
+<div>
+<button>Play</button>
+<input type=range max=100 value=0>
+<span>not loaded</span>
+</div>
+</audio-embed>
+`),
 		
 		video: function({url}) {
 			let e = document.createElement('video')
-			e.controls = true
-			e.preload = 'none'
+			//e.controls = true
+			//e.preload = 'none'
+			e.autoplay = true
 			e.dataset.shrink = ""
 			
 			e.src = filter_url(url, 'video')

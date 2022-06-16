@@ -107,6 +107,9 @@ L + ratio { }
 	height: auto;
 }
 
+.Markup youtube-embed {
+	display: block;
+}
 /* ruby text doesn't work if set to white-space: pre */
 .Markup rt {
 	white-space: pre-line;
