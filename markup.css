@@ -38,9 +38,10 @@ L + ratio { }
 	
 	--T-link-bg: #5CE5; /* for links w/ custom text */
 	
-	/* Most themes won't change these: */
+
 	--T-tab-size: 2.5;
 	--T-embed-height: 10vh;
+	
 	--T-font: 1em sans-serif;
 	--T-monospace-font: 0.8128em consolas, monospace;
 }

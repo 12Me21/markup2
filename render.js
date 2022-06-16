@@ -177,8 +177,8 @@ class Markup_Render_Dom { constructor() {
 		
 		table_row: 𐀶`<tr>`,
 		
-		table_cell: function({header, color, truecolor, colspan, rowspan, align}) {
-			let e = this[header?1:0]()
+		table_cell: function({header, color, truecolor, colspan, rowspan, align}, parent) {
+			let e = this[header||parent.header ? 1 : 0]()
 			if (color) e.dataset.bgcolor = color
 			if (truecolor) e.style.backgroundColor = truecolor
 			if (colspan) e.colSpan = colspan
@@ -268,7 +268,7 @@ we should create our own fake bullet elements instead.*/
 		}.bind(𐀶`<div class='M-preview'>`),
 	}
 	
-	function fill_branch(branch, leaves, options) {
+	function fill_branch(branch, leaves) {
 		for (let leaf of leaves) {
 			if ('string'==typeof leaf) {
 				branch.append(leaf)
@@ -284,11 +284,23 @@ we should create our own fake bullet elements instead.*/
 						else
 							throw new TypeError("unknown node type: "+typeof leaf)
 					}
-					node = creator(leaf.args, options)
+					node = creator(leaf.args)
 				}
-				if (leaf.content)
-					fill_branch(node, leaf.content, options)
-				branch.append(node.getRootNode())
+				if (leaf.content) {
+					if ('table_row'===leaf.type) {
+						for (let cell of leaf.content) {
+							if ('table_cell'!==cell.type)
+								continue
+							let c = CREATE.table_cell(cell.args, leaf.args)
+							if (cell.content)
+								fill_branch(c, cell.content)
+							node.append(c)
+						}
+					} else {
+						fill_branch(node, leaf.content)
+					}
+				}
+				branch.append(node.getRootNode()) // recursion order?
 			}
 		}
 	}
@@ -303,7 +315,7 @@ we should create our own fake bullet elements instead.*/
 		intersection_observer = options && options.intersection_observer
 		preview = options && options.preview
 		node.textContent = "" //mmnn
-		fill_branch(node, content, options)
+		fill_branch(node, content)
 		return node
 	}
 	/**

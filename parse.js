@@ -96,9 +96,7 @@ class Markup_12y2 { constructor() {
 {BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
 [\`]${{ INLINE_CODE: ARGS_ICODE}}
 ([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}
- *[|] *{EOL}${{ TABLE_END: 0}}
-{BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
- *[|]${{ TABLE_CELL: ARGS_TABLE}}
+({BOL}${{ TABLE_START: ARGS_TABLE}}|) *[|]${{ TABLE_CELL: ARGS_TABLE}}
 {BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}
 `
 // org tables separators?
@@ -123,7 +121,6 @@ class Markup_12y2 { constructor() {
 	// 📥 body 🏷 Text 📝 argmatch[2] (varies)
 	// 📥 base_token 🏷 Text 📝 token text, without arguments
 	function PROCESS(_token_type, token, rargs, body, base_token) {
-		//console.log('process', arguments)
 		switch (_token_type) { default: {
 			throw new TypeError("unknown token type: "+_token_type)
 			// error
@@ -205,15 +202,15 @@ class Markup_12y2 { constructor() {
 			CLOSE() // cell
 			CLOSE() // row
 		} break; case 'TABLE_START': {
-			let args = table_args(rargs)
-			OPEN('table_row', "")
-			OPEN('table_cell', token, args, body)
+			OPEN('table_row', token, {})
+			OPEN('table_cell', "", rargs, body)
 		} break; case 'TABLE_CELL': {
 			if (!REACH_CELL())
 				return void TEXT(token)
-			let args = table_args(rargs)
 			CLOSE() // cell
-			OPEN('table_cell', token.replace(/^ *[|]/, ""), args, body)
+			// we don't know whether these are row args or cell args,
+			// so just pass the raw args directly, and parse them later.
+			OPEN('table_cell', token, rargs, body)
 		} break; case 'INVALID_TAG': {
 			if (body)
 				OPEN('invalid', token, {text: token, reason: "invalid tag"}, body)
@@ -318,23 +315,6 @@ class Markup_12y2 { constructor() {
 		}
 		return [type, args]
 	}
-
-	function table_args(rargs) {
-		let ret = {}
-		for (let arg of rargs) {
-			let m
-			if ('*'===arg)
-				ret.header = true
-			else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
-				ret.color = arg
-			else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
-				let [, w, h] = m
-				if (+w > 1) ret.colspan = +w
-				if (+h > 1) ret.rowspan = +h
-			}
-		}
-		return ret
-	}
 	
 	// start a new block
 	function OPEN(type, token, args, body) {
@@ -370,6 +350,25 @@ class Markup_12y2 { constructor() {
 			
 			current.content.push(...o.content)
 			current.prev = o.prev
+		} else if ('table_cell'===current.type && !current.content.length) {
+			// cancelling an empty table cell means it's the end of the row
+			// so, discard the cell
+			let o = pop()
+			// if the row is empty (i.e. we just have a single | )
+			if (!current.content.length) {
+				let o = pop() // discard the row
+				TEXT(o.token)
+				return
+			}
+			// transfer args to the row, and parse as table row args:
+			let ret = current.args
+			for (let arg of o.args) {
+				if ("*"===arg || "#"===arg) {
+					ret.header = true
+				}
+			}
+			// close the row
+			CLOSE()
 		} else
 			CLOSE()
 	}
@@ -418,6 +417,22 @@ class Markup_12y2 { constructor() {
 				current.content.push(dest)
 			}
 		}
+		// table cell
+		else if ('table_cell'===o.type) {
+			let ret = node.args = {}
+			for (let arg of o.args) {
+				let m
+				if ("*"===arg || "#"===arg)
+					ret.header = true
+				else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
+					ret.color = arg
+				else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
+					let [, w, h] = m
+					if (+w > 1) ret.colspan = +w
+					if (+h > 1) ret.rowspan = +h
+				}
+			}
+		}
 		
 		dest.content.push(node)
 		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
@@ -446,18 +461,15 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function REACH_CELL() {
-		// awful shit
-		// this also relies on table cells being marked as "weak"
-		// (.body = 0n) to be closed by |
-		let c
-		for (c=current; can_cancel(c); c=c.parent)
-			;
-		if (c.type==='table_cell') {
-			while (current.type!=='table_cell')
-				CANCEL()
-			return true
+		for (let c=current; ; c=c.parent) {
+			if (c.type==='table_cell') {
+				while (current.type!=='table_cell')
+					CANCEL()
+				return true
+			}
+			if (!can_cancel(c))
+				return false
 		}
-		return false
 	}
 
 	function parse(text) {
