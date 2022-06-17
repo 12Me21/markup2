@@ -73,9 +73,6 @@ class Markup_12y2 { constructor() {
 	const ARGS_TABLE = // /[...]? */
 	/(?:\[([^\]\n]*)\])? */y
 	
-	const ARGS_ICODE = // /...`/ or /...{EOL}/
-	/(){0}([^\n`]+)`?/y
-	ARGS_ICODE._raw = true // bad...
 	const ARGS_CODE = // /uhhh
 	/(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
 	ARGS_CODE._raw = true
@@ -94,12 +91,14 @@ class Markup_12y2 { constructor() {
 [\\]{ANY}${{ ESCAPED: 0}}
 {BOL}[>]${{ QUOTE: ARGS_HEADING}}
 {BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
-[\`]${{ INLINE_CODE: ARGS_ICODE}}
+[\`]{1,2}[^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${{ INLINE_CODE: 0}}
 ([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}
-({BOL}${{ TABLE_START: ARGS_TABLE}}|) *[|]${{ TABLE_CELL: ARGS_TABLE}}
+{BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
+ *[|]${{ TABLE_CELL: ARGS_TABLE}}
 {BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}
 `
 // org tables separators?
+	//[\`]{2}[^\n]*${{ LINE_CODE: 0}}
 	
 	// TokenType -> ArgRegex
 	const TAGS = {
@@ -182,7 +181,9 @@ class Markup_12y2 { constructor() {
 			// idea: strip leading indent from code?
 			BLOCK('code', {text: body, lang})
 		} break; case 'INLINE_CODE': {
-			BLOCK('icode', {text: body})
+			BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
+		} break; case 'LINE_CODE': {
+			BLOCK('icode', {text: token.substring(2)})
 		} break; case 'EMBED': {
 			let url = base_token.substr(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
