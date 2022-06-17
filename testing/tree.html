@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang=en-QS>
-<meta id=ݽ charset=utf-8>
-<title>Markup2 Demo</title>
+<!doctype html><html lang=en-QS><meta charset=utf-8>
+<meta name=viewport content="width=device-width, initial-scale=1">
+<title>Markup2 Tree Viewer</title>
 
+<base href=..>
 <script src=langs.js></script>
 <script src=parse.js></script>
 <script src=legacy.js></script>
@@ -10,10 +10,11 @@
 <script src=runtime.js></script>
 <script src=helpers.js></script>
 
-<script src=testing/tree.js></script>
-
-<meta name=viewport content="width=device-width, initial-scale=1, height=device-height">
 <link rel=stylesheet href=markup.css>
+
+<script src=testing/tree.js></script>
+<link rel=stylesheet href=testing/tree.css>
+
 <style>
 	html { word-break: break-word; }
 	
@@ -100,7 +101,8 @@
 		let tree = Markup.langs.parse($input.value, $lang.value)
 		window.tree = tree
 		let t1 = performance.now()
-		$output.replaceChildren(Markup.renderer.render(tree))
+		$output.replaceChildren(draw_node(tree))
+		//$output.replaceChildren(Markup.renderer.render(tree))
 		let t2 = performance.now()
 		$output.scrollHeight
 		let t3 = performance.now()

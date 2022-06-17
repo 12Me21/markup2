@@ -1,0 +1,38 @@
+tree-node {
+	display: block;
+}
+tree-node > div:not(.content) {
+	display: inline-block;
+	background: lavender;
+	border: 2px solid purple;
+	border-radius: 10px 10px 0 0;
+	padding: 1px 3px;
+	vertical-align: top;
+}
+tree-node.one > div:not(.content) {
+	border-radius: 10px 0 0 10px;
+}
+tree-node.leaf > div:not(.content) {
+	border-radius: 10px 10px 10px 10px;
+}
+tree-node > div > .type {
+	font-weight: bold;
+}
+tree-node > div > .args {
+	font-family: monospace;
+}
+tree-node > div.content {
+	padding-left: 10px;
+	border: 1px dotted purple;
+}
+tree-node.one > div.content {
+	display: inline-block;
+}
+
+tree-node.text {
+	display: inline-block;
+	background: lavender;
+	border: 2px solid purple;
+	border-radius: 10px;
+	padding: 1px 3px;
+}
