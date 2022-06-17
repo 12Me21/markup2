@@ -126,37 +126,53 @@ class Markup_Render_Dom { constructor() {
 			audio.src = filter_url(url, 'audio')
 			e.firstChild.replaceWith(audio)
 			let cl = e.lastChild
-			let [play, progress, time] = cl.childNodes
+			let [play, progress, time, link] = cl.childNodes
 			play.onclick = e=>{
 				if (audio.paused)
 					audio.play()
 				else
 					audio.pause()
 			}
-			audio.ondurationchange = e=>{
-				let s = audio.duration
+			audio.onpause = e=>{
+				play.textContent = "▶️"
+			}
+			audio.onpause()
+			audio.onplay = e=>{
+				play.textContent = "⏸️"
+			}
+			audio.onerror = e=>{
+				time.textContent = "Error"
+			}
+			function format_time(dur) {
+				let s = dur
 				let m = Math.floor(s / 60)
 				s = s % 60
-				time.textContent = m+":"+(s+100).toFixed(2).substr(1)
+				return m+":"+(s+100).toFixed(1).substr(1)
+			}
+			audio.ondurationchange = e=>{
+				progress.max = Math.ceil(audio.duration*10)/10
+				time.textContent = format_time(audio.currentTime)+"/"+format_time(audio.duration)
 			}
 			audio.ontimeupdate = e=>{
-				progress.value = audio.currentTime / audio.duration * 100
+				time.textContent = format_time(audio.currentTime)+"/"+format_time(audio.duration)
+				progress.value = audio.currentTime
 			}
 			progress.onchange = e=>{
-				audio.currentTime = progress.value/100 * audio.duration
+				audio.currentTime = progress.value
 			}
+			link.href = audio.src
 			return e
 		}.bind(𐀶`
-<audio-embed>
+<media-player>
 aaa
 <div>
-<button>Play</button>
-<input type=range max=100 value=0>
+<button></button>
+<input type=range max=100 step=0.1 value=0>
 <span>not loaded</span>
+<a target=_blank>🔗</a>
 </div>
-</audio-embed>
+</media-player>
 `),
-		
 		video: function({url}) {
 			let e = this()
 			let media = document.createElement('video')
@@ -189,14 +205,14 @@ aaa
 			}
 			return e
 		}.bind(𐀶`
-<video-embed>
+<media-player>
 aaa
 <div>
 <button>Play</button>
 <input type=range max=100 value=0>
 <span>not loaded</span>
 </div>
-</video-embed>
+</media-player>
 `),
 		/*video: function({url}) {
 			let e = document.createElement('video')
