@@ -91,14 +91,16 @@ class Markup_12y2 { constructor() {
 [\\]{ANY}${{ ESCAPED: 0}}
 {BOL}[>]${{ QUOTE: ARGS_HEADING}}
 {BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
-[\`]{1,2}[^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${{ INLINE_CODE: 0}}
+[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${{ INLINE_CODE: 0}}
 ([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}
 {BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
  *[|]${{ TABLE_CELL: ARGS_TABLE}}
 {BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}
 `
-// org tables separators?
+	//todo: org tables separators?
+	
 	//[\`]{2}[^\n]*${{ LINE_CODE: 0}}
+	//[\`]{2}[^\`\n]*([\`][^\`\n]+)*[\`]{0,3}${{ INLINE_CODE_2: 0}}
 	
 	// TokenType -> ArgRegex
 	const TAGS = {
@@ -133,7 +135,7 @@ class Markup_12y2 { constructor() {
 		} break; case 'DIVIDER': {
 			BLOCK('divider')
 		} break; case 'STYLE_START': {
-			OPEN('style', token, null, 0n)
+			OPEN('style', token)
 		} break; case 'STYLE_END': {
 			while ('style'===current.type) {
 				if (token===current.token) { // found opening
@@ -182,8 +184,11 @@ class Markup_12y2 { constructor() {
 			BLOCK('code', {text: body, lang})
 		} break; case 'INLINE_CODE': {
 			BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
+/*		} break; case 'INLINE_CODE_2': {
+			token = token.slice(2, token.endsWith("``") ? -2 : 1/0)
+			BLOCK('icode', {text: token})
 		} break; case 'LINE_CODE': {
-			BLOCK('icode', {text: token.substring(2)})
+			BLOCK('icode', {text: token.substring(2)})*/
 		} break; case 'EMBED': {
 			let url = base_token.substr(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
@@ -197,17 +202,12 @@ class Markup_12y2 { constructor() {
 				args.text = rargs[0]
 				BLOCK('simple_link', args)
 			}
-		} break; case 'TABLE_END': {
-			if (!REACH_CELL())
-				return void TEXT(token)
-			CLOSE() // cell
-			CLOSE() // row
 		} break; case 'TABLE_START': {
 			OPEN('table_row', token, {})
 			OPEN('table_cell', "", rargs, body)
 		} break; case 'TABLE_CELL': {
-			if (!REACH_CELL())
-				return void TEXT(token)
+			while (current.type!=='table_cell')
+				CANCEL()
 			CLOSE() // cell
 			// we don't know whether these are row args or cell args,
 			// so just pass the raw args directly, and parse them later.
@@ -337,7 +337,7 @@ class Markup_12y2 { constructor() {
 	}
 	
 	function can_cancel(o) {
-		return 0n===o.body
+		return 'style'===o.type
 	}
 	
 	function CANCEL() {
@@ -461,13 +461,10 @@ class Markup_12y2 { constructor() {
 			current.prev = 'newline'
 	}
 	
-	function REACH_CELL() {
+	function in_table() {
 		for (let c=current; ; c=c.parent) {
-			if (c.type==='table_cell') {
-				while (current.type!=='table_cell')
-					CANCEL()
+			if (c.type==='table_cell')
 				return true
-			}
 			if (!can_cancel(c))
 				return false
 		}
@@ -495,17 +492,21 @@ class Markup_12y2 { constructor() {
 			// 3: get type + argument pattern
 			let type = GROUPS[group_num]
 			let argregex
-			if ('TAG'!==type) {
-				argregex = ARGTYPES[group_num]
-			} else if (token_text in TAGS) {
-				type = token_text
-				argregex = TAGS[type]
+			if ('TAG'===type) {
+				if (token_text in TAGS) {
+					type = token_text
+					argregex = TAGS[type]
+				} else {
+					type = 'INVALID_TAG'
+					argregex = ARGS_NORMAL
+				}
 			} else {
-				// when an unknown \tag is encountered, we create a block
-				// rather than just ignoring it, so in the future,
-				// we can add a new tag without changing the parsing (much)
-				type = 'INVALID_TAG'
-				argregex = ARGS_NORMAL
+				if ('TABLE_CELL'===type && !in_table()) {
+					REGEX.lastIndex = match.index+1
+					last = match.index
+					continue
+				}
+				argregex = ARGTYPES[group_num]
 			}
 			
 			// 4: parse args and {
