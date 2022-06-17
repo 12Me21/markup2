@@ -55,6 +55,7 @@ let Markup = {
 			tree = this.langs.parse(text, lang, etc)
 			element = this.renderer.render(tree, element, etc)
 		} catch (error) {
+			// render error message
 			if (!element)
 				element = document.createDocumentFragment()
 			let d = document.createElement('pre')
@@ -62,6 +63,12 @@ let Markup = {
 			d.textContent = `${type}: ${error ? error.message : "unknown error"}`
 			d.style.border = "4px inset red"
 			element.append(d, text)
+			// add stack trace
+			let st = document.createElement('details')
+			let label = document.createElement('summary')
+			st.append(label, error.stack)
+			label.append(d.firstChild)
+			d.append(st)
 		} finally {
 			return element
 		}
