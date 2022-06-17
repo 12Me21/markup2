@@ -142,9 +142,6 @@ class Markup_Render_Dom { constructor() {
 			function anim() {
 				time.textContent = format_time(audio.currentTime)+" / "+format_time(audio.duration)
 				progress.value = Math.round(audio.currentTime*10)/10
-//				if (!audio.paused) {
-//					window.requestAnimationFrame(anim)
-//				}
 			}
 			loop.onchange = e=>{ audio.loop = loop.checked }
 			audio.onpause = e=>{
@@ -153,7 +150,6 @@ class Markup_Render_Dom { constructor() {
 			audio.onpause()
 			audio.onplay = e=>{
 				play.textContent = "⏸️"
-//				anim()
 			}
 			audio.onerror = e=>{
 				time.textContent = "Error"
@@ -168,6 +164,8 @@ class Markup_Render_Dom { constructor() {
 				let volume = audio.volume
 				vol.textContent = volume ? ["🔈","🔉","🔊"][volume*2.99|0] : "🔇"
 			}
+			volume.value = audio.volume
+			audio.onvolumechange()
 			audio.ondurationchange = e=>{
 				progress.max = Math.round(audio.duration*10)/10
 				time.textContent = format_time(audio.currentTime)+" / "+format_time(audio.duration)
