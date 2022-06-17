@@ -247,8 +247,8 @@ aaa
 		
 		table_row: 𐀶`<tr>`,
 		
-		table_cell: function({header, color, truecolor, colspan, rowspan, align}, parent) {
-			let e = this[header||parent.header ? 1 : 0]()
+		table_cell: function({header, color, truecolor, colspan, rowspan, align}, row_args) {
+			let e = this[header||row_args.header ? 1 : 0]()
 			if (color) e.dataset.bgcolor = color
 			if (truecolor) e.style.backgroundColor = truecolor
 			if (colspan) e.colSpan = colspan
@@ -361,7 +361,7 @@ we should create our own fake bullet elements instead.*/
 						for (let cell of leaf.content) {
 							if ('table_cell'!==cell.type)
 								continue
-							let c = CREATE.table_cell(cell.args, leaf.args)
+							let c = CREATE.table_cell(cell.args, leaf.args||{})
 							if (cell.content)
 								fill_branch(c, cell.content)
 							node.append(c)
