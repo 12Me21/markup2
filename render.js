@@ -263,7 +263,7 @@ aaa
 			e.firstChild.href = url
 			e.setAttribute('href', url)
 			return e
-		}.bind(𐀶`<youtube-embed><a></a></youtube-embed>`),
+		}.bind(𐀶`<youtube-embed><a target=_blank></a></youtube-embed>`),
 		
 		link: function({url}) {
 			let e = this()
