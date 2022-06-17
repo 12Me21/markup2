@@ -7,12 +7,6 @@
 	@implements Parser_Collection
 **/
 class Markup_12y2 { constructor() {
-	// idea: maybe instead of this separate parse step, we should just do something like
-	// go back to using ex: /^><args>?[{ ]/
-	// have either
-	// - custom post-processing regex for each token (ex /[\\](\w+)(<args>)?({)?/ )
-	// - include these extra groups in the main regex, remove the () group, and find a replacement for the () indexOf("") system
-	
 
 	// TokenType 🏷 enum
 	// BlockType 🏷 enum
@@ -32,25 +26,26 @@ class Markup_12y2 { constructor() {
 	// RegExp
 	// GroupNum -> TokenType
 	// GroupNum -> ArgPattern
-	function DEF_TOKENS({raw}, ...groups) {
-		const MACROS = {
-			'{EOL}': "(?![^\\n])",
-			'{BOL}': "^",
-			'{ANY}': "[^]",
-			'{URL_CHARS}': "[-\\w/%&=#+~@$*'!?,.;:]*",
-			'{URL_FINAL}': "[-\\w/%&=#+~@$*']",
+	const MACROS = {
+		'{EOL}': "(?![^\\n])",
+		'{BOL}': "^",
+		'{ANY}': "[^]",
+		'{URL_CHARS}': "[-\\w/%&=#+~@$*'!?,.;:]*",
+		'{URL_FINAL}': "[-\\w/%&=#+~@$*']",
+	}
+	const GROUPS = [], ARGTYPES = []
+	let regi = []
+	function PAT({raw}, ...groups) {
+		regi.push(
+			raw.join("()")
+				.replace(/\\`/g, "`")
+				.replace(/[(](?![?)])/g, "(?:")
+				.replace(/[{][A-Z_]+[}]/g, match=>MACROS[match])
+		)
+		for (let g of groups) {
+			GROUPS.push(Object.keys(g)[0])
+			ARGTYPES.push(Object.values(g)[0])
 		}
-		return [
-			new RegExp(
-				raw.join("()").slice(1, -1)
-					.replace(/\n/g, "|").replace(/\\`/g, "`")
-					.replace(/[(](?![?)])/g, "(?:")
-					.replace(/[{][A-Z_]+[}]/g, match=>MACROS[match]),
-				"g"
-			),
-			groups.map(x=>Object.keys(x)[0]),
-			groups.map(x=>Object.values(x)[0]),
-		]
 	}
 	// style start:
 	// (?<![^ \t\n({'"])([*][*]|[_][_]|[~][~]|[/])(?=[^ \t\n,'"])
@@ -80,23 +75,25 @@ class Markup_12y2 { constructor() {
 	// problem with improving style parsing:
 	// sometimes a style tag might be valid as both a start and end tag?
 	// and we don't know until we also check the previous char
-	const [REGEX, GROUPS, ARGTYPES] = DEF_TOKENS`
-[\n]?[}]${{ BLOCK_END: 0}}
-[\n]${{ NEWLINE: 0}}
-{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}
-{BOL}[-]{3,}{EOL}${{ DIVIDER: 0}}
-([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START: 0}}|${{ STYLE_END: 0}})
-[\\][a-z]+(?![a-zA-Z0-9])${{ TAG: 0}}
-[\\][{][\n]?${{ NULL_ENV: 0}}
-[\\]{ANY}${{ ESCAPED: 0}}
-{BOL}[>]${{ QUOTE: ARGS_HEADING}}
-{BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}
-[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${{ INLINE_CODE: 0}}
-([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}
-{BOL} *[|]${{ TABLE_START: ARGS_TABLE}}
- *[|]${{ TABLE_CELL: ARGS_TABLE}}
-{BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}
-`
+	PAT`[\n]?[}]${{ BLOCK_END: 0}}`
+	PAT`[\n]${{ NEWLINE: 0}}`
+	PAT`{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}`
+	PAT`{BOL}[-]{3,}{EOL}${{ DIVIDER: 0}}`
+	PAT`([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START: 0}}|${{ STYLE_END: 0}})`
+	PAT`[\\][a-z]+(?![a-zA-Z0-9])${{ TAG: 0}}`
+	PAT`[\\][{][\n]?${{ NULL_ENV: 0}}`
+	PAT`[\\]{ANY}${{ ESCAPED: 0}}`
+	PAT`{BOL}[>]${{ QUOTE: ARGS_HEADING}}`
+	PAT`{BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}`
+	PAT`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${{ INLINE_CODE: 0}}`
+	PAT`([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}`
+	PAT`{BOL} *[|]${{ TABLE_START: ARGS_TABLE}}`
+	PAT` *[|]${{ TABLE_CELL: ARGS_TABLE}}`
+	PAT`{BOL} *[-]${{ LIST_ITEM: ARGS_HEADING}}`
+	
+	const REGEX = new RegExp(regi.join("|"), 'g')
+	regi = null
+	
 	//todo: org tables separators?
 	
 	//[\`]{2}[^\n]*${{ LINE_CODE: 0}}
@@ -105,9 +102,12 @@ class Markup_12y2 { constructor() {
 	// TokenType -> ArgRegex
 	const TAGS = {
 		__proto__:null,
-		'\\sub': ARGS_WORD, '\\sup': ARGS_WORD,
-		'\\b': ARGS_WORD, '\\i': ARGS_WORD,
-		'\\u': ARGS_WORD, '\\s': ARGS_WORD,
+		'\\sub': ARGS_WORD,
+		'\\sup': ARGS_WORD,
+		'\\b': ARGS_WORD,
+		'\\i': ARGS_WORD,
+		'\\u': ARGS_WORD,
+		'\\s': ARGS_WORD,
 		'\\quote': ARGS_LINE,
 		'\\align': ARGS_LINE,
 		'\\spoiler': ARGS_LINE,
