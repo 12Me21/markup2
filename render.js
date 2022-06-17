@@ -125,20 +125,35 @@ class Markup_Render_Dom { constructor() {
 			audio.preload = 'none'
 			audio.src = filter_url(url, 'audio')
 			e.firstChild.replaceWith(audio)
-			let cl = e.lastChild
-			let [play, progress, time, link] = cl.childNodes
+			let c2 = e.lastChild
+			let c1 = c2.previousSibling
+			let [play, progress, , loop] = c1.childNodes
+			let [time, save, vol, volume] = c2.childNodes
+			save.href = audio.src
 			play.onclick = e=>{
 				if (audio.paused)
 					audio.play()
 				else
 					audio.pause()
 			}
+			volume.oninput = e=>{
+				audio.volume = +volume.value
+			}
+			function anim() {
+				time.textContent = format_time(audio.currentTime)+" / "+format_time(audio.duration)
+				progress.value = Math.round(audio.currentTime*10)/10
+//				if (!audio.paused) {
+//					window.requestAnimationFrame(anim)
+//				}
+			}
+			loop.onchange = e=>{ audio.loop = loop.checked }
 			audio.onpause = e=>{
 				play.textContent = "▶️"
 			}
 			audio.onpause()
 			audio.onplay = e=>{
 				play.textContent = "⏸️"
+//				anim()
 			}
 			audio.onerror = e=>{
 				time.textContent = "Error"
@@ -149,18 +164,20 @@ class Markup_Render_Dom { constructor() {
 				s = s % 60
 				return m+":"+(s+100).toFixed(1).substr(1)
 			}
+			audio.onvolumechange = e=>{
+				let volume = audio.volume
+				vol.textContent = volume ? ["🔈","🔉","🔊"][volume*2.99|0] : "🔇"
+			}
 			audio.ondurationchange = e=>{
-				progress.max = Math.ceil(audio.duration*10)/10
-				time.textContent = format_time(audio.currentTime)+"/"+format_time(audio.duration)
+				progress.max = Math.round(audio.duration*10)/10
+				time.textContent = format_time(audio.currentTime)+" / "+format_time(audio.duration)
 			}
 			audio.ontimeupdate = e=>{
-				time.textContent = format_time(audio.currentTime)+"/"+format_time(audio.duration)
-				progress.value = audio.currentTime
+				anim()
 			}
 			progress.onchange = e=>{
 				audio.currentTime = progress.value
 			}
-			link.href = audio.src
 			return e
 		}.bind(𐀶`
 <media-player>
@@ -168,8 +185,13 @@ aaa
 <div>
 <button></button>
 <input type=range max=100 step=0.1 value=0>
-<span>not loaded</span>
-<a target=_blank>🔗</a>
+🔁<input type=checkbox title=loop></input>
+</div>
+<div>
+<span class='M-media-time'>‒‒/‒‒</span>
+<a target=_blank>💾</a>
+<span>🔊</span>
+<input type=range max=1 step=0.01 value=1 class='M-media-volume'>
 </div>
 </media-player>
 `),

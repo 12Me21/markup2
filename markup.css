@@ -304,7 +304,8 @@ L + ratio { }
 /***********/
 
 .Markup media-player {
-	display: table;
+	display: block;
+	width: fit-content; width: -moz-fit-content;
 	background: slategray;
 	border-radius: 3px;
 	color: white;
@@ -318,7 +319,20 @@ L + ratio { }
 	padding-right: 3px;
 }
 
+.Markup media-player > div > a[href] {
+	color: white;
+}
+
 .Markup media-player > div > button {
 	padding: 2px;
-	line-height: 1;
+	line-height: 1em;
+	border: none;
+}
+
+.M-media-time {
+	flex-grow: 1;
+}
+
+.M-media-volume {
+	width: 50px;
 }
