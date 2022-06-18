@@ -28,7 +28,7 @@ tree-node > node-content {
 	border-collapse: collapse;
 	padding: 4px;
 	border: 2px solid purple;
-	background: #6084;
+	background: #6083;
 }
 node-content {
 	display: flex;
@@ -47,7 +47,12 @@ node-content > tree-node.leaf {
 }
 
 tree-node.one > node-content {
-	display: inline-block;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 2px;
+	padding: 2px;
+	border-collapse: collapse;
 }
 tree-node.simple > node-content {
 	display: flex;
@@ -79,4 +84,8 @@ tree-node.text {
 	border-radius: 10px;
 	padding: 1px 3px;
 	font-family: serif;
+}
+
+tree-node:not(tree-node *) > node-content {
+	background: none;
 }
