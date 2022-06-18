@@ -27,11 +27,13 @@ let CREATE = {
 			args.remove()
 		if (node.content.length == 1)
 			e.classList.add('one')
+		if (node.content.every(x=>'string'==typeof x || !x.content || !x.content.length))
+			e.classList.add('simple')
 		return content
 	}.bind(𐀶`
 <tree-node class='branch'>
 	<div><span class='type'></span><span class='args'></span></div>
-	<div class='content'></div>
+	<node-content>
 `),
 	
 	leaf: function(node) {

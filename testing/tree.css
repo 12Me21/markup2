@@ -1,32 +1,68 @@
 tree-node {
 	display: block;
 }
-tree-node > div:not(.content) {
+tree-node > div {
 	display: inline-block;
 	background: lavender;
 	border: 2px solid purple;
 	border-radius: 10px 10px 0 0;
 	padding: 1px 3px;
 	vertical-align: top;
+	border-collapse: collapse;
 }
-tree-node.one > div:not(.content) {
+tree-node.one > div {
 	border-radius: 10px 0 0 10px;
 }
-tree-node.leaf > div:not(.content) {
+tree-node.leaf > div {
 	border-radius: 10px 10px 10px 10px;
 }
 tree-node > div > .type {
 	font-weight: bold;
+	white-space: pre;
 }
 tree-node > div > .args {
 	font-family: monospace;
 }
-tree-node > div.content {
-	padding-left: 10px;
-	border: 1px dotted purple;
+tree-node > node-content {
+	border-collapse: collapse;
+	padding: 4px;
+	border: 2px solid purple;
+	background: #A0F4;
 }
-tree-node.one > div.content {
+node-content {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 3px;
+}
+node-content > tree-node {
+	flex-grow: 1;
+	width: 100%;
+}
+node-content > tree-node.text,
+node-content > tree-node.leaf {
+	flex-grow: 0;
+	width: auto;
+}
+
+tree-node.one > node-content {
 	display: inline-block;
+	padding: 0;
+	border: none;
+	outline: 2px solid purple;
+	outline-offset: -2px;
+}
+tree-node.simple > node-content {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+tree-node.simple > node-content > * {
+	flex-grow: 0;
+}
+
+tree-node.one {
+	display: flex;
 }
 
 tree-node.text {
