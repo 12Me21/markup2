@@ -25,10 +25,10 @@ let CREATE = {
 			args.textContent = JSON.stringify(node.args)
 		else
 			args.remove()
-		if (node.content.length == 1)
-			e.classList.add('one')
+	//	if (node.content.length == 1)
+	//		e.classList.add('one')
 		if (node.content.every(x=>'string'==typeof x || !x.content || !x.content.length))
-			e.classList.add('simple')
+			e.classList.add('one')
 		return content
 	}.bind(𐀶`
 <tree-node class='branch'>
