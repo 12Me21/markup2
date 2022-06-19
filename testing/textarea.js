@@ -1,3 +1,4 @@
+let setup_textarea
 {
 	let style = document.createElement('style')
 	style.textContent = `
@@ -35,7 +36,7 @@ textarea-container > textarea {
 		t.style.height = "100%"
 	}
 	
-	function setup_textarea(textarea, callback) {
+	setup_textarea = (textarea, callback)=>{
 		resize(textarea)
 		
 		let lock = false
