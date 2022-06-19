@@ -110,6 +110,8 @@
 		elem.textContent = ms.toFixed(1)
 	}
 	
+	window.onerror = (...x)=>alert(x)
+	
 	function update() {
 		//Markup.convert_lang($input.value, $lang.value, $output)
 		let t0, t1, t2, t3
