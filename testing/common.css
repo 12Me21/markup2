@@ -1,4 +1,8 @@
-html { word-break: break-word; }
+html {
+	word-break: break-word;
+	-webkit-text-size-adjust: none;
+	font-variant-ligatures: none;
+}
 
 html, body {
 	position: fixed;
@@ -44,5 +48,12 @@ html, select {
 	}
 	.Split > * {
 		width: unset;
+	}
+}
+
+/* ios safari... */
+@supports (-webkit-touch-callout: none) {
+	textarea, input, select {
+		font-size: 16px;
 	}
 }
