@@ -48,6 +48,7 @@
 		border: 3px solid black;
 		padding: 2px;
 		overflow-y: auto;
+		user-select: contain;
 	}
 	#\$inputs {
 		flex-wrap: wrap;
@@ -73,7 +74,8 @@
 				<option> 12y2
 				<option> 12y
 				<option> bbcode
-				<option value=plaintext> plain
+				<option> plaintext
+				<option> json
 			</select>
 			<span class='fill'></span>
 			<select id=$display value=render>
@@ -105,6 +107,12 @@
 </main>
 
 <script>
+	Markup.langs.include({
+		langs: {
+			json: text=>JSON.parse(text)
+		}
+	})
+	
 	function show_time(elem, ms) {
 		elem.dateTime = (ms/1000).toFixed(4)+' s'
 		elem.textContent = ms.toFixed(1)
