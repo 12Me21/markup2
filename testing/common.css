@@ -1,0 +1,48 @@
+html { word-break: break-word; }
+
+html, body {
+	position: fixed;
+	top:0; left:0; right:0; bottom:0;
+	background: var(--T-bg, white);
+}
+
+html, select {
+	font: var(--T-font);
+}
+
+.Row, .Col {
+	display: flex;
+}
+.Col {
+	flex-direction: column;
+}
+
+.Col > *, .Row > * {
+	flex-shrink: 0;
+}
+.Col > .limit, .Row > .limit {
+	flex-shrink: 1;
+	min-height: 0;
+}
+.Col > .fill, .Row > .fill {
+	flex-grow: 1;
+	flex-shrink: 1;
+	min-height: 0;
+}
+
+.Split {
+	display: flex;
+}
+.Split > * {
+	width: 50%;
+}
+
+@media all and (max-width: 550px) {
+	.Split {
+		flex-direction: column-reverse;
+		justify-content: left;
+	}
+	.Split > * {
+		width: unset;
+	}
+}

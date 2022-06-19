@@ -6,7 +6,7 @@ tree-node > div {
 	background: lavender;
 	border: 2px solid purple;
 	border-radius: 10px 10px 0 0;
-	padding: 1px 3px;
+	padding: 1px 5px;
 	vertical-align: top;
 	border-collapse: collapse;
 	border-left-color: black;
@@ -46,6 +46,7 @@ node-content > tree-node.leaf {
 	width: auto;
 }
 
+
 tree-node.one > node-content {
 	display: flex;
 	flex-direction: row;
@@ -79,13 +80,13 @@ tree-node.one {
 
 tree-node.text {
 	display: inline-block;
-	background: lavender;
+	background: beige;
 	border: 2px solid purple;
 	border-radius: 10px;
 	padding: 1px 3px;
 	font-family: serif;
 }
 
-tree-node:not(tree-node *) > node-content {
+/*tree-node:not(tree-node *) > node-content {
 	background: none;
-}
+}*/

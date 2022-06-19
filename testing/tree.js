@@ -57,10 +57,10 @@ let CREATE = {
 	}.bind(𐀶`<tree-node class='text'>`),
 }
 
-function draw_node(node) {
+function draw_tree(node) {
 	let elem = CREATE.node(node)
 	if (node.content)
 		for (let n of node.content)
-			elem.append(draw_node(n))
+			elem.append(draw_tree(n))
 	return elem.getRootNode()
 }

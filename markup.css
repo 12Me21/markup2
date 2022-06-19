@@ -336,3 +336,33 @@ L + ratio { }
 .M-media-volume {
 	width: 50px;
 }
+
+/**************/
+/** Headings **/
+/**************/
+
+.Markup h2, .Markup h3, .Markup h4, .Markup h5 {
+	margin: 0.1em 0;
+	border-bottom: 1px dotted var(--T-border-color);
+}
+
+.Markup h2 {
+	font-size: 2em;
+	font-weight: 500;
+	background: var(--T-gray-bg);
+	padding: 0 0.1em;
+	border-bottom: 1px solid var(--T-border-color);
+	border-top: 1px solid var(--T-border-color);
+}
+
+.Markup h3 {
+	background: var(--T-box-bg);
+	padding: 0 0.1em;
+	font-size: 1.6875em;
+	font-weight: 500;
+}
+
+.Markup h4 {
+	font-size: 1.3125em;
+	font-weight: bold;
+}

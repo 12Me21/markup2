@@ -68,9 +68,8 @@ class Markup_12y2 { constructor() {
 	const ARGS_TABLE = // /[...]? */
 	/(?:\[([^\]\n]*)\])? */y
 	
-	const ARGS_CODE = // /uhhh
-	/(?: *([-\w.+#$ ]+?)? *(?:\n|$))?([^]*?)(?:```|$)/y
-	ARGS_CODE._raw = true
+	const ARGS_CODE = // ... ```
+	/(?: *([-\w.+#$ ]+?) *(?:\n|$))?([^]*?)(?:```|$)/y
 	
 	// problem with improving style parsing:
 	// sometimes a style tag might be valid as both a start and end tag?
@@ -84,7 +83,7 @@ class Markup_12y2 { constructor() {
 	PAT`[\\][{][\n]?${{ NULL_ENV: 0}}`
 	PAT`[\\]{ANY}${{ ESCAPED: 0}}`
 	PAT`{BOL}[>]${{ QUOTE: ARGS_HEADING}}`
-	PAT`{BOL}[\`]{3}${{ CODE_BLOCK: ARGS_CODE}}`
+	PAT`{BOL}[\`]{3}(?=[^\n\`]*?{EOL})${{ CODE_BLOCK: ARGS_CODE}}`
 	PAT`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${{ INLINE_CODE: 0}}`
 	PAT`([!]${{ EMBED: ARGS_BODYLESS}})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${{ LINK: ARGS_NORMAL}}`
 	PAT`{BOL} *[|]${{ TABLE_START: ARGS_TABLE}}`
@@ -180,7 +179,6 @@ class Markup_12y2 { constructor() {
 			OPEN('quote', token, {cite: rargs[0]}, body)
 		} break; case 'CODE_BLOCK': {
 			let lang = rargs
-			// idea: strip leading indent from code?
 			BLOCK('code', {text: body, lang})
 		} break; case 'INLINE_CODE': {
 			BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
@@ -500,12 +498,11 @@ class Markup_12y2 { constructor() {
 					type = 'INVALID_TAG'
 					argregex = ARGS_NORMAL
 				}
+			} else if ('TABLE_CELL'===type && !in_table()) {
+				REGEX.lastIndex = match.index+1
+				last = match.index
+				continue
 			} else {
-				if ('TABLE_CELL'===type && !in_table()) {
-					REGEX.lastIndex = match.index+1
-					last = match.index
-					continue
-				}
 				argregex = ARGTYPES[group_num]
 			}
 			
@@ -531,7 +528,7 @@ class Markup_12y2 { constructor() {
 				let body = argmatch[2] // the {, or contents of raw tags
 				let word = argmatch[3] // only for syntax like \sub word
 				
-				if (!argregex._raw) {
+				if (ARGS_CODE!==argregex) {
 					args = parse_args(args)
 					start_line = body
 				}
