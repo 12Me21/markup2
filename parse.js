@@ -212,8 +212,8 @@ class Markup_12y2 { constructor() {
 			if (!['left', 'right', 'center'].includes(a))
 				a = 'center'
 			OPEN('align', {align: a}, body)
-		} break; case '\\spoiler': {
-			let label = arg0(rargs, "spoiler") // todo: handle this default value in the renderer
+		} break; case '\\spoiler': case '\\h': {
+			let label = arg0(rargs, "spoiler")
 			OPEN('spoiler', {label}, body)
 		} break; case '\\ruby': {
 			let text = arg0(rargs, "true")
@@ -239,8 +239,8 @@ class Markup_12y2 { constructor() {
 		// note: checks undefined AND "" (\tag AND \tag[])
 		if (!arglist)
 			return null_args
-		
 		let list = [], named = {}
+		list.named = named
 		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
 			// value OR =value
@@ -250,7 +250,6 @@ class Markup_12y2 { constructor() {
 			else // name=value
 				named[name] = value
 		}
-		list.named = named
 		return list
 	}
 	// process an embed url: !https://example.com/image.png[alt=balls]

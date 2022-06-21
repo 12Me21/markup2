@@ -7,7 +7,7 @@ function make_link([title, url]) {
 	let a = document.createElement('a')
 	a.href = new URL("../"+url, document.currentScript.src)
 	a.textContent = title
-	if (a.href == window.location)
+	if (a.pathname == window.location.pathname)
 		a.classList.add('current')
 	return a
 }
