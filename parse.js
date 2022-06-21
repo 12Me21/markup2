@@ -50,10 +50,6 @@ class Markup_12y2 { constructor() {
 			ARGTYPES.push(Object.values(g)[0])
 		}
 	}
-	// style start:
-	// (?<![^ \t\n({'"])([*][*]|[_][_]|[~][~]|[/])(?=[^ \t\n,'"])
-	// style end:
-	// (?<=[^ \t\n,'"])([*][*]|[_][_]|[~][~]|[/])(?![^- \t\n.,:;!?'")}])
 	
 	// ArgPattern
 	const ARGS_NORMAL = // /[...]?{?/
@@ -470,9 +466,10 @@ class Markup_12y2 { constructor() {
 		let match
 		function nevermind() {
 			REGEX.lastIndex = match.index+1
-			last = match.index
+			//last = match.index
 		}
 		function accept(i) {
+			TEXT(text.substring(last, match.index))
 			last = i
 		}
 		main: while (match = REGEX.exec(text)) {
@@ -482,7 +479,7 @@ class Markup_12y2 { constructor() {
 			prev = match.index
 			// 1: insert the text from after previous token
 			// idea: defer this until we actually KNOW we matched a token
-			TEXT(text.substring(last, match.index))
+			//TEXT(text.substring(last, match.index))
 			// 2: figure out which token type was matched
 			let token_text = match[0]
 			let group_num = match.indexOf("", 1)-1
