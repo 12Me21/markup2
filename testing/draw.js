@@ -5,7 +5,7 @@ function 𐀶([html]) {
 	return elem.cloneNode.bind(elem, true)
 }
 
-let RESULT = 𐀶`<test- class=row><div class=col><name-></name-><result- class=grow></result-></div><input- class=grow></input->` // p autoclose select by id?
+let RESULT = 𐀶`<test- class=Row><div class=Col><name-></name-><result- class=fill></result-></div><input- class=fill></input->` // p autoclose select by id?
 
 Test.prototype.draw_result = function() {
 	let d = RESULT()

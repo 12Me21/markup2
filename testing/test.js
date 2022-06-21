@@ -15,7 +15,7 @@ function clean(tree) {
 
 function make_env() {
 	let x = document.createElement('iframe')
-	
+	x.srcdoc
 }
 
 function INIT(th, defs) {

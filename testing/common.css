@@ -4,7 +4,7 @@ html {
 	font-variant-ligatures: none;
 }
 
-html, body {
+html.fixed, html.fixed > body {
 	position: fixed;
 	top:0; left:0; right:0; bottom:0;
 	background: var(--T-bg, white);
@@ -39,6 +39,31 @@ html, select {
 }
 .Split > * {
 	width: 50%;
+}
+
+table.data, table.data td, table.data th {
+	color: black;
+	background: white;
+	border: 1px solid currentColor;
+	border-spacing: 0;
+}
+table.data td, table.data th {
+	padding: 2px 5px;
+	word-break: normal; overflow-wrap: break-word;
+}
+table.data td {
+	color: black;
+	background: white;
+}
+table.data th {
+	font-weight: bold;
+	color: white;
+	background: black;
+}
+table-overflow {
+	overflow-x: auto;
+	background: #222;
+	color: #FFF;
 }
 
 @media all and (max-width: 550px) {

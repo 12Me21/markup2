@@ -1,25 +1,24 @@
-<!DOCTYPE html>
-<html lang=en-QS>
-<meta charset="utf-8">
+<!doctype html><html lang=en-QS><meta charset="utf-8">
 <title>Markup2 Tests</title>
 
 <script src=../parse.js></script>
 
 <script src=test.js></script>
 <script src=draw.js></script>
+<link rel=stylesheet href=common.css>
 <link rel=stylesheet href=style.css>
 
 <body>
 <script src=nav.js></script>
 
 loaded: <time id=$time></time>
-<table>
+<table class='data'>
 	<tr>
 		<th> total <th> passed <th> pending <th> failed
 	<tr>
 		<td id=$table_total> ? <td id=$table_passed> ? <td id=$table_pending> ? <td id=$table_failed> ?
 </table>
-
+<hr>
 <div id=$output></div>
 
 <script>

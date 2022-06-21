@@ -1,16 +1,11 @@
 html {
 	/*white-space: pre-wrap;*/
 	word-wrap: break-all;
+	font-family: sans-serif;
 }
 
-.row, .col { display: flex; }
-.col { flex-direction: column; }
-.row > *, .col > * {
-	flex-shrink: 1;
-	flex-grow: 0;
-}
-.row > .grow, .col > .grow {
-	flex-grow: 1;
+body {
+	overflow-y: scroll;
 }
 
 test- {
@@ -59,4 +54,24 @@ test- input- {
 	font: 1em monospace;
 	background-color: rgba(255,255,255,0.5);
 	overflow-y: auto;
+}
+
+#\$output {
+	background: white;
+}
+
+#\$table_total {
+	background: #6fb7c080;
+}
+
+#\$table_passed {
+	background: #3f9f5f40;
+}
+
+#\$table_failed {
+	background: #f8606060;
+}
+
+#\$table_pending {
+	background: #e0c87f70;
 }
