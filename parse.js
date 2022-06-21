@@ -20,6 +20,9 @@ class Markup_12y2 { constructor() {
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
+	// About __proto__ in object literals:
+	// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation
+	
 	// elements which can survive an eol (without a body)
 	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1}
 	
@@ -71,9 +74,6 @@ class Markup_12y2 { constructor() {
 	const ARGS_CODE = // ... ```
 	/(?: *([-\w.+#$ ]+?) *(?:\n|$))?([^]*?)(?:```|$)/y
 	
-	// problem with improving style parsing:
-	// sometimes a style tag might be valid as both a start and end tag?
-	// and we don't know until we also check the previous char
 	PAT`[\n]?[}]${{ BLOCK_END: 0}}`
 	PAT`[\n]${{ NEWLINE: 0}}`
 	PAT`{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}`
@@ -150,19 +150,21 @@ class Markup_12y2 { constructor() {
 			}
 			TEXT(token)
 		} break; case 'BLOCK_END': {
-			if (brackets<=0) {
+			if (brackets>0) {
+				while (!current.body)
+					CANCEL()
+				if ('invalid'===current.type) {
+					if ("\n}"==token)
+						NEWLINE(false) // false since we already closed everything
+					TEXT("}")
+				}
+				CLOSE()
+			} else {
 				// hack:
 				if ("\n}"==token)
 					NEWLINE(true)
 				TEXT("}")
-				return
 			}
-			// only runs if at least 1 element has a body, so this won't fail:
-			while (!current.body)
-				CANCEL()
-			if ('invalid'===current.type)
-				TEXT("}")
-			CLOSE()
 		} break; case 'NULL_ENV': {
 			OPEN('null_env', token, null, true)
 			current.prev = current.parent.prev
@@ -469,7 +471,7 @@ class Markup_12y2 { constructor() {
 	}
 
 	function parse(text) {
-		let tree = {type: 'ROOT', token: "", content: [], prev: 'all_newline'}
+		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
 		current = tree
 		brackets = 0
 		
