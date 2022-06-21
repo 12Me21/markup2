@@ -12,14 +12,41 @@
 <body>
 <script src=nav.js></script>
 
-<button onclick="run()">run tests</button>
-<hr>
+loaded: <time id=$time></time>
+<table>
+	<tr>
+		<th> total <th> passed <th> pending <th> failed
+	<tr>
+		<td id=$table_total> ? <td id=$table_passed> ? <td id=$table_pending> ? <td id=$table_failed> ?
+</table>
+
 <div id=$output></div>
 
 <script>
-	function run() {
-		Test.run_all()
-		$output.replaceChildren(Test.draw_results())
+	$time.textContent = new Date(performance.timing.fetchStart).toLocaleString([], {year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'2-digit'})
+	
+	function wait(ms) {
+		return {then: fn=>window.setTimeout(fn, ms)}
+	}
+	
+	async function run() {
+		$output.textContent = ""
+		$table_passed.textContent = 0
+		$table_failed.textContent = 0
+		$table_pending.textContent = Test.all.length
+		$table_total.textContent = Test.all.length
+		for (let test of Test.all) {
+			test.run()
+			if (test.status > 0) {
+				$output.append(test.draw_result())
+				$table_passed.textContent++
+			} else {
+				$output.prepend(test.draw_result())
+				$table_failed.textContent++
+			}
+			$table_pending.textContent--
+			await wait()
+		}
 	}
 	window.onload = function() {
 		Test.load_text($data.textContent)

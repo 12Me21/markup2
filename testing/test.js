@@ -13,6 +13,11 @@ function clean(tree) {
 	return ret
 }
 
+function make_env() {
+	let x = document.createElement('iframe')
+	
+}
+
 function INIT(th, defs) {
 	Object.defineProperties(th, defs)
 	Object.seal(th)
