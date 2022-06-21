@@ -162,7 +162,7 @@ class Markup_Render_Dom { constructor() {
 			}
 			audio.onvolumechange = e=>{
 				let volume = audio.volume
-				vol.textContent = volume ? ["🔈","🔉","🔊"][volume*2.99|0] : "🔇"
+				vol.textContent = volume ? ["🔈", "🔉", "🔊"][volume*2.99|0] : "🔇"
 			}
 			volume.value = audio.volume
 			audio.onvolumechange()

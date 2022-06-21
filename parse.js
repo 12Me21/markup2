@@ -107,12 +107,6 @@ class Markup_12y2 { constructor() {
 		'\\key': ARGS_WORD,
 	}
 	
-	function find_style(token) {
-		for (let c=current; 'style'===c.type; c=c.parent)
-			if (c.token===token)
-				return c
-	}
-	
 	// process a token
 	// 📥 _token_type 🏷 TokenType 📝
 	// 📥 token 🏷 Text 📝 token text, including arguments
@@ -129,7 +123,7 @@ class Markup_12y2 { constructor() {
 			let level = base_token.length
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
-			OPEN('heading', token, args, body)
+			OPEN('heading', args, body)
 		} break; case 'DIVIDER': {
 			BLOCK('divider')
 		} break; case 'BLOCK_END': {
@@ -149,7 +143,7 @@ class Markup_12y2 { constructor() {
 				TEXT("}")
 			}
 		} break; case 'NULL_ENV': {
-			OPEN('null_env', token, null, true)
+			OPEN('null_env', null, true)
 			current.prev = current.parent.prev
 		} break; case 'ESCAPED': {
 			if ("\\\n"===token)
@@ -161,17 +155,12 @@ class Markup_12y2 { constructor() {
 			} else
 				TEXT(token.substr(1))
 		} break; case 'QUOTE': {
-			OPEN('quote', token, {cite: rargs[0]}, body)
+			OPEN('quote', {cite: rargs[0]}, body)
 		} break; case 'CODE_BLOCK': {
 			let lang = rargs
 			BLOCK('code', {text: body, lang})
 		} break; case 'INLINE_CODE': {
 			BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
-/*		} break; case 'INLINE_CODE_2': {
-			token = token.slice(2, token.endsWith("``") ? -2 : 1/0)
-			BLOCK('icode', {text: token})
-		} break; case 'LINE_CODE': {
-			BLOCK('icode', {text: token.substring(2)})*/
 		} break; case 'EMBED': {
 			let url = base_token.substr(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
@@ -180,57 +169,57 @@ class Markup_12y2 { constructor() {
 			let url = base_token
 			let args = {url}
 			if (body) {
-				OPEN('link', token, args, body)
+				OPEN('link', args, body)
 			} else {
 				args.text = rargs[0]
 				BLOCK('simple_link', args)
 			}
 		} break; case 'TABLE_START': {
-			OPEN('table_row', token, {})
-			OPEN('table_cell', "", rargs, body)
+			OPEN('table_row', token) // special OPEN call
+			OPEN('table_cell', rargs, body)
 		} break; case 'TABLE_CELL': {
 			while (current.type!=='table_cell')
 				CANCEL()
 			CLOSE() // cell
 			// we don't know whether these are row args or cell args,
 			// so just pass the raw args directly, and parse them later.
-			OPEN('table_cell', token, rargs, body)
+			OPEN('table_cell', rargs, body)
 		} break; case 'INVALID_TAG': {
 			if (body)
-				OPEN('invalid', token, {text: token, reason: "invalid tag"}, body)
+				OPEN('invalid', {text: token, reason: "invalid tag"}, body)
 			else
 				BLOCK('invalid', {text: token, reason: "invalid tag"})
 		} break; case 'LIST_ITEM': {
 			let indent = token.indexOf("-")
-			OPEN('list_item', token, {indent}, body)
+			OPEN('list_item', {indent}, body)
 
 		} break; case '\\sub': {
-			OPEN('subscript', token, null, body)
+			OPEN('subscript', null, body)
 		} break; case '\\sup': {
-			OPEN('superscript', token, null, body)
+			OPEN('superscript', null, body)
 		} break; case '\\b': {
-			OPEN('bold', token, null, body)
+			OPEN('bold', null, body)
 		} break; case '\\i': {
-			OPEN('italic', token, null, body)
+			OPEN('italic', null, body)
 		} break; case '\\u': {
-			OPEN('underline', token, null, body)
+			OPEN('underline', null, body)
 		} break; case '\\s': {
-			OPEN('strikethrough', token, null, body)
+			OPEN('strikethrough', null, body)
 		} break; case '\\quote': {
-			OPEN('quote', token, {cite: rargs[0]}, body)
+			OPEN('quote', {cite: rargs[0]}, body)
 		} break; case '\\align': {
 			let a = rargs[0]
 			if (!['left', 'right', 'center'].includes(a))
 				a = 'center'
-			OPEN('align', token, {align: a}, body)
+			OPEN('align', {align: a}, body)
 		} break; case '\\spoiler': {
 			let label = arg0(rargs, "spoiler") // todo: handle this default value in the renderer
-			OPEN('spoiler', token, {label}, body)
+			OPEN('spoiler', {label}, body)
 		} break; case '\\ruby': {
 			let text = arg0(rargs, "true")
-			OPEN('ruby', token, {text}, body)
+			OPEN('ruby', {text}, body)
 		} break; case '\\key': {
-			OPEN('key', token, null, body)
+			OPEN('key', null, body)
 		} }
 	}
 	
@@ -301,10 +290,10 @@ class Markup_12y2 { constructor() {
 	}
 	
 	// start a new block
-	function OPEN(type, token, args, body) {
+	function OPEN(type, args, body) {
 		current = Object.seal({
 			type, args, content: [],
-			token, body, parent: current,
+			body, parent: current,
 			prev: 'all_newline',
 		})
 		if (body)
@@ -319,44 +308,40 @@ class Markup_12y2 { constructor() {
 		return o
 	}
 	
-	function can_cancel(o) {
-		return 'style'===o.type
-	}
-	
 	function CANCEL() {
-		if (can_cancel(current)) {
+		if ('style'===current.type) {
 			let o = pop()
-			
-			if (o.token)
-				current.content.push(o.token)
-			else if ('block'===current.prev && "\n"===o.content[0])
-				o.content.shift() // strip newline
-			
-			current.content.push(...o.content)
+			current.content.push(o.args, ...o.content)
 			current.prev = o.prev
-		} else if ('table_cell'===current.type && !current.content.length) {
-			// cancelling an empty table cell means it's the end of the row
-			// so, discard the cell
-			let o = pop()
-			// if the row is empty (i.e. we just have a single | )
-			if (!current.content.length) {
-				let o = pop() // discard the row
-				TEXT(o.token)
-				return
-			}
-			// transfer args to the row, and parse as table row args:
-			let ret = current.args
-			for (let arg of o.args) {
-				if ("*"===arg || "#"===arg) {
-					ret.header = true
+			return
+		}
+		if ('table_cell'===current.type) {
+			if (current.content.length) {
+				CLOSE() // table_cell
+				current.args = {}
+			} else {
+				// cancelling an empty table cell means:
+				// it's the end of the row, so discard the cell
+				let o = pop()
+				// if the ROW is empty (i.e. we just have a single | )
+				if (!current.content.length) {
+					let o = pop() // discard the row
+					TEXT(o.args)
+					return
+					// todo: maybe also cancel rows with 1 unclosed cell?
+					// like `| abc` -> text
+				}
+				// transfer args to the row, and parse as table row args:
+				let ret = current.args = {}
+				for (let arg of o.args) {
+					if ("*"===arg || "#"===arg) {
+						ret.header = true
+					}
 				}
 			}
-			// close the row
-			CLOSE()
-		} else
-			CLOSE()
-		// todo: maybe also cancel rows with just 1 unclosed cell?
-		// like `| abc` -> text
+			// fallthrough to close the table_row
+		}
+		CLOSE()
 	}
 	
 	function get_last(block) {
@@ -418,6 +403,13 @@ class Markup_12y2 { constructor() {
 					if (+h > 1) ret.rowspan = +h
 				}
 			}
+		} else if ('style'===o.type) {
+			node.type = {
+				__proto__:null,
+				'**': 'bold', '__': 'underline',
+				'~~': 'strikethrough', '/': 'italic',
+			}[o.args]
+			node.args = null
 		}
 		
 		dest.content.push(node)
@@ -448,11 +440,17 @@ class Markup_12y2 { constructor() {
 	
 	function in_table() {
 		for (let c=current; ; c=c.parent) {
-			if (c.type==='table_cell')
+			if ('table_cell'===c.type)
 				return true
-			if (!can_cancel(c))
+			if ('style'!==c.type)
 				return false
 		}
+	}
+	// todo: this should check for body
+	function find_style(token) {
+		for (let c=current; 'style'===c.type; c=c.parent)
+			if (c.args===token)
+				return c
 	}
 
 	function parse(text) {
@@ -466,20 +464,21 @@ class Markup_12y2 { constructor() {
 		let match
 		function nevermind() {
 			REGEX.lastIndex = match.index+1
-			//last = match.index
 		}
-		function accept(i) {
+		function accept() {
 			TEXT(text.substring(last, match.index))
-			last = i
+			last = REGEX.lastIndex
+		}
+		function start_line() {
+			text = text.substring(last)
+			last = REGEX.lastIndex = 0
+			prev = -1
 		}
 		main: while (match = REGEX.exec(text)) {
 			// check for infinite loops
 			if (match.index===prev)
 				throw ["INFINITE LOOP", match]
 			prev = match.index
-			// 1: insert the text from after previous token
-			// idea: defer this until we actually KNOW we matched a token
-			//TEXT(text.substring(last, match.index))
 			// 2: figure out which token type was matched
 			let token_text = match[0]
 			let group_num = match.indexOf("", 1)-1
@@ -487,6 +486,7 @@ class Markup_12y2 { constructor() {
 			// 3: get type + argument pattern
 			let type = GROUPS[group_num]
 			let argregex
+			// 4: special cases:
 			if ('TAG'===type) {
 				if (token_text in TAGS) {
 					type = token_text
@@ -502,21 +502,16 @@ class Markup_12y2 { constructor() {
 				if ('style'===current.type && !` \t\n,'"`.includes(before) && `- \t\n.,:;!?'")}`.includes(after)) {
 					let c = find_style(token_text)
 					if (c) {
-						accept(REGEX.lastIndex)
+						accept()
 						while (current != c)
 							CANCEL()
-						current.type = {
-							__proto__:null,
-							'**': 'bold', '__': 'underline',
-							'~~': 'strikethrough', '/': 'italic',
-						}[current.token]
 						CLOSE()
 						continue main
 					}
 				}
 				// open?
 				if (` \t\n({'"`.includes(before) && !` \t\n,'"`.includes(after)) {
-					accept(REGEX.lastIndex)
+					accept()
 					OPEN('style', token_text)
 					continue main
 				}
@@ -528,14 +523,13 @@ class Markup_12y2 { constructor() {
 			} else {
 				argregex = ARGTYPES[group_num]
 			}
-			// 4: parse args and {
-			let start_line = false
+			// 5: parse args and {
 			if (!argregex) {
-				accept(REGEX.lastIndex)
+				accept()
 				let body = 'NULL_ENV'===type //h
 				PROCESS(type, token_text, null, body, token_text)
 				if (body || 'NEWLINE'===type)
-					start_line = true
+					start_line()
 			} else {
 				// try to match arguments
 				argregex.lastIndex = REGEX.lastIndex
@@ -549,25 +543,21 @@ class Markup_12y2 { constructor() {
 				let body = argmatch[2] // the {, or contents of raw tags
 				let word = argmatch[3] // only for syntax like \sub word
 				
-				if (ARGS_CODE!==argregex) {
+				if (ARGS_CODE!==argregex)
 					args = parse_args(args)
-					start_line = body
-				}
-				accept(REGEX.lastIndex = argregex.lastIndex)
+				
+				REGEX.lastIndex = argregex.lastIndex
+				accept()
 				
 				PROCESS(type, full_token, args, body, token_text)
 				// word
 				if (undefined!==word) {
 					TEXT(word.replace(/\\([^])/g, "$1"))
 					CLOSE()
-					start_line = false
 				}
-			}
-			// 5: handle start-of-line
-			if (start_line) {
-				text = text.substring(last)
-				last = REGEX.lastIndex = 0
-				prev = -1
+				// start new line at `{`
+				if (body && ARGS_CODE!==argregex && undefined!==word)
+					start_line()
 			}
 		} // end of main loop
 		

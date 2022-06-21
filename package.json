@@ -61,12 +61,12 @@
 				"objects": "always-multiline",
 				"functions": "never"
 			}],
+			"no-useless-escape": ["off"],
 			"comma-spacing": ["warn"],
 			"comma-style": ["warn"],
 			"computed-property-spacing": ["warn"],
 			"dot-location": ["error", "property"],
 			"func-call-spacing": ["error"],
-			"key-spacing": ["warn"],
 			"keyword-spacing": ["warn"],
 			"max-len": ["error", {"code": 400}],
 			"new-parens": ["warn"],
