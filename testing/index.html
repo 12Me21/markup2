@@ -49,7 +49,7 @@ code block
 🟩 unclosed table cell
 |[red] hack|a
 bcdefa
-🟩 {"type":"ROOT","content":[{"type":"table","content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","content":["hack"],"args":{"color":"red"}}]}]},"a","\n","bcdefa"]}
+🟩 {"type":"ROOT","content":[{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{"color":"red"},"content":["hack"]},{"type":"table_cell","args":{},"content":["a"]}]}]},"bcdefa"],"prev":"text"}
 
 🟩 unclosed icode
 `eabcn
@@ -178,13 +178,17 @@ normal
 codeblock
 abc
 ```
+missing start linebreak:
+```x=1
+x=x+1
+```
 ``` c++ 11 
 lang
 aaa
 ```
 ```inline```
 ```js
-no lb```
+missing end linebreak (todo: idk about this)```
 ```
 
 blank lines
@@ -197,7 +201,7 @@ heck```abc
 ```
 unclosed
 
-🟩 {"type":"ROOT","content":[{"type":"code","args":{"text":"normal\ncodeblock\nabc\n"}},{"type":"code","args":{"text":"lang\naaa\n","lang":"c++ 11"}},{"type":"code","args":{"text":"inline"}},{"type":"code","args":{"text":"no lb","lang":"js"}},{"type":"code","args":{"text":"\nblank lines\n\n"}},"not at start ","`","`",{"type":"icode","args":{"text":"abc"}},"`","`","\n",{"type":"code","args":{"text":"end not at start\nheck"}},"abc","\n",{"type":"code","args":{"text":"unclosed\n"}}]}
+🟩 {"type":"ROOT","content":[{"type":"code","args":{"text":"normal\ncodeblock\nabc\n"}},"missing start linebreak:","\n",{"type":"code","args":{"text":"x=1\nx=x+1\n"}},{"type":"code","args":{"text":"lang\naaa\n","lang":"c++ 11"}},{"type":"icode","args":{"text":"`inline`"}},"\n",{"type":"code","args":{"text":"missing end linebreak (todo: idk about this)","lang":"js"}},{"type":"code","args":{"text":"\nblank lines\n\n"}},"not at start ",{"type":"icode","args":{"text":"`abc`"}},"\n",{"type":"code","args":{"text":"end not at start\nheck"}},"abc","\n",{"type":"code","args":{"text":"unclosed\n"}}],"prev":"block"}
 
 🟩 paragraphs
 paragraph1
@@ -243,7 +247,7 @@ a/
 `abc
 def`
 
-🟩 {"type":"ROOT","content":["\n","\n",{"type":"table","content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","content":["abc"],"args":{"color":"gray"}},{"type":"table_cell","content":["abc"],"args":{"color":"blue"}}]}]}," ",{"type":"icode","args":{"text":"test"}}," ","\n",{"type":"image","args":{"url":"https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true"}},"the sand can be eatena","\n","\tabc","\n",{"type":"spoiler","content":["abc defaaaa ",{"type":"spoiler","content":["a"],"args":{"label":"spoiler"}}],"args":{"label":"spoiler"}},"aaaaaa","\n",{"type":"align","content":["heck"],"args":{"align":"right"}},{"type":"align","content":["| ","table"," |"],"args":{"align":"center"}},{"type":"divider"},{"type":"key","content":[{"type":"key","content":["a"]},{"type":"key","content":["b"]},"\n",{"type":"key","content":["ctrl"]},{"type":"invalid","content":[" ha","}"],"args":{"text":"\\abcdef[aaa]{","reason":"invalid tag"}},"\n",{"type":"key","content":["shift"]},"\n",{"type":"key","content":["ctrl"]},"+",{"type":"key","content":["shift"]},"+",{"type":"key","content":["M"]}]},"\n",{"type":"spoiler","content":["abc"],"args":{"label":"spoiler"}},"/","test","\n","a","/","\n",{"type":"icode","args":{"text":"abc"}},"\n","def","`","\n","\n"]}
+🟩 {"type":"ROOT","content":["\n","\n",{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{"color":"gray"},"content":["abc"]},{"type":"table_cell","args":{"color":"blue"},"content":["abc"]},{"type":"table_cell","args":{},"content":[{"type":"icode","args":{"text":"test"}}," "]}]}]},{"type":"image","args":{"url":"https://qcs.shsbs.xyz/api/file/raw/31760?size=30&crop=true"}},"the sand can be eatena","\n","\tabc","\n",{"type":"spoiler","args":{"label":"spoiler"},"content":["abc defaaaa ",{"type":"spoiler","args":{"label":"spoiler"},"content":["a"]}]},"aaaaaa","\n",{"type":"align","args":{"align":"right"},"content":["heck"]},{"type":"align","args":{"align":"center"},"content":["| table"," ","|"]},{"type":"divider"},{"type":"key","args":null,"content":[{"type":"key","args":null,"content":["a"]},{"type":"key","args":null,"content":["b"]},"\n",{"type":"key","args":null,"content":["ctrl"]},{"type":"invalid","args":{"text":"\\abcdef[aaa]{","reason":"invalid tag"},"content":[" ha","}"]},"\n",{"type":"key","args":null,"content":["shift"]},"\n",{"type":"key","args":null,"content":["ctrl"]},"+",{"type":"key","args":null,"content":["shift"]},"+",{"type":"key","args":null,"content":["M"]}]},"\n",{"type":"spoiler","args":{"label":"spoiler"},"content":["abc"]},"/","test","\n","a","/","\n",{"type":"icode","args":{"text":"abc"}},"\n","def",{"type":"icode","args":{"text":""}},"\n","\n"],"prev":"newline"}
 
 🟩 idk..env close
 >{
@@ -270,7 +274,7 @@ https://example\.com
 /italic | abc/
 | table /test | /italic | abc/ |
 abc /heck |
-🟩 {"type":"ROOT","content":[{"type":"italic","content":["italic"," | ","abc"]},"\n",{"type":"table","content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{},"content":["table ","/","test"]},{"type":"table_cell","args":{},"content":["/","italic"]},{"type":"table_cell","args":{},"content":["abc","/"]}]}]},"abc ","/","heck"," |"]}
+🟩 {"type":"ROOT","content":[{"type":"italic","content":["italic"," ","| abc"]},"\n",{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{},"content":["table ","/","test"]},{"type":"table_cell","args":{},"content":["/","italic"]},{"type":"table_cell","args":{},"content":["abc","/"]}]}]},"abc ","/","heck"," ","|"],"prev":"text"}
 
 🟩 list
 - abc
@@ -327,7 +331,7 @@ wow |
 |abc|abc
 the sand | can be eaten |
 heck |
-🟩 {"type":"ROOT","content":["|","\n","wow"," |\n|","abc","\n",{"type":"table","content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{},"content":["abc"]},{"type":"table_cell","args":{},"content":["abc","\n","the sand"]},{"type":"table_cell","args":{},"content":["can be eaten"]}]}]},"heck"," |"]}
+🟩 {"type":"ROOT","content":["|","\n","wow"," ","|","\n",{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{},"content":["abc"]}]},{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{},"content":["abc"]},{"type":"table_cell","args":{},"content":["abc"]}]}]},"the sand"," ","| can be eaten"," ","|","\n","heck"," ","|"],"prev":"text"}
 
 🟩 urls
 aaahttp://example.com
@@ -336,4 +340,4 @@ http://example.com?
 (http://example.com/heck(123))
 http://example.com/heck(123)abc;
 
-🟩 {"type":"ROOT","content":["aaahttp:","/","/","example.com","\n",{"type":"simple_link","args":{"url":"http://example.com"}},"?","\n","(",{"type":"simple_link","args":{"url":"http://example.com"}},")","\n","(",{"type":"simple_link","args":{"url":"http://example.com/heck(123)"}},")","\n",{"type":"simple_link","args":{"url":"http://example.com/heck(123)abc"}},";","\n","\n"]}
+🟩 {"type":"ROOT","content":["aaahttp:","/","/example.com","\n",{"type":"simple_link","args":{"url":"http://example.com"}},"?","\n","(",{"type":"simple_link","args":{"url":"http://example.com"}},")","\n","(",{"type":"simple_link","args":{"url":"http://example.com/heck(123)"}},")","\n",{"type":"simple_link","args":{"url":"http://example.com/heck(123)abc"}},";","\n","\n"]}

@@ -72,13 +72,13 @@ class Markup_12y2 { constructor() {
 	/(?:\[([^\]\n]*)\])? */y
 	
 	const ARGS_CODE = // ... ```
-	/(?: *([-\w.+#$ ]+?) *(?:\n|$))?([^]*?)(?:```|$)/y
+	/(?: *([-\w.+#$ ]+?) *(?=\n|$))?\n?([^]*?)(?:```|$)/y
 	
 	PAT`[\n]?[}]${{ BLOCK_END: 0}}`
 	PAT`[\n]${{ NEWLINE: 0}}`
 	PAT`{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}`
 	PAT`{BOL}[-]{3,}{EOL}${{ DIVIDER: 0}}`
-	PAT`([*][*]|[_][_]|[~][~]|[/])(?=[\w]${{ STYLE_START: 0}}|${{ STYLE_END: 0}})`
+	PAT`([*][*]|[_][_]|[~][~]|[/])${{ STYLE: 0}}`
 	PAT`[\\][a-z]+(?![a-zA-Z0-9])${{ TAG: 0}}`
 	PAT`[\\][{][\n]?${{ NULL_ENV: 0}}`
 	PAT`[\\]{ANY}${{ ESCAPED: 0}}`
@@ -95,9 +95,6 @@ class Markup_12y2 { constructor() {
 	
 	//todo: org tables separators?
 	
-	//[\`]{2}[^\n]*${{ LINE_CODE: 0}}
-	//[\`]{2}[^\`\n]*([\`][^\`\n]+)*[\`]{0,3}${{ INLINE_CODE_2: 0}}
-	
 	// TokenType -> ArgRegex
 	const TAGS = {
 		__proto__:null,
@@ -112,6 +109,12 @@ class Markup_12y2 { constructor() {
 		'\\spoiler': ARGS_LINE,
 		'\\ruby': ARGS_WORD,
 		'\\key': ARGS_WORD,
+	}
+	
+	function find_style(token) {
+		for (let c=current; 'style'===c.type; c=c.parent)
+			if (c.token===token)
+				return c
 	}
 	
 	// process a token
@@ -133,22 +136,6 @@ class Markup_12y2 { constructor() {
 			OPEN('heading', token, args, body)
 		} break; case 'DIVIDER': {
 			BLOCK('divider')
-		} break; case 'STYLE_START': {
-			OPEN('style', token)
-		} break; case 'STYLE_END': {
-			while ('style'===current.type) {
-				if (token===current.token) { // found opening
-					current.type = {
-						__proto__:null,
-						'**': 'bold', '__': 'underline',
-						'~~': 'strikethrough', '/': 'italic',
-					}[current.token]
-					CLOSE()
-					return
-				}
-				CANCEL() // different style (kill)
-			}
-			TEXT(token)
 		} break; case 'BLOCK_END': {
 			if (brackets>0) {
 				while (!current.body)
@@ -372,6 +359,8 @@ class Markup_12y2 { constructor() {
 			CLOSE()
 		} else
 			CLOSE()
+		// todo: maybe also cancel rows with just 1 unclosed cell?
+		// like `| abc` -> text
 	}
 	
 	function get_last(block) {
@@ -478,12 +467,21 @@ class Markup_12y2 { constructor() {
 		// MAIN LOOP //
 		let prev = -1
 		let last = REGEX.lastIndex = 0
-		for (let match; match=REGEX.exec(text); ) {
+		let match
+		function nevermind() {
+			REGEX.lastIndex = match.index+1
+			last = match.index
+		}
+		function accept(i) {
+			last = i
+		}
+		main: while (match = REGEX.exec(text)) {
 			// check for infinite loops
 			if (match.index===prev)
 				throw ["INFINITE LOOP", match]
 			prev = match.index
 			// 1: insert the text from after previous token
+			// idea: defer this until we actually KNOW we matched a token
 			TEXT(text.substring(last, match.index))
 			// 2: figure out which token type was matched
 			let token_text = match[0]
@@ -500,30 +498,54 @@ class Markup_12y2 { constructor() {
 					type = 'INVALID_TAG'
 					argregex = ARGS_NORMAL
 				}
+			} else if ('STYLE'===type) {
+				let before = text.charAt(match.index-1)
+				let after = text.charAt(REGEX.lastIndex)
+				// try close?
+				if ('style'===current.type && !` \t\n,'"`.includes(before) && `- \t\n.,:;!?'")}`.includes(after)) {
+					let c = find_style(token_text)
+					if (c) {
+						accept(REGEX.lastIndex)
+						while (current != c)
+							CANCEL()
+						current.type = {
+							__proto__:null,
+							'**': 'bold', '__': 'underline',
+							'~~': 'strikethrough', '/': 'italic',
+						}[current.token]
+						CLOSE()
+						continue main
+					}
+				}
+				// open?
+				if (` \t\n({'"`.includes(before) && !` \t\n,'"`.includes(after)) {
+					accept(REGEX.lastIndex)
+					OPEN('style', token_text)
+					continue main
+				}
+				nevermind()
+				continue main
 			} else if ('TABLE_CELL'===type && !in_table()) {
-				REGEX.lastIndex = match.index+1
-				last = match.index
-				continue
+				nevermind()
+				continue main
 			} else {
 				argregex = ARGTYPES[group_num]
 			}
-			
 			// 4: parse args and {
 			let start_line = false
 			if (!argregex) {
+				accept(REGEX.lastIndex)
 				let body = 'NULL_ENV'===type //h
 				PROCESS(type, token_text, null, body, token_text)
-				last = REGEX.lastIndex
 				if (body || 'NEWLINE'===type)
 					start_line = true
 			} else {
 				// try to match arguments
 				argregex.lastIndex = REGEX.lastIndex
 				let argmatch = argregex.exec(text)
-				if (null===argmatch) { // INVALID! skip 1 char
-					REGEX.lastIndex = match.index+1
-					last = match.index
-					continue
+				if (null===argmatch) {
+					nevermind()
+					continue main
 				}
 				let full_token = token_text+argmatch[0]
 				let args = argmatch[1]
@@ -534,6 +556,8 @@ class Markup_12y2 { constructor() {
 					args = parse_args(args)
 					start_line = body
 				}
+				accept(REGEX.lastIndex = argregex.lastIndex)
+				
 				PROCESS(type, full_token, args, body, token_text)
 				// word
 				if (undefined!==word) {
@@ -541,7 +565,6 @@ class Markup_12y2 { constructor() {
 					CLOSE()
 					start_line = false
 				}
-				last = REGEX.lastIndex = argregex.lastIndex
 			}
 			// 5: handle start-of-line
 			if (start_line) {
