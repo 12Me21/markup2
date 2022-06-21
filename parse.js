@@ -68,14 +68,14 @@ class Markup_12y2 { constructor() {
 	/(?:\[([^\]\n]*)\])? */y
 	
 	const ARGS_CODE = // ... ```
-	/(?: *([-\w.+#$ ]+?) *(?=\n|$))?\n?([^]*?)(?:```|$)/y
+	/(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:```|$)/y
 	
 	PAT`[\n]?[}]${{ BLOCK_END: 0}}`
 	PAT`[\n]${{ NEWLINE: 0}}`
 	PAT`{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}`
 	PAT`{BOL}[-]{3,}{EOL}${{ DIVIDER: 0}}`
-	PAT`([*][*]|[_][_]|[~][~]|[/])${{ STYLE: 0}}`
-	PAT`[\\][a-z]+(?![a-zA-Z0-9])${{ TAG: 0}}`
+	PAT`([*][*]|[_][_]|[~][~]|[/])${{ STYLE: true}}`
+	PAT`[\\][a-z]+(?![a-zA-Z0-9])${{ TAG: true}}`
 	PAT`[\\][{][\n]?${{ NULL_ENV: 0}}`
 	PAT`[\\]{ANY}${{ ESCAPED: 0}}`
 	PAT`{BOL}[>]${{ QUOTE: ARGS_HEADING}}`
@@ -113,14 +113,14 @@ class Markup_12y2 { constructor() {
 	// 📥 rarys 🏷 RawArgs 📝 raw arguments
 	// 📥 body 🏷 Text 📝 argmatch[2] (varies)
 	// 📥 base_token 🏷 Text 📝 token text, without arguments
-	function PROCESS(_token_type, token, rargs, body, base_token) {
+	function PROCESS(_token_type, token, rargs, body, args_token) {
 		switch (_token_type) { default: {
 			throw new TypeError("unknown token type: "+_token_type)
 			// error
 		} break; case 'NEWLINE': {
 			NEWLINE(true)
 		} break; case 'HEADING': {
-			let level = base_token.length
+			let level = token.length
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
 			OPEN('heading', args, body)
@@ -162,11 +162,11 @@ class Markup_12y2 { constructor() {
 		} break; case 'INLINE_CODE': {
 			BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
 		} break; case 'EMBED': {
-			let url = base_token.substr(1) // ehh better
+			let url = token.substr(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
 			BLOCK(type, args)
 		} break; case 'LINK': {
-			let url = base_token
+			let url = token
 			let args = {url}
 			if (body) {
 				OPEN('link', args, body)
@@ -175,7 +175,7 @@ class Markup_12y2 { constructor() {
 				BLOCK('simple_link', args)
 			}
 		} break; case 'TABLE_START': {
-			OPEN('table_row', token) // special OPEN call
+			OPEN('table_row', token+args_token) // special OPEN call
 			OPEN('table_cell', rargs, body)
 		} break; case 'TABLE_CELL': {
 			while (current.type!=='table_cell')
@@ -186,9 +186,9 @@ class Markup_12y2 { constructor() {
 			OPEN('table_cell', rargs, body)
 		} break; case 'INVALID_TAG': {
 			if (body)
-				OPEN('invalid', {text: token, reason: "invalid tag"}, body)
+				OPEN('invalid', {text: token+args_token, reason: "invalid tag"}, body)
 			else
-				BLOCK('invalid', {text: token, reason: "invalid tag"})
+				BLOCK('invalid', {text: token+args_token, reason: "invalid tag"})
 		} break; case 'LIST_ITEM': {
 			let indent = token.indexOf("-")
 			OPEN('list_item', {indent}, body)
@@ -538,26 +538,26 @@ class Markup_12y2 { constructor() {
 					nevermind()
 					continue main
 				}
-				let full_token = token_text+argmatch[0]
-				let args = argmatch[1]
-				let body = argmatch[2] // the {, or contents of raw tags
-				let word = argmatch[3] // only for syntax like \sub word
-				
-				if (ARGS_CODE!==argregex)
-					args = parse_args(args)
-				
 				REGEX.lastIndex = argregex.lastIndex
 				accept()
 				
-				PROCESS(type, full_token, args, body, token_text)
-				// word
+				let args = argmatch[1]
+				let body = argmatch[2] // flag: args with {, or word args
+				let word = argmatch[3] // contents: word args & code block
+				if (ARGS_CODE!==argregex)
+					args = parse_args(args)
+				
+				PROCESS(type, token_text, args, body, argmatch[0])
+				// word tags
 				if (undefined!==word) {
+					// escaping in word args? idk. todo
 					TEXT(word.replace(/\\([^])/g, "$1"))
 					CLOSE()
 				}
-				// start new line at `{`
-				if (body && ARGS_CODE!==argregex && undefined!==word)
+				// tags with { body
+				else if (body && ARGS_CODE!==argregex) {
 					start_line()
+				}
 			}
 		} // end of main loop
 		
