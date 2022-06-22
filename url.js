@@ -6,11 +6,17 @@ class SbsLocation {
 		
 		this.type = decodeURIComponent(type)
 		
-		if (id) {
-			this.id = decodeURIComponent(id.substr(1))
-			if (/^-?\d+$/.test(this.id))
-				this.id = +this.id
-		}
+		if (id==undefined)
+			this.id = null
+		else {
+			let id = decodeURIComponent(id.substring(1))
+			if (/^-?\d+$/.test(id))
+				this.id = +id
+			else if (id[1]=="@")
+				this.id = id.substring(1)
+			else
+				this.id = id
+		} 
 		
 		this.query = {}
 		if (query_str)
@@ -34,8 +40,14 @@ class SbsLocation {
 		
 		let url = esc(this.type, /[/?&#]+/g)
 		
-		if (this.id != null)
-			url += "/"+esc(this.id, /[/?&#]+/g)
+		if (this.id!=null) {
+			url += "/"
+			if ('string'==typeof this.id) {
+				if (/^-?\d+$|^@/.test(this.id))
+					url += "@"
+			}
+			url += esc(this.id, /[/?&#]+/g)
+		}
 		
 		let query = Object.entries(this.query).map(([k,v])=>{
 			k = esc(k, /[?=&#]+/g)

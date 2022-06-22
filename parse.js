@@ -498,7 +498,7 @@ class Markup_12y2 { constructor() {
 				let before = text.charAt(match.index-1)
 				let after = text.charAt(REGEX.lastIndex)
 				// try close?
-				if ('style'===current.type && !` \t\n,'"`.includes(before) && `- \t\n.,:;!?'")}`.includes(after)) {
+				if ('style'===current.type && !` \t\n,'"`.includes(before) && `- \t\n.,:;!?'")}{`.includes(after)) {
 					let c = find_style(token_text)
 					if (c) {
 						accept()
@@ -509,7 +509,7 @@ class Markup_12y2 { constructor() {
 					}
 				}
 				// open?
-				if (` \t\n({'"`.includes(before) && !` \t\n,'"`.includes(after)) {
+				if (` \t\n({}'"`.includes(before) && !` \t\n,'"`.includes(after)) {
 					accept()
 					OPEN('style', token_text)
 					continue main
