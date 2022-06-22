@@ -9,7 +9,7 @@ class SbsLocation {
 		if (id==undefined)
 			this.id = null
 		else {
-			let id = decodeURIComponent(id.substring(1))
+			id = decodeURIComponent(id.substring(1))
 			if (/^-?\d+$/.test(id))
 				this.id = +id
 			else if (id[1]=="@")
