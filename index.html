@@ -35,6 +35,14 @@
 		align-self: center;
 		font-weight: bold;
 	}
+	
+	#\$output > textarea.plaintext {
+		resize: none;
+		display: block;
+		width: -webkit-fill-available;
+		width: -moz-available;
+		width: stretch;
+	}
 </style>
 
 <body class='Col'>
@@ -55,6 +63,7 @@
 				<option> render
 				<option> nodes
 				<option> json
+				<option> testcase
 			</select>
 		</div>
 		
@@ -75,7 +84,7 @@
 				<td> <time id=$time4 datetime=Z></time>
 		</table></table-overflow>
 		<span id=$count></span>
-		<div id=$output class='Markup limit'></div>
+		<span id=$output class='Markup limit'></span>
 	</output-pane>
 </main>
 
@@ -99,14 +108,30 @@
 		t0 = performance.now()
 		let tree = Markup.langs.parse($input.value, $lang.value)
 		t1 = performance.now()
+		function output_text(text) {
+			let x = document.createElement('textarea')
+			let b = document.createElement('button')
+			b.textContent = 'Copy'
+			b.onclick = e=>{
+				navigator.clipboard.writeText(x.value)
+			}
+			x.value = text
+			x.className = 'plaintext'
+			$output.replaceChildren(b, x)
+		}
 		if ('render'==$display.value) {
 			$output.replaceChildren(Markup.renderer.render(tree))
 		} else if ('nodes'==$display.value) {
 			let e = draw_tree(tree)
 			$output.replaceChildren(e)
 		} else if ('json'==$display.value) {
-			$output.textContent = JSON.stringify(tree)
+			output_text(JSON.stringify(tree))
+		} else if ('testcase'==$display.value) {
+			output_text("🟩 title here\n"+$input.value.replace(/🟩/g, "🟨")+"\n"+"🟩 "+JSON.stringify(tree))
 		}
+		//console.log(textarea, $output.contentEditable)
+		//if (textarea != ($output.contentEditable=='true'))
+		//	$output.contentEditable = textarea ? 'true' : 'false'
 		t2 = performance.now()
 		$output.scrollHeight
 		t3 = performance.now()
