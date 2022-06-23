@@ -1,4 +1,4 @@
-<!doctype html><html lang=en-QS><meta charset="utf-8">
+<!doctype html><html lang=en-QS><meta charset=utf-8>
 <title>Markup2 Tests</title>
 
 <script src=../parse.js></script>
@@ -13,19 +13,17 @@
 
 opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 <table class='data'>
-	<tr>
-		<th> total <th> passed <th> pending <th> failed
-	<tr>
-		<td id=$table_total> ? <td id=$table_passed> ? <td id=$table_pending> ? <td id=$table_failed> ?
+	<tr> <th> total <th> passed <th> pending <th> failed
+	<tr> <td id=$table_total> ? <td id=$table_passed> ? <td id=$table_pending> ? <td id=$table_failed> ?
 </table>
 <hr>
 <div id=$output></div>
 
 <script>'use strict'
 	let start = performance.timing.fetchStart
-	$start_time.textContent = new Date(start).toLocaleString([], {year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'2-digit',second:'numeric'})
+	$start_time.textContent = new Date(start).toLocaleString()
 	
-	async function run(data) {
+	function run(data) {
 		$output.textContent = ""
 		
 		Test.load_text(data)
@@ -33,23 +31,15 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 		let total, pending
 		let passed = 0, failed = 0
 		total = pending = Test.all.length
-		
 		$table_total.textContent = total
 		function draw() {
 			$table_passed.textContent = passed
 			$table_failed.textContent = failed
 			$table_pending.textContent = pending
 		}
-		
 		draw()
 		
-		let prev = 0
 		for (let test of Test.all) {
-			/*let t = performance.now()
-			if (t > prev+1000/30) {
-				prev = t
-				await {then: fn=>setTimeout(fn)}
-			}*/
 			test.run()
 			if (test.status > 0) {
 				$output.append(test.draw_result())
@@ -68,26 +58,13 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 		let data = $data.textContent
 		run(data)
 	})
-	
-	/*
-		// this makes the tests/results render immediately when the page loads,
-		// but it's actually /too fast/ and it's hard to tell whether the tests actually ran
-
-	let x = new MutationObserver((events, observer)=>{
-		let pt = events.find(e=>e.target.id=='$data')
-		observer.disconnect()
-		run(pt.target.textContent)
-	}).observe(document.body, {
-		childList: true,
-		subtree: true,
-	})*/
 </script>
 
 <!-- <plaintext> goes until EOF, so the </plaintext> tag is fake -->
 <!-- (I just use it so editors won't indent the contents) -->
 <plaintext id=$data hidden></plaintext>
 🟩 wake up!
-|[1x1] /uwu/ |
+|[2x1] /uwu/ |
 ## `owo`
 🟩 {"type":"ROOT","content":[{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{"colspan":2},"content":[{"type":"italic","args":null,"content":["uwu"]}]}]}]},{"type":"heading","args":{"level":2},"content":[{"type":"icode","args":{"text":"owo"}}]}],"prev":"block"}
 

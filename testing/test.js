@@ -243,3 +243,17 @@ class Comparator {
 		this.pop()
 	}
 }
+
+	
+	/*
+		// this makes the tests/results render immediately when the page loads,
+		// but it's actually /too fast/ and it's hard to tell whether the tests actually ran
+
+	let x = new MutationObserver((events, observer)=>{
+		let pt = events.find(e=>e.target.id=='$data')
+		observer.disconnect()
+		run(pt.target.textContent)
+	}).observe(document.body, {
+		childList: true,
+		subtree: true,
+	})*/

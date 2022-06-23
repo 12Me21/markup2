@@ -15,7 +15,6 @@ test- {
 	margin: 3px;
 	white-space: pre-wrap;
 	font: 0.8em sans-serif;
-	height: 2.2rem;
 }
 test-.passed {
 	background: #7F6;
@@ -56,6 +55,9 @@ test- input- {
 	overflow-y: auto;
 }
 
+test- col2- {
+}
+
 #\$output {
 	background: white;
 }
@@ -75,3 +77,9 @@ test- input- {
 #\$table_pending {
 	background: #e0c87f70;
 }
+
+/*    box-shadow: 0 0 3px inset red;
+    background: linear-gradient(#0003, #FFF8 4px calc(100% - 4px), #0003);
+        background-attachment: scroll;
+    background-attachment: local;
+}*/

@@ -1,11 +1,21 @@
 function 𐀶([html]) {
 	let temp = document.createElement('template')
-	temp.innerHTML = html
-	let elem = temp.content.firstChild
-	return elem.cloneNode.bind(elem, true)
+	temp.innerHTML = html.replace(/\s*?\n\s*/g, "")
+	let node = temp.content.firstChild
+	return document.importNode.bind(document, node, true)
 }
 
-let RESULT = 𐀶`<test- class=Row><div class=Col><name-></name-><result- class=fill></result-></div><input- class=fill></input->` // p autoclose select by id?
+let RESULT = 𐀶`
+<test- class=Row>
+	<div class=Col>
+		<name-></name->
+		<result-></result->
+	</div>
+	<col2- class='fill Col'>
+		<input- class='fill'></input->
+	</col2->
+</test->
+` // p autoclose select by id?
 
 Test.prototype.draw_result = function() {
 	let d = RESULT()
@@ -17,8 +27,10 @@ Test.prototype.draw_result = function() {
 	d.querySelector('name-').textContent = this.name
 	d.querySelector('input-').textContent = this.input
 	let result = this.result
-	if (this.status > 0)
+	if (this.status > 0) {
 		result += " ["+(+this.parse_time).toFixed(1)+" ms]"
+		d.querySelector('div').className = "Row"
+	}
 	d.querySelector('result-').textContent = result
 	//d.querySelector('time-').textContent = 
 	
