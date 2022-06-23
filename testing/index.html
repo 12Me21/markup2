@@ -28,7 +28,7 @@ loaded: <time id=$time></time>
 		return {then: fn=>window.setTimeout(fn, ms)}
 	}
 	
-	async function run() {
+	/*async*/ function run() {
 		$output.textContent = ""
 		$table_passed.textContent = 0
 		$table_failed.textContent = 0
@@ -44,7 +44,7 @@ loaded: <time id=$time></time>
 				$table_failed.textContent++
 			}
 			$table_pending.textContent--
-			await wait()
+			//await wait()
 		}
 	}
 	window.onload = function() {
