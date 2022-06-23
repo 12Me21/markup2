@@ -11,7 +11,7 @@
 <body>
 <script src=nav.js></script>
 
-loaded: <time id=$time></time>
+opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 <table class='data'>
 	<tr>
 		<th> total <th> passed <th> pending <th> failed
@@ -21,41 +21,76 @@ loaded: <time id=$time></time>
 <hr>
 <div id=$output></div>
 
-<script>
-	$time.textContent = new Date(performance.timing.fetchStart).toLocaleString([], {year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'2-digit'})
+<script>'use strict'
+	let start = performance.timing.fetchStart
+	$start_time.textContent = new Date(start).toLocaleString([], {year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'2-digit',second:'numeric'})
 	
-	function wait(ms) {
-		return {then: fn=>window.setTimeout(fn, ms)}
-	}
-	
-	/*async*/ function run() {
+	async function run(data) {
 		$output.textContent = ""
-		$table_passed.textContent = 0
-		$table_failed.textContent = 0
-		$table_pending.textContent = Test.all.length
-		$table_total.textContent = Test.all.length
+		
+		Test.load_text(data)
+		
+		let total, pending
+		let passed = 0, failed = 0
+		total = pending = Test.all.length
+		
+		$table_total.textContent = total
+		function draw() {
+			$table_passed.textContent = passed
+			$table_failed.textContent = failed
+			$table_pending.textContent = pending
+		}
+		
+		draw()
+		
+		let prev = 0
 		for (let test of Test.all) {
+			/*let t = performance.now()
+			if (t > prev+1000/30) {
+				prev = t
+				await {then: fn=>setTimeout(fn)}
+			}*/
 			test.run()
 			if (test.status > 0) {
 				$output.append(test.draw_result())
-				$table_passed.textContent++
+				passed++
 			} else {
 				$output.prepend(test.draw_result())
-				$table_failed.textContent++
+				failed++
 			}
-			$table_pending.textContent--
-			//await wait()
+			pending--
+			draw()
 		}
+		let dur = Date.now() - start
+		$duration.textContent = dur+" ms"
 	}
-	window.onload = function() {
-		Test.load_text($data.textContent)
-		run()
-	}
+	document.addEventListener('DOMContentLoaded', e=>{
+		let data = $data.textContent
+		run(data)
+	})
+	
+	/*
+		// this makes the tests/results render immediately when the page loads,
+		// but it's actually /too fast/ and it's hard to tell whether the tests actually ran
+
+	let x = new MutationObserver((events, observer)=>{
+		let pt = events.find(e=>e.target.id=='$data')
+		observer.disconnect()
+		run(pt.target.textContent)
+	}).observe(document.body, {
+		childList: true,
+		subtree: true,
+	})*/
 </script>
 
-<!-- plaintext goes until EOF, i put a fake closing tag
-so it doesn't get indented -->
-<plaintext hidden id=$data></plaintext>
+<!-- <plaintext> goes until EOF, so the </plaintext> tag is fake -->
+<!-- (I just use it so editors won't indent the contents) -->
+<plaintext id=$data hidden></plaintext>
+🟩 wake up!
+|[1x1] /uwu/ |
+## `owo`
+🟩 {"type":"ROOT","content":[{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{"colspan":2},"content":[{"type":"italic","args":null,"content":["uwu"]}]}]}]},{"type":"heading","args":{"level":2},"content":[{"type":"icode","args":{"text":"owo"}}]}],"prev":"block"}
+
 🟩 123
 ### heading
 the `sand` can /be/ eaten

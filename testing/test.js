@@ -90,7 +90,6 @@ class Test {
 	
 	static load_text(text) {
 		this.all = []
-		//let text = await fetch(url).then(x=>x.text())
 		text = text.replace(/\r/g, "")
 		// todo: indent? (\t*) and then \1 backref match on other lines
 		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*([{].*)$|(🟩)/gum
