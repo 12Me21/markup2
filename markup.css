@@ -52,12 +52,13 @@ L + ratio { }
 	color: var(--T-color);
 	background: var(--T-bg);
 	font: var(--T-font);
+	font-variant-ligatures: none;
 	-moz-tab-size: var(--T-tab-size);
 	tab-size: var(--T-tab-size);
 }
 
 .Markup * {
-	font-family: inherit;
+	font: inherit;
 	margin: 0;
 }
 
