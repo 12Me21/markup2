@@ -58,7 +58,7 @@ L + ratio { }
 }
 
 .Markup * {
-	font: inherit;
+	font-family: inherit;
 	margin: 0;
 }
 
