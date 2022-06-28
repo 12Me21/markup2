@@ -12,7 +12,7 @@ class SbsLocation {
 			id = decodeURIComponent(id.substring(1))
 			if (/^-?\d+$/.test(id))
 				this.id = +id
-			else if (id[1]=="@")
+			else if (id[0]=="@")
 				this.id = id.substring(1)
 			else
 				this.id = id
