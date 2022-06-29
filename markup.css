@@ -51,7 +51,7 @@ L + ratio { }
 .Markup {
 	color: var(--T-color);
 	background: var(--T-bg);
-	font: var(--T-font);
+	font: var(--T-font); /* this is kinda bad.. maybe there should be a --T-markup-font ? or something separate for the main site and markup. then you can set --T-markup-font to "inherit" */
 	font-variant-ligatures: none;
 	-moz-tab-size: var(--T-tab-size);
 	tab-size: var(--T-tab-size);
@@ -100,7 +100,7 @@ L + ratio { }
 	border: var(--T-image-border);
 }
 /* before loading, assume image will be larger than --image-max-height */
-.Markup img[data-state="loading"], .Markup video[data-state="loading"] {
+.Markup img[data-state="loading"], .Markup video[data-state="loading"], .Markup img[data-state="error"] {
 	height: var(--T-embed-height);
 	min-width: 2em;
 }
