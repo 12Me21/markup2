@@ -84,7 +84,7 @@ class Markup_Render_Dom { constructor() {
 			} else {
 				e.src = src
 			}
-			if (alt!=null) e.alt = alt
+			if (alt!=null) e.alt = e.title = alt
 			if (width) {
 				e.width = width
 				e.style.setProperty('--width', height)

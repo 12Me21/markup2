@@ -256,10 +256,23 @@ class Markup_12y2 { constructor() {
 	// returns [type: String, args: Object]
 	function process_embed(url, rargs) {
 		let type
-		let args = {url, alt: rargs.named.alt}
-		for (let arg of rargs)
-			if ('video'===arg || 'audio'===arg || 'image'===arg)
+		let args = {url}
+		for (let arg of rargs) {
+			let m
+			if ('video'===arg || 'audio'===arg || 'image'===arg) {
 				type = arg
+			} else if (m = /^(\d+)x(\d+)$/.exec(arg)) {
+				args.width = +m[1]
+				args.height = +m[2]
+			} else {
+				if (args.alt==undefined)
+					args.alt = arg
+				else
+					args.alt += ";"+arg
+			}
+		}
+		if (rargs.named.alt!=undefined)
+			args.alt = rargs.named.alt
 		// todo: improve this
 		if (!type) {
 			//let u = new URL(url, "x-relative:/")
@@ -275,16 +288,6 @@ class Markup_12y2 { constructor() {
 		}
 		if (!type)
 			type = 'image'
-		// process args
-		if ('image'===type || 'video'===type) {
-			for (let arg of rargs) {
-				let m
-				if (m = /^(\d+)x(\d+)$/.exec(arg)) {
-					args.width = +m[1]
-					args.height = +m[2]
-				}
-			}
-		}
 		return [type, args]
 	}
 	
