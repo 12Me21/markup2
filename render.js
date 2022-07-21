@@ -158,7 +158,7 @@ class Markup_Render_Dom { constructor() {
 				let s = dur
 				let m = Math.floor(s / 60)
 				s = s % 60
-				return m+":"+(s+100).toFixed(1).substr(1)
+				return m+":"+(s+100).toFixed(1).substring(1)
 			}
 			audio.onvolumechange = e=>{
 				let volume = audio.volume
@@ -215,7 +215,7 @@ aaa
 				let s = media.duration
 				let m = Math.floor(s / 60)
 				s = s % 60
-				time.textContent = m+":"+(s+100).toFixed(2).substr(1)
+				time.textContent = m+":"+(s+100).toFixed(2).substring(1)
 			}
 			media.ontimeupdate = e=>{
 				progress.value = media.currentTime / media.duration * 100

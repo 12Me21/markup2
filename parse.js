@@ -153,7 +153,7 @@ class Markup_12y2 { constructor() {
 				//current.content.push("")
 				current.prev = 'block'
 			} else
-				TEXT(token.substr(1))
+				TEXT(token.substring(1))
 		} break; case 'QUOTE': {
 			OPEN('quote', {cite: rargs[0]}, body)
 		} break; case 'CODE_BLOCK': {
@@ -162,7 +162,7 @@ class Markup_12y2 { constructor() {
 		} break; case 'INLINE_CODE': {
 			BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
 		} break; case 'EMBED': {
-			let url = token.substr(1) // ehh better
+			let url = token.substring(1) // ehh better
 			let [type, args] = process_embed(url, rargs)
 			BLOCK(type, args)
 		} break; case 'LINK': {
