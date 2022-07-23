@@ -50,9 +50,9 @@ L + ratio { }
 /** aa */
 
 .Markup {
-	color: var(--T-color);
+	/*color: var(--T-color);*/
 	background: var(--T-bg);
-	font: var(--T-font); /* this is kinda bad.. maybe there should be a --T-markup-font ? or something separate for the main site and markup. then you can set --T-markup-font to "inherit" */
+	/*font: var(--T-font);*/ /* this is kinda bad.. maybe there should be a --T-markup-font ? or something separate for the main site and markup. then you can set --T-markup-font to "inherit" */
 	font-variant-ligatures: none;
 	-moz-tab-size: var(--T-tab-size);
 	tab-size: var(--T-tab-size);
@@ -335,7 +335,7 @@ L + ratio { }
 /** Headings **/
 /**************/
 
-.Markup h2, .Markup h3, .Markup h4, .Markup h5 {
+.M-heading {
 	margin: 0.1em 0;
 	border-bottom: 1px dotted var(--T-border-color);
 }
@@ -364,4 +364,24 @@ L + ratio { }
 .Markup h5 {
 	font-size: 1.125em;
 	font-weight: bold;
+}
+
+/*.Markup section {
+	border-left: 2px solid green;
+	padding-left: 2px;
+}*/
+
+.Markup[data-collapse] h2 {
+	display: list-item;
+	list-style: disclosure-closed inside;
+}
+.Markup[data-collapse] h2[data-open] {
+	list-style-type: disclosure-open;
+}
+/*.Markup[data-collapse] h2:not([data-open]) {
+	border-bottom-style: double;
+	border-bottom-width: 3px;
+}*/
+.Markup[data-collapse] h2:not([data-open]) + section {
+	display: none;
 }
