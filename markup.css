@@ -381,10 +381,10 @@ L + ratio { }
 .Markup h2[data-open] {
 	list-style-type: disclosure-open;
 }
-.Markup[data-invert-collapse] h2:not([data-open]) {
+.Markup[data-collapse] h2:not([data-open]) {
 	list-style-type: disclosure-open;
 }
-.Markup[data-invert-collapse] h2[data-open] {
+.Markup[data-collapse] h2[data-open] {
 	list-style-type: disclosure-closed;
 }
 /*.Markup[data-collapse] h2:not([data-open]) {
@@ -397,10 +397,10 @@ L + ratio { }
 .Markup h2[data-open] + section {
 	display: block;
 }
-.Markup[data-invert-collapse] h2:not([data-open]) + section {
+.Markup[data-collapse] h2:not([data-open]) + section {
 	display: block;
 }
-.Markup[data-invert-collapse] h2[data-open] + section {
+.Markup[data-collapse] h2[data-open] + section {
 	display: none;
 }
 
