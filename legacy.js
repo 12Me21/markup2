@@ -445,7 +445,7 @@ class Markup_Legacy { constructor() {
 							if (code[i+1] != "`")
 								break
 							if (i == start+1 && codeText[0] == " ")
-								codeText = codeText.substring(1)
+								codeText = codeText.substr(1)
 							scan()
 						}
 						codeText += c

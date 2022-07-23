@@ -262,16 +262,8 @@ aaa
 		underline: 𐀶`<u>`,
 		
 		heading: function({level}) {
-			let e = this[level-1]()
-			e.onclick = ev=>{
-				ev.currentTarget.toggleAttribute('data-open')
-			}
-			return e
-		}.bind([𐀶`<h2 class='M-heading'>`, 𐀶`<h3 class='M-heading'>`, 𐀶`<h4 class='M-heading'>`, 𐀶`<h5 class='M-heading'>`]),
-		
-		section: function({level}) {
-			return this()
-		}.bind(𐀶`<section>`),
+			return this[level-1]()
+		}.bind([𐀶`<h2>`, 𐀶`<h3>`, 𐀶`<h4>`, 𐀶`<h5>`]),
 		
 		quote: function({cite}) {
 			if (cite==null)

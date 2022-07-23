@@ -24,7 +24,7 @@ class Markup_12y2 { constructor() {
 	// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation
 	
 	// elements which can survive an eol (without a body)
-	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1, section:1}
+	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1}
 	
 	// RegExp
 	// GroupNum -> TokenType
@@ -71,7 +71,7 @@ class Markup_12y2 { constructor() {
 	/(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:```|$)/y
 	
 	PAT`[\n]?[}]${{ BLOCK_END: 0}}`
-	PAT`[\n]${{ NEWLINE: 0}}` // todo: see if we can change to [\n]+
+	PAT`[\n]${{ NEWLINE: 0}}`
 	PAT`{BOL}[#]{1,4}${{ HEADING: ARGS_HEADING}}`
 	PAT`{BOL}[-]{3,}{EOL}${{ DIVIDER: 0}}`
 	PAT`([*][*]|[_][_]|[~][~]|[/])${{ STYLE: true}}`
@@ -123,10 +123,6 @@ class Markup_12y2 { constructor() {
 			let level = token.length
 			let args = {level}
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
-			while ('section'===current.type && level<=current.args.level) {
-				current.prev = 'block'
-				CLOSE()
-			}
 			OPEN('heading', args, body)
 		} break; case 'DIVIDER': {
 			BLOCK('divider')
@@ -298,9 +294,9 @@ class Markup_12y2 { constructor() {
 	// start a new block
 	function OPEN(type, args, body) {
 		current = Object.seal({
-			type, args, content:[],
-			body, parent:current,
-			prev:'all_newline',
+			type, args, content: [],
+			body, parent: current,
+			prev: 'all_newline',
 		})
 		if (body)
 			brackets++
@@ -420,11 +416,6 @@ class Markup_12y2 { constructor() {
 		
 		dest.content.push(node)
 		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
-		
-		if ('heading'===o.type) {
-			OPEN('section', {level:o.args.level})
-			current.prev = 'block'
-		}
 	}
 	// push text
 	function TEXT(text) {
@@ -441,7 +432,7 @@ class Markup_12y2 { constructor() {
 	
 	function NEWLINE(real) {
 		if (real)
-			while (!current.body && 'ROOT'!==current.type && 'section'!==current.type)
+			while (!current.body && 'ROOT'!=current.type)
 				CANCEL()
 		if ('block'!==current.prev)
 			current.content.push("\n")
@@ -465,7 +456,7 @@ class Markup_12y2 { constructor() {
 	}
 
 	function parse(text) {
-		let tree = {type: 'ROOT', content: [], prev: 'all_newline', sections: []}
+		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
 		current = tree
 		brackets = 0
 		
