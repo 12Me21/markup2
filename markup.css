@@ -371,17 +371,36 @@ L + ratio { }
 	padding-left: 2px;
 }*/
 
-.Markup[data-collapse] h2 {
+.Markup h2 {
 	display: list-item;
-	list-style: disclosure-closed inside;
+	list-style: inside;
 }
-.Markup[data-collapse] h2[data-open] {
+.Markup h2:not([data-open]) {
+	list-style-type: disclosure-closed;
+}
+.Markup h2[data-open] {
 	list-style-type: disclosure-open;
+}
+.Markup[data-invert-collapse] h2:not([data-open]) {
+	list-style-type: disclosure-open;
+}
+.Markup[data-invert-collapse] h2[data-open] {
+	list-style-type: disclosure-closed;
 }
 /*.Markup[data-collapse] h2:not([data-open]) {
 	border-bottom-style: double;
 	border-bottom-width: 3px;
 }*/
-.Markup[data-collapse] h2:not([data-open]) + section {
+.Markup h2:not([data-open]) + section {
 	display: none;
 }
+.Markup h2[data-open] + section {
+	display: block;
+}
+.Markup[data-invert-collapse] h2:not([data-open]) + section {
+	display: block;
+}
+.Markup[data-invert-collapse] h2[data-open] + section {
+	display: none;
+}
+
