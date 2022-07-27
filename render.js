@@ -234,24 +234,6 @@ aaa
 </div>
 </media-player>
 `),
-		/*video: function({url}) {
-			let e = document.createElement('video')
-			//e.controls = true
-			//e.preload = 'none'
-			e.autoplay = true
-			e.dataset.shrink = ""
-			
-			e.src = filter_url(url, 'video')
-			// for clients that expand images/video when clicked:
-			// mousedown events don't happen on <video>,
-			// so instead I throw a fake event when the video plays
-			// todo: ew
-			e.onplaying = (event)=>{
-				let e2 = new Event('videoclicked', {bubbles: true, cancellable: true})
-				event.target.dispatchEvent(e2)
-			}
-			return e
-		},*/
 		
 		italic: 𐀶`<i>`,
 		
@@ -264,6 +246,16 @@ aaa
 		heading: function({level}) {
 			return this[level-1]()
 		}.bind([𐀶`<h2>`, 𐀶`<h3>`, 𐀶`<h4>`, 𐀶`<h5>`]),
+		
+		// what if instead of the \a tag, we just supported
+		// an [id=...] attribute on every tag? just need to set id, so...
+		// well except <a name=...> is safer than id...
+		anchor: function({id}) {
+			let e = this()
+			if (id)
+				e.name = id
+			return e
+		}.bind(𐀶`<a name="" class=M-anchor></a>`),
 		
 		quote: function({cite}) {
 			if (cite==null)
@@ -329,11 +321,11 @@ we should create our own fake bullet elements instead.*/
 		
 		superscript: 𐀶`<sup>`,
 		
-		anchor: function({name}) {
+		/*anchor: function({name}) {
 			let e = this()
 			e.id = "Markup-anchor-"+name
 			return e
-		}.bind(𐀶`<span id="" class='M-anchor'>`),
+		}.bind(𐀶`<span id="" class='M-anchor'>`),*/
 		
 		ruby: function({text}) {
 			let e = this()

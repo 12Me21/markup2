@@ -24,7 +24,7 @@ class Markup_12y2 { constructor() {
 	// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation
 	
 	// elements which can survive an eol (without a body)
-	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1}
+	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1, anchor:1}
 	
 	// RegExp
 	// GroupNum -> TokenType
@@ -61,6 +61,8 @@ class Markup_12y2 { constructor() {
 	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // probably dont need this, we can strip space after { in all cases instead.
 	const ARGS_HEADING = // /[...]?{/ or /[...] ?/ or / /
 	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y
+	const ARGS_ANCHOR = // /[...]{?/
+	/(?:\[([^\]\n]*)\])({\n?)?/y
 	
 	const ARGS_BODYLESS = // /[...]?/
 	/(?:\[([^\]\n]*)\])?/y
@@ -105,6 +107,7 @@ class Markup_12y2 { constructor() {
 		'\\spoiler': ARGS_LINE,
 		'\\ruby': ARGS_WORD,
 		'\\key': ARGS_WORD,
+		'\\a': ARGS_ANCHOR,
 	}
 	
 	// process a token
@@ -220,6 +223,13 @@ class Markup_12y2 { constructor() {
 			OPEN('ruby', {text}, body)
 		} break; case '\\key': {
 			OPEN('key', null, body)
+		} break; case '\\a': {
+			let id = rargs[0]
+			id = id ? id.replace(/\W+/g, "-") : null
+			if (body)
+				OPEN('anchor', {id}, body)
+			else
+				BLOCK('anchor', {id})
 		} }
 	}
 	
