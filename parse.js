@@ -61,8 +61,10 @@ class Markup_12y2 { constructor() {
 	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y // probably dont need this, we can strip space after { in all cases instead.
 	const ARGS_HEADING = // /[...]?{/ or /[...] ?/ or / /
 	/(?:\[([^\]\n]*)\]|(?=[ {]))(?:({\n?)| ?)/y
+	
+	// this is like args_heading kinda, except always counts as a line start. maybe backport this to args heading etc.?
 	const ARGS_ANCHOR = // /[...]{?/
-	/(?:\[([^\]\n]*)\])({\n?)?/y
+	/\[([^\]\n]*)\]({\n?| ?|)/y
 	
 	const ARGS_BODYLESS = // /[...]?/
 	/(?:\[([^\]\n]*)\])?/y
@@ -125,6 +127,8 @@ class Markup_12y2 { constructor() {
 		} break; case 'HEADING': {
 			let level = token.length
 			let args = {level}
+			let id = rargs[0]
+			args.id = id ? id.replace(/\W+/g, "-") : null
 			// todo: anchor name (and, can this be chosen automatically based on contents?)
 			OPEN('heading', args, body)
 		} break; case 'DIVIDER': {
@@ -226,10 +230,8 @@ class Markup_12y2 { constructor() {
 		} break; case '\\a': {
 			let id = rargs[0]
 			id = id ? id.replace(/\W+/g, "-") : null
-			if (body)
-				OPEN('anchor', {id}, body)
-			else
-				BLOCK('anchor', {id})
+			OPEN('anchor', {id}, body)
+				//BLOCK('anchor', {id})
 		} }
 	}
 	
@@ -556,8 +558,10 @@ class Markup_12y2 { constructor() {
 				let args = argmatch[1]
 				let body = argmatch[2] // flag: args with {, or word args
 				let word = argmatch[3] // contents: word args & code block
-				if (ARGS_CODE!==argregex)
+				if (ARGS_CODE!==argregex) {
 					args = parse_args(args)
+					body = body>="{"
+				}
 				
 				PROCESS(type, token_text, args, body, argmatch[0])
 				// word tags
@@ -567,7 +571,7 @@ class Markup_12y2 { constructor() {
 					CLOSE()
 				}
 				// tags with { body
-				else if (body && ARGS_CODE!==argregex) {
+				else if (argmatch[2]!==undefined && ARGS_CODE!==argregex) {
 					start_line()
 				}
 			}

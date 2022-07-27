@@ -243,9 +243,15 @@ aaa
 		
 		underline: 𐀶`<u>`,
 		
-		heading: function({level}) {
-			return this[level-1]()
-		}.bind([𐀶`<h2>`, 𐀶`<h3>`, 𐀶`<h4>`, 𐀶`<h5>`]),
+		heading: function({level, id}) {
+			let e = document.createElement("h"+(level- -1))
+			if (id) {
+				let e2 = this()
+				e2.name = id
+				e2.appendChild(e)
+			}
+			return e
+		}.bind(𐀶`<a name="" class=M-anchor></a>`),
 		
 		// what if instead of the \a tag, we just supported
 		// an [id=...] attribute on every tag? just need to set id, so...

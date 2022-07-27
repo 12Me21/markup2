@@ -66,7 +66,7 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 🟩 wake up!
 |[2x1] /uwu/ |
 ## `owo`
-🟩 {"type":"ROOT","content":[{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{"colspan":2},"content":[{"type":"italic","args":null,"content":["uwu"]}]}]}]},{"type":"heading","args":{"level":2},"content":[{"type":"icode","args":{"text":"owo"}}]}],"prev":"block"}
+🟩 {"type":"ROOT","content":[{"type":"table","args":null,"content":[{"type":"table_row","args":{},"content":[{"type":"table_cell","args":{"colspan":2},"content":[{"type":"italic","args":null,"content":["uwu"]}]}]}]},{"type":"heading","args":{"level":2,"id":null},"content":[{"type":"icode","args":{"text":"owo"}}]}],"prev":"block"}
 
 🟩 123
 ### heading
@@ -74,7 +74,7 @@ the `sand` can /be/ eaten
 ```
 code block
 ```
-🟩 {"type":"ROOT","content":[{"type":"heading","content":["heading"],"args":{"level":3}},"the ",{"type":"icode","args":{"text":"sand"}}," can ",{"type":"italic","content":["be"]}," eaten","\n",{"type":"code","args":{"text":"code block\n"}}]}
+🟩 {"type":"ROOT","content":[{"type":"heading","content":["heading"],"args":{"level":3,"id":null}},"the ",{"type":"icode","args":{"text":"sand"}}," can ",{"type":"italic","content":["be"]}," eaten","\n",{"type":"code","args":{"text":"code block\n"}}]}
 
 🟩 table.
 |table|
@@ -111,7 +111,7 @@ bcdefa
 
 🟩 h2
 ## test
-🟩 {"type":"ROOT","content":[{"type":"heading","content":["test"],"args":{"level":2}}]}
+🟩 {"type":"ROOT","content":[{"type":"heading","content":["test"],"args":{"level":2,"id":null}}]}
 
 🟩 table in env
 \{|table|}
@@ -255,7 +255,7 @@ some text idk
 some more text
 ## heading
 yeah
-🟩 {"type":"ROOT","content":["some text idk","\n","\n",{"type":"heading","content":["heading"],"args":{"level":1}},"\n","some more text","\n",{"type":"heading","content":["heading"],"args":{"level":2}},"yeah"]}
+🟩 {"type":"ROOT","content":["some text idk","\n","\n",{"type":"heading","content":["heading"],"args":{"level":1,"id":null}},"\n","some more text","\n",{"type":"heading","content":["heading"],"args":{"level":2,"id":null}},"yeah"]}
 
 🟩 keys, word parsing
 \key abc
@@ -379,3 +379,21 @@ http://example.com?
 http://example.com/heck(123)abc;
 
 🟩 {"type":"ROOT","content":["aaahttp://example.com","\n",{"type":"simple_link","args":{"url":"http://example.com"}},"?","\n","(",{"type":"simple_link","args":{"url":"http://example.com"}},")","\n","(",{"type":"simple_link","args":{"url":"http://example.com/heck(123)"}},")","\n",{"type":"simple_link","args":{"url":"http://example.com/heck(123)abc"}},";","\n","\n"]}
+
+🟩 anchor
+\a[heck]wow
+\a[heck] wow
+\a[heck]## wow
+\a[heck] ## wow
+\a[heck]{## wow}
+\a[heck]
+🟩 {"type":"ROOT","content":[{"type":"anchor","args":{"id":"heck"},"content":["wow"]},{"type":"anchor","args":{"id":"heck"},"content":["wow"]},{"type":"anchor","args":{"id":"heck"},"content":[{"type":"heading","args":{"level":2,"id":null},"content":["wow"]}]},{"type":"anchor","args":{"id":"heck"},"content":[{"type":"heading","args":{"level":2,"id":null},"content":["wow"]}]},{"type":"anchor","args":{"id":"heck"},"content":[{"type":"heading","args":{"level":2,"id":null},"content":["wow"]}]},{"type":"anchor","args":{"id":"heck"},"content":[]}]}
+
+🟩 heading with anchor
+##[$what] deez
+##[=what]deez
+##[wh at]deez
+##[   wh at]{deez}
+##[wh at]
+a
+🟩 {"type":"ROOT","content":[{"type":"heading","args":{"level":2,"id":"-what"},"content":["deez"]},{"type":"heading","args":{"level":2,"id":"what"},"content":["deez"]},{"type":"heading","args":{"level":2,"id":"wh-at"},"content":["deez"]},{"type":"heading","args":{"level":2,"id":"-wh-at"},"content":["deez"]},{"type":"heading","args":{"level":2,"id":"wh-at"},"content":[]},"a"]}
