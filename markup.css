@@ -131,6 +131,7 @@ L + ratio { }
 	border-radius: 3px;
 	padding: 0.1875rem 0.375rem;
 	font: var(--T-monospace-font);
+	vertical-align: middle;
 }
 
 /*** divider ***/
