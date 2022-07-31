@@ -180,12 +180,12 @@ class Markup_Render_Dom { constructor() {
 		}.bind(𐀶`
 <media-player>
 aaa
-<div>
+<div class='M-media-controls'>
 <button></button>
 <input type=range max=100 step=0.1 value=0>
 🔁<input type=checkbox title=loop></input>
 </div>
-<div>
+<div class='M-media-controls'>
 <span class='M-media-time'>‒‒/‒‒</span>
 <a target=_blank>💾</a>
 <span>🔊</span>
@@ -197,9 +197,9 @@ aaa
 			let e = this()
 			let media = document.createElement('video')
 			media.preload = 'none'
+			media.dataset.shrink = "video"
 			media.src = filter_url(url, 'video')
-			media.dataset.shrink = ""
-			e.firstChild.replaceWith(media)
+			e.firstChild.append(media)
 			let cl = e.lastChild
 			let [play, progress, time] = cl.childNodes
 			play.onclick = e=>{
@@ -213,7 +213,9 @@ aaa
 			}
 			media.onresize = ev=>{
 				media.onresize = null
-				media.style.aspectRatio = media.videoWidth+"/"+media.videoHeight
+				media.parentNode.style.aspectRatio = media.videoWidth+"/"+media.videoHeight
+				media.parentNode.style.height = media.videoHeight+"px"
+				media.parentNode.style.width = media.videoWidth+"px"
 			}
 			media.ondurationchange = e=>{
 				let s = media.duration
@@ -230,8 +232,8 @@ aaa
 			return e
 		}.bind(𐀶`
 <media-player>
-aaa
-<div>
+<div class='M-image-wrapper'></div>
+<div class='M-media-controls'>
 <button>Play</button>
 <input type=range max=100 value=0>
 <span>not loaded</span>
