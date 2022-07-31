@@ -299,8 +299,10 @@ L + ratio { }
 /***********/
 
 .Markup media-player {
-	display: block;
-	width: fit-content; width: -moz-fit-content;
+	display: flex;
+	flex-flow: column;
+	width: min-content;
+	max-width: 100%;
 	background: slategray;
 	border-radius: 3px;
 	color: white;
@@ -316,6 +318,14 @@ L + ratio { }
 
 .Markup media-player > div > a[href] {
 	color: white;
+}
+
+.Markup media-player > video {
+	background: black;
+}
+
+.Markup media-player > * {
+	flex: none;
 }
 
 .Markup media-player > div > button {
@@ -365,4 +375,29 @@ L + ratio { }
 .Markup h5 {
 	font-size: 1.125em;
 	font-weight: bold;
+}
+
+
+/* markup.css | file:///~/sbs2/markup2/markup.css */
+
+.Markup media-player {
+			/* display: block; */
+			/* width: fit-content; */
+			/* width: -moz-fit-content; */
+			display: flex;
+			flex-flow: column;
+			width: min-content;
+			max-width: 100%;
+}
+
+.Markup img, .Markup video {
+			/* max-width: stretch; */
+			flex: none;
+			height: auto;
+}
+
+/* Element | file:///~/sbs2/index.html#page/937 */
+
+.message-list > message-block:nth-child(39) > message-contents:nth-child(3) > message-part:nth-child(1) > media-player:nth-child(1) > video:nth-child(1) {
+			aspect-ratio: 720 / 540;
 }

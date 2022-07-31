@@ -211,6 +211,10 @@ aaa
 					media.pause()
 				e.stopPropagation()
 			}
+			media.onresize = ev=>{
+				media.onresize = null
+				media.style.aspectRatio = media.videoWidth+"/"+media.videoHeight
+			}
 			media.ondurationchange = e=>{
 				let s = media.duration
 				let m = Math.floor(s / 60)
