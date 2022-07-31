@@ -84,14 +84,14 @@ L + ratio { }
 
 /* styles and maximum sizes for embedded media */
 .Markup img, .M-image-wrapper {
-	object-fit: scale-down; /* just in case */
 	max-height: var(--T-embed-height);
 	border: var(--T-image-border);
 	box-sizing: content-box;
 }
-
+					 
 .Markup img {
 	display: block;
+	object-fit: scale-down;
 	
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
