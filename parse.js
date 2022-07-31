@@ -477,7 +477,7 @@ class Markup_12y2 { constructor() {
 	}
 	function do_style(token_text, before, after) {
 		for (let c=current; 'style'===c.type; c=c.parent)
-			if (c.args===token) {
+			if (c.args===token_text) {
 				if (!after || /[^\s,'"][-\s.,:;!?'")}{]/y.test(before+after))
 					return c
 				else
