@@ -106,10 +106,11 @@ class Markup_12y2 { constructor() {
 		'\\s': ARGS_WORD,
 		'\\quote': ARGS_LINE,
 		'\\align': ARGS_LINE,
-		'\\spoiler': ARGS_LINE,
+		'\\spoiler': ARGS_LINE, '\\h': ARGS_LINE,
 		'\\ruby': ARGS_WORD,
 		'\\key': ARGS_WORD,
 		'\\a': ARGS_ANCHOR,
+		'\\link': ARGS_NORMAL, // should use arg parse mode, i think?
 	}
 	
 	// process a token
@@ -232,6 +233,14 @@ class Markup_12y2 { constructor() {
 			id = id ? id.replace(/\W+/g, "-") : null
 			OPEN('anchor', {id}, body)
 				//BLOCK('anchor', {id})
+		} break; case '\\link': {
+			let args = {url: rargs[0]}
+			if (body) {
+				OPEN('link', args, body)
+			} else {
+				args.text = args.url
+				BLOCK('simple_link', args)
+			}
 		} }
 	}
 	
@@ -466,6 +475,18 @@ class Markup_12y2 { constructor() {
 			if (c.args===token)
 				return c
 	}
+	function do_style(token_text, before, after) {
+		for (let c=current; 'style'===c.type; c=c.parent)
+			if (c.args===token) {
+				if (!after || /[^\s,'"][-\s.,:;!?'")}{]/y.test(before+after))
+					return c
+				else
+					break
+			}
+		
+		if (!before || /[\s.({}'"][^\s,'"]/y.test(before+after))
+			return true
+	}
 
 	function parse(text) {
 		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
@@ -510,26 +531,18 @@ class Markup_12y2 { constructor() {
 					argregex = ARGS_NORMAL
 				}
 			} else if ('STYLE'===type) {
-				let before = text.charAt(match.index-1)
-				let after = text.charAt(REGEX.lastIndex)
-				// try close?
-				if ('style'===current.type && !` \t\n,'"`.includes(before) && `- \t\n.,:;!?'")}{`.includes(after)) {
-					let c = find_style(token_text)
-					if (c) {
-						accept()
-						while (current != c)
-							CANCEL()
-						CLOSE()
-						continue main
-					}
-				}
-				// open?
-				if (` \t\n({}'"`.includes(before) && !` \t\n,'"`.includes(after)) {
+				let c = do_style(token_text, text.charAt(match.index-1), text.charAt(REGEX.lastIndex))
+				if (!c) { // no
+					nevermind()
+				} else if (true===c) { // open new
 					accept()
 					OPEN('style', token_text)
-					continue main
+				} else { // close
+					accept()
+					while (current != c)
+						CANCEL()
+					CLOSE()
 				}
-				nevermind()
 				continue main
 			} else if ('TABLE_CELL'===type && !in_table()) {
 				nevermind()
