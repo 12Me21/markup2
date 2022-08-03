@@ -8,15 +8,6 @@
 **/
 class Markup_12y2 { constructor() {
 
-	// TokenType 🏷 enum
-	// BlockType 🏷 enum
-	// Text 🏷 string 📝 from input text
-	// ArgPattern 🏷 RegExp
-	// GroupNum 🏷 number - regex capturing group num
-	// RawArgs 🏷 Array - array with .named field
-	// Block 🏷 Object - has .type .args .content
-	// CurrentBlock 🏷 Object - block + other fields
-	
 	// all state is stored in these vars (and REGEX.lastIndex)
 	let current, brackets
 	
@@ -26,9 +17,6 @@ class Markup_12y2 { constructor() {
 	// elements which can survive an eol (without a body)
 	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1, anchor:1}
 	
-	// RegExp
-	// GroupNum -> TokenType
-	// GroupNum -> ArgPattern
 	const MACROS = {
 		'{EOL}': "(?![^\\n])",
 		'{BOL}': "^",
@@ -38,7 +26,7 @@ class Markup_12y2 { constructor() {
 	}
 	const GROUPS = []
 	let regi = []
-	function PAT({raw}, ...groups) {
+	const PAT=({raw}, ...groups)=>{
 		regi.push(
 			raw.join("()")
 				.replace(/\\`/g, "`")
@@ -51,12 +39,12 @@ class Markup_12y2 { constructor() {
 	PAT`[\n]?[}]${'BLOCK_END'}`
 	PAT`[\n]${'NEWLINE'}`
 	PAT`{BOL}[#]{1,4}(?=[\[{ ])${'HEADING'}`
+	PAT`{BOL}[>](?=[\[{ ])${'QUOTE'}`
 	PAT`{BOL}[-]{3,}{EOL}${'DIVIDER'}`
 	PAT`([*][*]|[_][_]|[~][~]|[/])${'STYLE'}`
 	PAT`[\\][a-z]+(?![a-zA-Z0-9])${'TAG'}`
 	PAT`[\\][{][\n]?${'NULL_ENV'}`
 	PAT`[\\]{ANY}${'ESCAPED'}`
-	PAT`{BOL}[>](?=[\[{ ])${'QUOTE'}`
 	PAT`{BOL}[\`]{3}(?=[^\n\`]*?{EOL})${'CODE_BLOCK'}`
 	PAT`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${'INLINE_CODE'}`
 	PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${'LINK'}`
@@ -69,12 +57,6 @@ class Markup_12y2 { constructor() {
 	
 	//todo: org tables separators?
 	
-	function arg0(rargs, def) {
-		if (rargs.length<1)
-			return def
-		return rargs[0]
-	}
-	
 
 	
 	const null_args = []
@@ -84,7 +66,7 @@ class Markup_12y2 { constructor() {
 	NO_ARGS.named = Object.freeze({})
 	Object.freeze(NO_ARGS)
 	// todo: do we even need named args?
-	function parse_args(arglist) {
+	const parse_args=(arglist)=>{
 		// note: checks undefined AND "" (\tag AND \tag[])
 		if (!arglist)
 			return null_args
@@ -103,7 +85,7 @@ class Markup_12y2 { constructor() {
 	}
 	// process an embed url: !https://example.com/image.png[alt=balls]
 	// returns [type: String, args: Object]
-	function process_embed(url, rargs) {
+	const process_embed=(url, rargs)=>{
 		let type
 		let args = {url}
 		for (let arg of rargs) {
@@ -124,8 +106,6 @@ class Markup_12y2 { constructor() {
 			args.alt = rargs.named.alt
 		// todo: improve this
 		if (!type) {
-			//let u = new URL(url, "x-relative:/")
-			//let ext = /[.]([a-z0-9A-Z]{3,4})(?!\w)[^.]*$/.exec(url)
 			if (/[.](mp3|ogg|wav|m4a)\b/i.test(url))
 				type = 'audio'
 			else if (/[.](mp4|mkv|mov)\b/i.test(url))
@@ -141,7 +121,7 @@ class Markup_12y2 { constructor() {
 	}
 	
 	// move up
-	function pop() {
+	const pop=()=>{
 		if (current.body)
 			brackets--
 		let o = current
@@ -149,7 +129,7 @@ class Markup_12y2 { constructor() {
 		return o
 	}
 	
-	function CANCEL() {
+	const CANCEL=()=>{
 		if ('style'===current.type) {
 			let o = pop()
 			current.content.push(o.args, ...o.content)
@@ -185,11 +165,11 @@ class Markup_12y2 { constructor() {
 		CLOSE()
 	}
 	
-	function get_last(block) {
+	const get_last=(block)=>{
 		return block.content[block.content.length-1]
 	}
 	
-	function CLOSE() {
+	const CLOSE=()=>{
 		let o = pop()
 		
 		if ('null_env'===o.type) {
@@ -257,19 +237,19 @@ class Markup_12y2 { constructor() {
 		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 	}
 	// push text
-	function TEXT(text) {
+	const TEXT=(text)=>{
 		if (text!=="") {
 			current.content.push(text) // todo: merge with surrounding textnodes?
 			current.prev = 'text'
 		}
 	}
 	// push empty tag
-	function BLOCK(type, args) {
+	const BLOCK=(type, args)=>{
 		current.content.push({type, args})
 		current.prev = type in IS_BLOCK ? 'block' : 'text'
 	}
 	
-	function NEWLINE(real) {
+	const NEWLINE=(real)=>{
 		if (real)
 			while (!current.body && 'ROOT'!=current.type)
 				CANCEL()
@@ -279,7 +259,7 @@ class Markup_12y2 { constructor() {
 			current.prev = 'newline'
 	}
 	
-	function in_table() {
+	const in_table=()=>{
 		for (let c=current; ; c=c.parent) {
 			if ('table_cell'===c.type)
 				return true
@@ -287,7 +267,7 @@ class Markup_12y2 { constructor() {
 				return false
 		}
 	}
-	function do_style(token_text, before, after) {
+	const do_style=(token_text, before, after)=>{
 		for (let c=current; 'style'===c.type; c=c.parent)
 			if (c.args===token_text) {
 				if (!after || /[^\s,'"][-\s.,:;!?'")}{]/y.test(before+after))
@@ -300,49 +280,23 @@ class Markup_12y2 { constructor() {
 			return true
 	}
 
-	let ARG_REGEX = /[^\]\n]*(?=])/y
+	let ARG_REGEX = /.*?(?=])/y
 	let WORD_REGEX = /[^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*/y
-	let CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:```|$)/y
+	let CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:```|$)/y // ack
 	
-	function parse(text) {
+	const parse=(text)=>{
 		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
 		current = tree
 		brackets = 0
 		
 		// these use REGEX, text
-		function read_args() {
-			let pos = REGEX.lastIndex
-			let next = text.charAt(pos)
-			if ("["!==next)
-				return NO_ARGS
-			ARG_REGEX.lastIndex = pos+1
-			let argstr = ARG_REGEX.exec(text)
-			if (!argstr)
-				return NO_ARGS
-			REGEX.lastIndex = ARG_REGEX.lastIndex+1
-			return parse_args(argstr[0])
-		}
-		function skip_spaces() {
+		const skip_spaces=()=>{
 			let pos = REGEX.lastIndex
 			while (" "===text.charAt(pos))
 				pos++
 			REGEX.lastIndex = pos
 		}
-		function read_body(space=false) {
-			let pos = REGEX.lastIndex
-			let next = text.charAt(pos)
-			if ("{"===next) {
-				if ("\n"===text.charAt(pos+1))
-					pos++
-				REGEX.lastIndex = pos+1
-				return true
-			}
-			if (" "===next)
-				REGEX.lastIndex = pos+1
-			else if (space)
-				return false
-		}
-		function read_code() {
+		const read_code=()=>{
 			let pos = REGEX.lastIndex
 			CODE_REGEX.lastIndex = pos
 			let [, lang, code] = CODE_REGEX.exec(text)
@@ -350,9 +304,38 @@ class Markup_12y2 { constructor() {
 			return [lang, code]
 		}
 		
+		let rargs
+		const read_args=()=>{
+			let pos = REGEX.lastIndex
+			let next = text.charAt(pos)
+			if ("["!==next)
+				return rargs = NO_ARGS
+			ARG_REGEX.lastIndex = pos+1
+			let argstr = ARG_REGEX.exec(text)
+			if (!argstr)
+				return rargs = NO_ARGS
+			REGEX.lastIndex = ARG_REGEX.lastIndex+1
+			return rargs = parse_args(argstr[0])
+		}
+		
 		let body
+		const read_body=(space=false)=>{
+			let pos = REGEX.lastIndex
+			let next = text.charAt(pos)
+			if ("{"===next) {
+				if ("\n"===text.charAt(pos+1))
+					pos++
+				REGEX.lastIndex = pos+1
+				return body = true
+			}
+			if (" "===next)
+				REGEX.lastIndex = pos+1
+			else if (space)
+				return body = false
+			return body = undefined
+		}
 		// start a new block
-		function OPEN(type, args=null) {
+		const OPEN=(type, args=null)=>{
 			current = Object.seal({
 				type, args, content: [],
 				body, parent: current,
@@ -361,7 +344,7 @@ class Markup_12y2 { constructor() {
 			if (body)
 				brackets++
 		}
-		function word_maybe() {
+		const word_maybe=()=>{
 			if (!body) {
 				TEXT(read_word())
 				CLOSE()
@@ -370,14 +353,14 @@ class Markup_12y2 { constructor() {
 		
 		let match
 		let last = REGEX.lastIndex = 0
-		function nevermind() {
+		const NEVERMIND=()=>{
 			REGEX.lastIndex = match.index+1
 		}
-		function accept() {
+		const ACCEPT=()=>{
 			TEXT(text.substring(last, match.index))
 			last = REGEX.lastIndex
 		}
-		function read_word() {
+		const read_word=()=>{
 			let pos = REGEX.lastIndex
 			WORD_REGEX.lastIndex = pos
 			let word = WORD_REGEX.exec(text)
@@ -401,13 +384,13 @@ class Markup_12y2 { constructor() {
 
 			switch (type) {
 			case 'TAG': {
-				let rargs = read_args()
-				body = read_body(true)
+				read_args()
+				read_body(true)
 				if (NO_ARGS===rargs && false===body) {
-					nevermind()
+					NEVERMIND()
 					continue main
 				}
-				accept()
+				ACCEPT()
 				switch (token) { default: {
 					let args = {text:text.substring(match.index, last), reason:"invalid tag"}
 					if (body)
@@ -440,11 +423,11 @@ class Markup_12y2 { constructor() {
 						a = 'center'
 					OPEN('align', {align: a})
 				} break; case '\\spoiler': case '\\h': {
-					let label = arg0(rargs, "spoiler")
+					let [label="spoiler"] = rargs
 					OPEN('spoiler', {label})
 				} break; case '\\ruby': {
-					let text = arg0(rargs, "true")
-					OPEN('ruby', {text})
+					let [txt="true"] = rargs
+					OPEN('ruby', {text: txt})
 					word_maybe()
 				} break; case '\\key': {
 					OPEN('key')
@@ -464,16 +447,15 @@ class Markup_12y2 { constructor() {
 						BLOCK('simple_link', args)
 					}
 				}}
-
 			} break; case 'STYLE': {
 				let c = do_style(token, text.charAt(match.index-1), text.charAt(REGEX.lastIndex))
 				if (!c) { // no
-					nevermind()
+					NEVERMIND()
 				} else if (true===c) { // open new
-					accept()
+					ACCEPT()
 					OPEN('style', token)
 				} else { // close
-					accept()
+					ACCEPT()
 					while (current != c)
 						CANCEL()
 					CLOSE()
@@ -481,12 +463,12 @@ class Markup_12y2 { constructor() {
 				continue main
 			} break; case 'TABLE_CELL': {
 				if (!in_table()) {
-					nevermind()
+					NEVERMIND()
 					continue main
 				}
-				let rargs = read_args()
+				read_args()
 				skip_spaces()
-				accept()
+				ACCEPT()
 				while (current.type!=='table_cell')
 					CANCEL()
 				CLOSE() // cell
@@ -494,24 +476,24 @@ class Markup_12y2 { constructor() {
 				// so just pass the raw args directly, and parse them later.
 				OPEN('table_cell', rargs)
 			} break; case 'TABLE_START': {
-				let rargs = read_args()
+				read_args()
 				skip_spaces()
-				accept()
+				ACCEPT()
 				let args_token = text.substring(match.index, last)
 				OPEN('table_row', args_token, false) // special OPEN call
 				OPEN('table_cell', rargs)
 			} break; case 'NEWLINE': {
-				accept()
+				ACCEPT()
 				NEWLINE(true)
 				body = true // to trigger start_line
 			} break; case 'HEADING': {
-				let rargs = read_args()
-				body = read_body(true)
+				read_args()
+				read_body(true)
 				if (NO_ARGS===rargs && false===body) {
-					nevermind()
+					NEVERMIND()
 					continue main
 				}
-				accept()
+				ACCEPT()
 				let level = token.length
 				let args = {level}
 				let id = rargs[0]
@@ -519,10 +501,10 @@ class Markup_12y2 { constructor() {
 				// todo: anchor name (and, can this be chosen automatically based on contents?)
 				OPEN('heading', args)
 			} break; case 'DIVIDER': {
-				accept()
+				ACCEPT()
 				BLOCK('divider')
 			} break; case 'BLOCK_END': {
-				accept()
+				ACCEPT()
 				if (brackets>0) {
 					while (!current.body)
 						CANCEL()
@@ -540,11 +522,11 @@ class Markup_12y2 { constructor() {
 				}
 			} break; case 'NULL_ENV': {
 				body = true
-				accept()
+				ACCEPT()
 				OPEN('null_env')
 				current.prev = current.parent.prev
 			} break; case 'ESCAPED': {
-				accept()
+				ACCEPT()
 				if ("\\\n"===token)
 					NEWLINE(false)
 				else if ("\\."===token) { // \. is a no-op
@@ -554,31 +536,31 @@ class Markup_12y2 { constructor() {
 				} else
 					TEXT(token.substring(1))
 			} break; case 'QUOTE': {
-				let rargs = read_args()
-				body = read_body(true)
+				read_args()
+				read_body(true)
 				if (NO_ARGS===rargs && false===body) {
-					nevermind()
+					NEVERMIND()
 					continue main
 				}
-				accept()
+				ACCEPT()
 				OPEN('quote', {cite: rargs[0]})
 			} break; case 'CODE_BLOCK': {
 				let [lang, code] = read_code()
-				accept()
+				ACCEPT()
 				BLOCK('code', {text:code, lang})
 			} break; case 'INLINE_CODE': {
-				accept()
+				ACCEPT()
 				BLOCK('icode', {text: token.replace(/`(`)?/g, "$1")})
 			} break; case 'EMBED': {
-				let rargs = read_args()
-				accept()
+				read_args()
+				ACCEPT()
 				let url = token.substring(1) // ehh better
 				let [type, args] = process_embed(url, rargs)
 				BLOCK(type, args)
 			} break; case 'LINK': {
-				let rargs = read_args()
-				body = read_body()
-				accept()
+				read_args()
+				read_body()
+				ACCEPT()
 				let url = token
 				let args = {url}
 				if (body) {
@@ -588,11 +570,11 @@ class Markup_12y2 { constructor() {
 					BLOCK('simple_link', args)
 				}
 			} break; case 'LIST_ITEM': {
-				accept()
+				ACCEPT()
 				let indent = token.indexOf("-")
 				OPEN('list_item', {indent})
 			} }
-			
+
 			if (body) {
 				text = text.substring(last)
 				last = REGEX.lastIndex = 0
@@ -610,17 +592,7 @@ class Markup_12y2 { constructor() {
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
 	
-	/**
-		Parser function
-		(closure method)
-		@type {Parser}
-		@kind function
-	**/
 	this.parse = parse
-	/**
-		@type {Object<string,Parser>}
-		@property {Parser} 12y2 - same as .parse
-	**/
 	this.langs = {'12y2': parse}
 	
 	// what if you want to write like, "{...}". well that's fine

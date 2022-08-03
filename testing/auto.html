@@ -1,0 +1,87 @@
+<!doctype html><html lang=en-QS><meta charset=utf-8><meta name=viewport content="width=device-width, height=device-height, initial-scale=1" id=$meta_viewport>
+<title>Tests 2</title>
+
+<script src=../parse2.js></script>
+<script src=parse-ref.js></script>
+<script src=test.js></script>
+<script src=draw.js></script>
+<link rel=stylesheet href=common.css>
+<link rel=stylesheet href=style.css>
+
+<body>
+<script src=nav.js></script>
+
+opened: <time id=$start_time></time> | duration: <time id=$duration></time>
+<table class='data'>
+	<tr> <th> total <th> passed <th> pending <th> failed
+	<tr> <td id=$table_total> ? <td id=$table_passed> ? <td id=$table_pending> ? <td id=$table_failed> ?
+</table>
+<hr>
+<div id=$output></div>
+
+<script>'use strict'
+	
+	let start = performance.timing.fetchStart
+	$start_time.textContent = new Date(start).toLocaleString()
+	
+	let ref_parser = new Markup_12y2_Ref().parse
+	
+	async function request(query) {
+		let req = new Request("https://qcs.shsbs.xyz/api/request", {
+			method: 'POST',
+			body: new Blob([JSON.stringify(query)], {type: "application/json;charset=UTF-8"}),
+n		})
+		let resp = await fetch(req)
+		let data = await resp.json()
+		return data.objects
+	}
+	
+	function collect(list, is_message) {
+		if (!list)
+			return
+		for (let c of list) {
+			if (c.values[is_message?'m':'markupLang']==="12y2") {
+				let name = is_message ? "message:"+c.id : c.name
+				new Test({name}, c.text, ref_parser(c.text))
+			}
+		}
+	}
+	
+	async function load_data(query) {
+		let lmm = await request(query)
+		collect(lmm.content, false)
+		collect(lmm.message, true)
+	}
+	
+	function run() {
+		$output.textContent = ""
+		
+		let total, pending
+		let passed = 0, failed = 0
+		total = pending = Test.all.length
+		$table_total.textContent = total
+		function draw() {
+			$table_passed.textContent = passed
+			$table_failed.textContent = failed
+			$table_pending.textContent = pending
+		}
+		draw()
+		
+		for (let test of Test.all) {
+			test.run()
+			if (test.status > 0) {
+				$output.append(test.draw_result())
+				passed++
+			} else {
+				$output.prepend(test.draw_result())
+				failed++
+			}
+			pending--
+			draw()
+		}
+		let dur = Date.now() - start
+		$duration.textContent = dur+" ms"
+	}
+	
+	
+</script>

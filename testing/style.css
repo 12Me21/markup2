@@ -8,7 +8,7 @@ body {
 	overflow-y: scroll;
 }
 
-test- {
+.test {
 	white-space: pre-wrap;
 	border: 2px solid black;
 	background: magenta;
@@ -16,22 +16,22 @@ test- {
 	white-space: pre-wrap;
 	font: 0.8em sans-serif;
 }
-test-.passed {
+.test.passed {
 	background: #7F6;
 	border-color: green;
 }
-test-.failed {
+.test.failed {
 	background: maroon;
 	color: white;
 	border-color: red;
 	height: unset;
 }
 
-test-.failed name- {
+.test.failed .name {
 	width: unset;
 }
 
-test- name- {
+.test .name {
 	padding: 0.1rem;
 	padding-left: 0.3rem;
 	padding-right: 0;
@@ -41,13 +41,13 @@ test- name- {
 	text-overflow: ellipsis;
 	overflow: hidden;
 }
-test- result- {
+.test .result {
 	padding: 0.1rem;
 	padding-inline: 0.3rem;
 	padding-top: 0;
 	overflow-y: auto;
 }
-test- input- {
+.test .input {
 	border-inline: 1px solid black;
 	padding: 0.2rem;
 	font: 1em monospace;
