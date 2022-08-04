@@ -129,14 +129,12 @@ class Markup_12y2 { constructor() {
 		return o
 	}
 	
-	const CANCEL=()=>{
-		if ('style'===current.type) {
-			let o = pop()
-			current.content.push(o.args, ...o.content)
-			current.prev = o.prev
-			return
-		}
-		if ('table_cell'===current.type) {
+	const get_last=(block)=>{
+		return block.content[block.content.length-1]
+	}
+	
+	const CLOSE=(cancel)=>{
+		if (cancel && 'table_cell'===current.type) {
 			if (current.content.length) {
 				CLOSE() // table_cell
 				current.args = {}
@@ -155,24 +153,23 @@ class Markup_12y2 { constructor() {
 				// transfer args to the row, and parse as table row args:
 				let ret = current.args = {}
 				for (let arg of o.args) {
-					if ("*"===arg || "#"===arg) {
+					if ("*"===arg || "#"===arg)
 						ret.header = true
-					}
 				}
 			}
 			// fallthrough to close the table_row
 		}
-		CLOSE()
-	}
-	
-	const get_last=(block)=>{
-		return block.content[block.content.length-1]
-	}
-	
-	const CLOSE=()=>{
+		
 		let o = pop()
 		
-		if ('null_env'===o.type) {
+		// "goto results in spaghetti code"
+		// languages without goto:
+		merge: {
+			if (cancel && 'style'===o.type) {
+				current.content.push(o.args)
+			} else if ('null_env'===o.type) {
+			} else
+				break merge
 			current.content.push(...o.content)
 			current.prev = o.prev
 			return
@@ -251,7 +248,7 @@ class Markup_12y2 { constructor() {
 	const NEWLINE=(real)=>{
 		if (real)
 			while (!current.body && 'ROOT'!=current.type)
-				CANCEL()
+				CLOSE(true)
 		if ('block'!==current.prev)
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)
@@ -453,7 +450,7 @@ class Markup_12y2 { constructor() {
 					OPEN('style', token)
 				} else { // close
 					while (current != c)
-						CANCEL()
+						CLOSE(true)
 					CLOSE()
 				}
 			} break; case 'TABLE_CELL': {
@@ -463,7 +460,7 @@ class Markup_12y2 { constructor() {
 						skip_spaces()
 						ACCEPT()
 						while (current!==c)
-							CANCEL()
+							CLOSE(true)
 						CLOSE() // cell
 						// we don't know whether these are row args or cell args,
 						// so just pass the raw args directly, and parse them later.
@@ -507,7 +504,7 @@ class Markup_12y2 { constructor() {
 				ACCEPT()
 				if (brackets>0) {
 					while (!current.body)
-						CANCEL()
+						CLOSE(true)
 					if ('invalid'===current.type) {
 						if ("\n}"==token)
 							NEWLINE(false) // false since we already closed everything
@@ -591,7 +588,7 @@ class Markup_12y2 { constructor() {
 		TEXT(text.substring(last)) // text after last token
 		
 		while ('ROOT'!==current.type)
-			CANCEL()
+			CLOSE(true)
 		if ('newline'===current.prev) //todo: this is repeated
 			current.content.push("\n")
 		
