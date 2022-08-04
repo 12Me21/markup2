@@ -136,17 +136,19 @@ class Markup_12y2 { constructor() {
 	const CLOSE=(cancel)=>{
 		let o = pop()
 		
-		if ('style'===o.type && cancel) {
-			current.content.push(o.args, ...o.content)
-			current.prev = o.prev
-			return
-		}
-		if ('null_env'===o.type) {
+		// "goto results in spaghetti code"
+		// languages without goto:
+		merge: {
+			if ('style'===o.type && cancel) {
+				current.content.push(o.args)
+			} else if ('null_env'===o.type) {
+			} else
+				break merge
 			current.content.push(...o.content)
 			current.prev = o.prev
 			return
 		}
-		if ('table_cell'===o.type && cancel && !o.content.length) {
+		if (cancel && 'table_cell'===o.type && !o.content.length) {
 			// cancelling an empty table cell means:
 			// it's the end of the row, so discard the cell
 			
