@@ -50,7 +50,7 @@ class Markup_12y2 { constructor() {
 	PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${'LINK'}`
 	PAT`{BOL} *[|]${'TABLE_START'}`
 	PAT` *[|]${'TABLE_CELL'}`
-	PAT`{BOL} *[-] ${'LIST_ITEM'}`
+	PAT`{BOL} *[-]${'LIST_ITEM'}`
 	
 	const REGEX = new RegExp(regi.join("|"), 'g')
 	regi = null
@@ -180,11 +180,13 @@ class Markup_12y2 { constructor() {
 		
 		if ('newline'===o.prev)
 			o.content.push("\n")
+		
 		let node = {type: o.type, args: o.args, content: o.content}
 		let dest = current
 		
-		// merge list_item with preceeding list
-		if ('list_item'===o.type) {
+		switch (o.type) {
+		case 'list_item': {
+			// merge list_item with preceeding list
 			node.args = null
 			let indent = o.args.indent
 			while (1) {
@@ -200,17 +202,13 @@ class Markup_12y2 { constructor() {
 				if (dest.args.indent == indent)
 					break
 			}
-		}
-		// merge table_row with preceeding table
-		else if ('table_row'===o.type) {
+		} break; case 'table_row': {
 			dest = get_last(current)
 			if (!dest || 'table'!==dest.type) {
 				dest = {type:'table', args:null, content:[]}
 				current.content.push(dest)
 			}
-		}
-		// table cell
-		else if ('table_cell'===o.type) {
+		} break; case 'table_cell': {
 			let ret = node.args = {}
 			for (let arg of o.args) {
 				let m
@@ -224,18 +222,19 @@ class Markup_12y2 { constructor() {
 					if (+h > 1) ret.rowspan = +h
 				}
 			}
-		} else if ('style'===o.type) {
+		} break; case 'style': {
 			node.type = {
 				__proto__:null,
 				'**': 'bold', '__': 'underline',
 				'~~': 'strikethrough', '/': 'italic',
 			}[o.args]
 			node.args = null
-		}
+		} }
 		
 		dest.content.push(node)
 		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
 	}
+	
 	// push text
 	const TEXT=(text)=>{
 		if (text!=="") {
@@ -259,15 +258,7 @@ class Markup_12y2 { constructor() {
 			current.prev = 'newline'
 	}
 	
-	const in_table=()=>{
-		for (let c=current; ; c=c.parent) {
-			if ('table_cell'===c.type)
-				return true
-			if ('style'!==c.type)
-				return false
-		}
-	}
-	const do_style=(token_text, before, after)=>{
+	const check_style=(token_text, before, after)=>{
 		for (let c=current; 'style'===c.type; c=c.parent)
 			if (c.args===token_text) {
 				if (!after || /[^\s,'"][-\s.,:;!?'")}{]/y.test(before+after))
@@ -452,33 +443,38 @@ class Markup_12y2 { constructor() {
 					}
 				}}
 			} break; case 'STYLE': {
-				let c = do_style(token, text.charAt(match.index-1), text.charAt(REGEX.lastIndex))
+				let c = check_style(token, text.charAt(match.index-1), text.charAt(REGEX.lastIndex))
 				if (!c) { // no
 					NEVERMIND()
-				} else if (true===c) { // open new
-					ACCEPT()
+					continue main
+				}
+				ACCEPT()
+				if (true===c) { // open new
 					OPEN('style', token)
 				} else { // close
-					ACCEPT()
 					while (current != c)
 						CANCEL()
 					CLOSE()
 				}
-				continue main
 			} break; case 'TABLE_CELL': {
-				if (!in_table()) {
-					NEVERMIND()
-					continue main
+				for (let c=current; ; c=c.parent) {
+					if ('table_cell'===c.type) {
+						read_args()
+						skip_spaces()
+						ACCEPT()
+						while (current!==c)
+							CANCEL()
+						CLOSE() // cell
+						// we don't know whether these are row args or cell args,
+						// so just pass the raw args directly, and parse them later.
+						OPEN('table_cell', rargs)
+						break
+					}
+					if ('style'!==c.type) {
+						NEVERMIND()
+						continue main
+					}
 				}
-				read_args()
-				skip_spaces()
-				ACCEPT()
-				while (current.type!=='table_cell')
-					CANCEL()
-				CLOSE() // cell
-				// we don't know whether these are row args or cell args,
-				// so just pass the raw args directly, and parse them later.
-				OPEN('table_cell', rargs)
 			} break; case 'TABLE_START': {
 				read_args()
 				skip_spaces()
@@ -563,7 +559,7 @@ class Markup_12y2 { constructor() {
 				BLOCK(type, args)
 			} break; case 'LINK': {
 				read_args()
-				read_body()
+				read_body(false)
 				ACCEPT()
 				let url = token
 				let args = {url}
@@ -574,6 +570,12 @@ class Markup_12y2 { constructor() {
 					BLOCK('simple_link', args)
 				}
 			} break; case 'LIST_ITEM': {
+				read_args()
+				read_body(true)
+				if (NO_ARGS===rargs && false===body) {
+					NEVERMIND()
+					continue main
+				}
 				ACCEPT()
 				let indent = token.indexOf("-")
 				OPEN('list_item', {indent})
@@ -592,6 +594,8 @@ class Markup_12y2 { constructor() {
 			CANCEL()
 		if ('newline'===current.prev) //todo: this is repeated
 			current.content.push("\n")
+		
+		current = null // my the memory leak!
 		
 		return tree // technically we could return `current` here and get rid of `tree` entirely
 	}
