@@ -59,30 +59,6 @@ class Markup_12y2 { constructor() {
 	
 
 	
-	const null_args = []
-	null_args.named = Object.freeze({})
-	Object.freeze(null_args)
-	const NO_ARGS = []
-	NO_ARGS.named = Object.freeze({})
-	Object.freeze(NO_ARGS)
-	// todo: do we even need named args?
-	const parse_args=(arglist)=>{
-		// note: checks undefined AND "" (\tag AND \tag[])
-		if (!arglist)
-			return null_args
-		let list = [], named = {}
-		list.named = named
-		for (let arg of arglist.split(";")) {
-			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-			// value OR =value
-			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
-			if (!name)
-				list.push(value)
-			else // name=value
-				named[name] = value
-		}
-		return list
-	}
 	// process an embed url: !https://example.com/image.png[alt=balls]
 	// returns [type: String, args: Object]
 	const process_embed=(url, rargs)=>{
@@ -119,6 +95,30 @@ class Markup_12y2 { constructor() {
 			type = 'image'
 		return [type, args]
 	}
+	const process_cell_args=(rargs)=>{
+		let args = {}
+		for (let arg of rargs) {
+			let m
+			if ("*"===arg || "#"===arg)
+				args.header = true
+			else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
+				args.color = arg
+			else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
+				let [, w, h] = m
+				if (+w > 1) args.colspan = +w
+				if (+h > 1) args.rowspan = +h
+			}
+		}
+		return args
+	}
+	const process_row_args=(rargs)=>{
+		let args = {}
+		for (let arg of rargs) {
+			if ("*"===arg || "#"===arg)
+				args.header = true
+		}
+		return args
+	}
 	
 	// move up
 	const pop=()=>{
@@ -135,23 +135,22 @@ class Markup_12y2 { constructor() {
 	
 	const CLOSE=(cancel)=>{
 		let o = pop()
+		let type = o.type
 		
-		// "goto results in spaghetti code"
-		// languages without goto:
-		merge: {
-			if ('style'===o.type && cancel) {
-				current.content.push(o.args)
-			} else if ('null_env'===o.type) {
-			} else
-				break merge
+		if ('style'===type && cancel) {
+			current.content.push(o.args, ...o.content)
+			current.prev = o.prev
+			return
+		}
+		if ('null_env'===type) {
 			current.content.push(...o.content)
 			current.prev = o.prev
 			return
 		}
-		if (cancel && 'table_cell'===o.type && !o.content.length) {
-			// cancelling an empty table cell means:
-			// it's the end of the row, so discard the cell
-			
+		
+		// cancelling an empty table cell means:
+		// it's the end of the row, so discard the cell
+		if ('table_cell'===type && cancel && !o.content.length) {
 			// if the ROW is empty (i.e. we just have a single | )
 			if (!current.content.length) {
 				let o = pop() // discard the row
@@ -161,44 +160,19 @@ class Markup_12y2 { constructor() {
 				// like `| abc` -> text
 			}
 			// transfer args to the row, and parse as table row args:
-			let ret = current.args = {}
-			for (let arg of o.args) {
-				if ("*"===arg || "#"===arg)
-					ret.header = true
-			}
+			current.args = process_row_args(o.args)
 			// FALLTHROUGH (to close the row)
 			o = pop()
+			type = o.type
 		}
-		
-		let node = {type: o.type, args: o.args, content: o.content}
-		let dest = current
 		
 		if ('newline'===o.prev)
 			o.content.push("\n")
 		
-		switch (o.type) {
-		case 'table_cell': {
-			let args = node.args = {}
-			for (let arg of o.args) {
-				let m
-				if ("*"===arg || "#"===arg)
-					args.header = true
-				else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
-					args.color = arg
-				else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
-					let [, w, h] = m
-					if (+w > 1) args.colspan = +w
-					if (+h > 1) args.rowspan = +h
-				}
-			}
-			if (cancel) {
-				// close the row
-				current.args = {}
-				current.prev = 'block'
-				current.content.push(node)
-				return void CLOSE()
-			}
-		} break; case 'list_item': {
+		let node = {type: type, args: o.args, content: o.content}
+		let dest = current
+		
+		if ('list_item'===type) {
 			// merge list_item with preceeding list
 			node.args = null
 			let indent = o.args.indent
@@ -215,23 +189,32 @@ class Markup_12y2 { constructor() {
 				if (dest.args.indent == indent)
 					break
 			}
-		} break; case 'table_row': {
+		} else if ('table_row'===type) {
 			dest = get_last(current)
 			if (!dest || 'table'!==dest.type) {
 				dest = {type:'table', args:null, content:[]}
 				current.content.push(dest)
 			}
-		} break; case 'style': {
+		} else if ('style'===type) {
 			node.type = {
 				__proto__:null,
 				'**': 'bold', '__': 'underline',
 				'~~': 'strikethrough', '/': 'italic',
 			}[o.args]
 			node.args = null
-		} }
+		}
 		
-		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
+		current.prev = type in IS_BLOCK ? 'block' : o.prev
 		dest.content.push(node)
+		
+		if ('table_cell'===type) {
+			node.args = process_cell_args(o.args) // hack?
+			if (cancel) {
+				// close the row
+				current.args = {}
+				CLOSE()
+			}
+		}
 	}
 	
 	// push text
@@ -255,6 +238,31 @@ class Markup_12y2 { constructor() {
 			current.content.push("\n")
 		if ('all_newline'!==current.prev)
 			current.prev = 'newline'
+	}
+	
+	const null_args = []
+	null_args.named = Object.freeze({})
+	Object.freeze(null_args)
+	const NO_ARGS = []
+	NO_ARGS.named = Object.freeze({})
+	Object.freeze(NO_ARGS)
+	// todo: do we even need named args?
+	const parse_args=(arglist)=>{
+		// note: checks undefined AND "" (\tag AND \tag[])
+		if (!arglist)
+			return null_args
+		let list = [], named = {}
+		list.named = named
+		for (let arg of arglist.split(";")) {
+			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+			// value OR =value
+			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
+			if (!name)
+				list.push(value)
+			else // name=value
+				named[name] = value
+		}
+		return list
 	}
 	
 	const check_style=(token_text, before, after)=>{

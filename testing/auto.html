@@ -68,9 +68,12 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 		let before = Test.all.length
 		for (let c of list) {
 			if (c.values[is_message?'m':'markupLang']==="12y2") {
-				got++
 				let name = is_message ? "message:"+c.id : c.name
-				new Test({name}, c.text, ref_parser(c.text))
+				let tree = ref_parser(c.text)
+				if (tree.content.some(x => 'string'!=typeof x)) {
+					got++
+					new Test({name}, c.text, tree)
+				}
 			}
 		}
 		let nw = Test.all.length - before
@@ -121,8 +124,8 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 	
 	load_data({
 		requests:[
-			{type:'content',fields:'*',order:'id_desc',query:'!valuelike({{markupLang}},{{"12y2"}})'},
-			{type:'message',fields:'*',order:'id_desc', query:"createDate > {{2022-05-01Z}} AND createUserId <> {{5410}} AND !notdeleted()", limit:500},
+			{type:'content', fields:'text,values,id,name', order:'id_desc',query:'!valuelike({{markupLang}},{{"12y2"}})'},
+			{type:'message', fields:'text,values,id,createDate,contentId', order:'id', query:`!valuelike({{m}},{{"12y2"}})`},
 		]
 	}).then(x=>{
 		run()
