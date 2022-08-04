@@ -136,74 +136,67 @@ class Markup_12y2 { constructor() {
 	const CLOSE=(cancel)=>{
 		let o = pop()
 		
-		// "goto results in spaghetti code"
-		// languages without goto:
-		merge: {
-			if ('style'===o.type && cancel) {
-				current.content.push(o.args)
-			} else if ('null_env'===o.type) {
-			} else
-				break merge
+		if ('style'===o.type && cancel) {
+			current.content.push(o.args, ...o.content)
+			current.prev = o.prev
+			return
+		}
+		if ('null_env'===o.type) {
 			current.content.push(...o.content)
 			current.prev = o.prev
 			return
 		}
-		
-		if ('table_cell'===o.type) {
-			let ret
-			if (cancel && !o.content.length) {
-				// cancelling an empty table cell means:
-				// it's the end of the row, so discard the cell
-				
-				// if the ROW is empty (i.e. we just have a single | )
-				if (!current.content.length) {
-					o = pop() // discard the row
-					TEXT(o.args)
-					return
-					// todo: maybe also cancel rows with 1 unclosed cell?
-					// like `| abc` -> text
-				}
-				// transfer args to the row, and parse as table row args:
-				ret = {}
-				for (let arg of o.args) {
-					if ("*"===arg || "#"===arg)
-						ret.header = true
-				}
-			} else {
-				let args = {}
-				let node = {type:o.type, args, content:o.content}
-				for (let arg of o.args) {
-					let m
-					if ("*"===arg || "#"===arg)
-						args.header = true
-					else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
-						args.color = arg
-					else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
-						let [, w, h] = m
-						if (+w > 1) args.colspan = +w
-						if (+h > 1) args.rowspan = +h
-					}
-				}
-				current.prev = o.type in IS_BLOCK ? 'block' : o.prev
-				current.content.push(node)
-				if (!cancel)
-					return
-				ret = {}
+		if ('table_cell'===o.type && cancel && !o.content.length) {
+			// cancelling an empty table cell means:
+			// it's the end of the row, so discard the cell
+			
+			// if the ROW is empty (i.e. we just have a single | )
+			if (!current.content.length) {
+				let o = pop() // discard the row
+				TEXT(o.args)
+				return
+				// todo: maybe also cancel rows with 1 unclosed cell?
+				// like `| abc` -> text
 			}
-			current.args = ret
-			// close the row
+			// transfer args to the row, and parse as table row args:
+			let ret = current.args = {}
+			for (let arg of o.args) {
+				if ("*"===arg || "#"===arg)
+					ret.header = true
+			}
+			// FALLTHROUGH (to close the row)
 			o = pop()
 		}
 		
 		let node = {type: o.type, args: o.args, content: o.content}
 		let dest = current
 		
-		if ('newline'===o.prev) {
+		if ('newline'===o.prev)
 			o.content.push("\n")
-		}
 		
 		switch (o.type) {
-		case 'list_item': {
+		case 'table_cell': {
+			let args = node.args = {}
+			for (let arg of o.args) {
+				let m
+				if ("*"===arg || "#"===arg)
+					args.header = true
+				else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
+					args.color = arg
+				else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
+					let [, w, h] = m
+					if (+w > 1) args.colspan = +w
+					if (+h > 1) args.rowspan = +h
+				}
+			}
+			if (cancel) {
+				// close the row
+				current.args = {}
+				current.prev = 'block'
+				current.content.push(node)
+				return void CLOSE()
+			}
+		} break; case 'list_item': {
 			// merge list_item with preceeding list
 			node.args = null
 			let indent = o.args.indent
