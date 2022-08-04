@@ -121,7 +121,8 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 	
 	load_data({
 		requests:[
-			{type:'message',fields:'*',order:'id_desc', query:"createDate > {{2022-05-01Z}} AND createUserId <> {{5410}} AND !notdeleted()", limit:1000}
+			{type:'content',fields:'*',order:'id_desc',query:'!valuelike({{markupLang}},{{"12y2"}})'},
+			{type:'message',fields:'*',order:'id_desc', query:"createDate > {{2022-05-01Z}} AND createUserId <> {{5410}} AND !notdeleted()", limit:500},
 		]
 	}).then(x=>{
 		run()
