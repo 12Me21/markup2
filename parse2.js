@@ -328,10 +328,12 @@ class Markup_12y2 { constructor() {
 				REGEX.lastIndex = pos+1
 				return body = true
 			}
-			if (" "===next)
-				REGEX.lastIndex = pos+1
-			else if (space)
-				return body = false
+			if (space) {
+				if (" "===next)
+					REGEX.lastIndex = pos+1
+				else
+					return body = false
+			}
 			return body = undefined
 		}
 		// start a new block
@@ -381,6 +383,8 @@ class Markup_12y2 { constructor() {
 			let group_num = match.indexOf("", 1)-1
 			let type = GROUPS[group_num]
 			// 3: 
+			body = null
+			rargs = null
 
 			switch (type) {
 			case 'TAG': {

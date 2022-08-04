@@ -36,9 +36,12 @@ class Test {
 		
 		this.reset()
 		
-		if (Test.all.find(test=>test.input == input))
-			console.warn('duplicate test!', this)
+		//if (Test.all.find(test=>test.input == input))
+		//	console.warn('duplicate test!', this)
+		if (Test.set.has(this.input))
+			return
 		Test.all.push(this)
+		Test.set.add(this.input)
 	}
 	
 	run() {
@@ -80,7 +83,7 @@ class Test {
 		return `🟩 ${this.name}\n${this.input}\n🟩 ${JSON.stringify(clean(this.correct))}`
 	}
 	
-	static all = []
+	//static all = []
 	
 	static run_all() {
 		for (let test of this.all) {
@@ -88,8 +91,13 @@ class Test {
 		}
 	}
 	
-	static load_text(text) {
+	static clear() {
 		this.all = []
+		this.set = new Set()
+	}
+	
+	static load_text(text) {
+		this.clear()
 		text = text.replace(/\r/g, "")
 		// todo: indent? (\t*) and then \1 backref match on other lines
 		let r = /^🟩[ \t]?(.*)\n([^🟩]*)\n🟩[ \t]*([{].*)$|(🟩)/gum
@@ -105,6 +113,7 @@ class Test {
 		}
 	}
 }
+Test.clear()
 
 class InvalidTree extends Error {
 	constructor(msg) {
@@ -114,12 +123,17 @@ class InvalidTree extends Error {
 }
 
 class Mismatch extends Error {
-	constructor(msg, correct, got) {
-		super(msg)
+	constructor(tree, thing, correct, got) {
+		console.log('mismatch', arguments)
+		super(thing)
 		this.correct = correct
 		this.got = got
-		this.message = `${msg}\nExpect: ${safe_string(correct)}\n   Got: ${safe_string(got)}`
+		this.tree = tree
+		this.thing = thing
 		this.name = 'Mismatch'
+	}
+	message() {
+		return `${this.tree}\n${this.thing}\nExpect: ${safe_string(this.correct)}\n   Got: ${safe_string(this.got)}`
 	}
 }
 
@@ -145,7 +159,7 @@ class Comparator {
 		this.compare_node(this.correct, this.got)
 	}
 	mismatch(msg, correct, got) {
-		throw new Mismatch("\n"+this.print()+msg, correct, got)
+		throw new Mismatch(this.print(), msg, correct, got)
 	}
 	push(correct) {
 		this.stack.push({node:correct})
@@ -190,7 +204,7 @@ class Comparator {
 			return
 		}
 		if (!this.is_object(correct)) {
-			this.mismatch("reference tree", 'object', correct)
+			this.mismatch("ref node.args", 'object', correct)
 		}
 		if (!this.is_object(got))
 			this.mismatch("node.args", correct, got)
@@ -217,11 +231,13 @@ class Comparator {
 		
 		for (let i=0; i<correct.length || i<got.length; i++) {
 			this.index(i)
+			if (i >= correct.length)
+				this.mismatch("node", undefined, got[i])
 			this.compare_node(correct[i], got[i])
 		}
 	}
 	compare_node(correct, got) {
-		this.push(correct)
+		
 		// string node
 		if ('string'==typeof correct) {
 			if (got !== correct)
@@ -229,7 +245,7 @@ class Comparator {
 		} else {
 			// object node
 			if (!this.is_object(correct)) {
-				this.mismatch("reference tree", 'object', correct)
+				this.mismatch("ref node", 'object', correct)
 			}
 			if (!this.is_object(got))
 				this.mismatch("node", correct, got)
@@ -238,9 +254,11 @@ class Comparator {
 			// 
 			this.compare_args(correct.args, got.args)
 			// 
+			this.push(correct)
 			this.compare_content(correct.content, got.content)
+			this.pop()
 		}
-		this.pop()
+		
 	}
 }
 

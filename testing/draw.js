@@ -6,19 +6,7 @@ let HTML = ([html])=>{
 	if (root.childNodes.length==1)
 		root = root.firstChild
 	
-	// get from `root` to `node` using .firstChild and .nextSibling
-	// TODO: optimize this  yeah yeah !
-	//1: sharing results !
-	//  ex. if you have 2 nodes:
-	// A = root.firstChild.nextSibling.nextSibling
-	// B = root.firstChild.nextSibling.firstChild
-	//  then this can be:
-	// temp = root.firstChild.nextSibling
-	// A = temp.nextSibling
-	// B = temp.firstChild
-	//2: using .lastChild, .childNodes[n], etc.?
-	// i wonder if browsers can optimize it better when it's simple though
-	let get_path = (root, node)=>{
+	let get_path=(root, node)=>{
 		let path = ""
 		while (node!==root) {
 			let parent = node.parentNode
@@ -46,49 +34,57 @@ return holder`
 	return c
 }
 
-let err_template = HTML`
-<div class='result'>
-	<div $=type><div>
-	<div $=tree><div>
-	<div $=field><div>
-	<div>Expect:<span $=expect><span></div>
-	<div>Got:<span $=got><span></div>
+let pass_template = HTML`
+<div class='test passed'>
+	<div>
+		<div class='name' $=name></div>
+	</div>
+	<div>
+		<div class='time' $=time></div>
+	</div>
+	<details>
+		<summary>input</summary>
+		<textarea class='input' $=input></textarea>
+	</details>
 </div>
 `
 
-let ok_template = HTML`
-<div class='result'>
-	<div $=msg><div>
-	<div $=time><div>
-</div>
-`
-
-let result_template = HTML`
-<div class='test'>
+let fail_template = HTML`
+<div class='test failed'>
 	<div>
 		<div class='name' $=name></div>
 		<div class='result' $=result></div>
 	</div>
 	<div>
-		<div class='input' $=input></div>
+		<div class='tree' $=tree></div>
 	</div>
+	<div class='compare'>
+		<span>Expect:</span><code $=correct></code>
+		<span>Got:</span><code $=got></code>
+	</div>
+	<details>
+		<summary>input</summary>
+		<textarea class='input' $=input></textarea>
+	</details>
 </div>
 `
 
 Test.prototype.draw_result = function() {
-	let e = result_template()
+	let e
 	if (this.status < 0) {
-		e.$root.classList.add('failed')
-		let f = err_template()
+		e = fail_template()
+		let r = this.result
+		e.$correct.textContent = safe_string(r.correct)
+		e.$got.textContent = safe_string(r.got)
+		e.$tree.textContent = r.tree
+		e.$result.textContent = r.thing
 	} else if (this.status > 0) {
-		e.$root.classList.add('passed')
-		let f = ok_template()
-		f.$msg.textContent = this.result
-		f.$time.textContent = (+this.parse_time).toFixed(1)+" ms"
+		e = pass_template()
+		e.$time.textContent = (+this.parse_time).toFixed(1)+" ms"
 	}
 	
 	e.$name.textContent = this.name
-	e.$input.textContent = this.input
+	e.$input.value = this.input
 	
 	return e.$root
 }

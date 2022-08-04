@@ -36,7 +36,6 @@ body {
 	padding-left: 0.3rem;
 	padding-right: 0;
 	font-weight: bold;
-	width: 7rem;
 	white-space: pre;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -83,3 +82,97 @@ test- col2- {
         background-attachment: scroll;
     background-attachment: local;
 }*/
+
+
+.test {
+	display: flex;
+	flex-flow: row;
+}
+
+.test > div {
+	display: flex;
+	flex-flow: column;
+	flex: 1;
+}
+
+.test .tree {
+}
+
+/*.test .input {
+	display: none;
+}
+
+.test.open .input {
+	display: block;
+}*/
+
+.test .input {
+	resize: none;
+	width: 100%;
+	box-sizing: border-box;
+	line-break: anywhere;
+	background: beige;
+}
+
+.test > details {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.test > details[open] {
+	flex-basis: 50%;
+}
+
+.test > details:not([open]) > summary {
+	height: 100%;
+}
+
+summary {
+	cursor: pointer;
+}
+
+code {
+	white-space: pre-wrap;
+	font-size: 10px;
+	background: white;
+	color: black;
+	line-break: anywhere;
+	border: 1px solid black;
+}
+
+.test .compare {
+	display: grid;
+	grid-template:
+		"label1 out1"
+		"label2 out2"
+		/ max-content auto;
+	align-self: flex-start;
+	align-items: center;
+}
+
+.test .compare > span {
+	text-align: right;
+}
+
+.test > :first-child {
+	flex: none;
+	padding-right: 0.5rem;
+}
+
+.test > :nth-child(2) {
+	flex: 0 0 max-content;
+	padding-right: 0.5rem;
+}
+
+.test .compare {
+	flex: 1 1 50%;
+}
+
+.test > details {
+	margin-left: auto;
+	flex: 0 0 auto;
+}
+
+.test > details[open] {
+	flex: 0 1 50%;
+}

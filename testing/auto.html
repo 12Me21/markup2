@@ -26,12 +26,37 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 	
 	let ref_parser = new Markup_12y2_Ref().parse
 	
+	class RequestError extends Error {
+		constructor(resp, text) {
+			if ('string'==typeof text && text.startsWith("Unhandled exception: ")) {
+				text = text.replace(/^   at [^]* ---$/m, "...")
+			}
+			
+			super(resp.url+" "+resp.status+" "+resp.statusText+"\n"+text)
+			
+			let ctype = resp.headers.get('content-type')
+			if (/[/+]json(;| |$)/i.test(ctype))
+				text = JSON.parse(text)
+			
+			this.stack = this.stack.replace(/^RequestError@.*\n/, "")
+		}
+	}
+	RequestError.prototype.name = 'RequestError'
+	
+	class ApiRequest extends Request {
+		constructor(endpoint, data) {
+			super("https://qcs.shsbs.xyz/api/"+endpoint, {
+				method: 'POST',
+				body: new Blob([JSON.stringify(data)], {type: "application/json;charset=UTF-8"}),
+			})
+		}
+	}
+	
 	async function request(query) {
-		let req = new Request("https://qcs.shsbs.xyz/api/request", {
-			method: 'POST',
-			body: new Blob([JSON.stringify(query)], {type: "application/json;charset=UTF-8"}),
-n		})
+		let req = new ApiRequest('request', query)
 		let resp = await fetch(req)
+		if (!resp.ok)
+			throw new RequestError(resp, await resp.text())
 		let data = await resp.json()
 		return data.objects
 	}
@@ -39,16 +64,22 @@ n		})
 	function collect(list, is_message) {
 		if (!list)
 			return
+		let got = 0
+		let before = Test.all.length
 		for (let c of list) {
 			if (c.values[is_message?'m':'markupLang']==="12y2") {
+				got++
 				let name = is_message ? "message:"+c.id : c.name
 				new Test({name}, c.text, ref_parser(c.text))
 			}
 		}
+		let nw = Test.all.length - before
+		console.log("got "+got+" items ("+nw+" new)")
 	}
 	
 	async function load_data(query) {
 		let lmm = await request(query)
+		console.log('got', lmm)
 		collect(lmm.content, false)
 		collect(lmm.message, true)
 	}
@@ -83,5 +114,16 @@ n		})
 		$duration.textContent = dur+" ms"
 	}
 	
+	/*window.onpageshow = ev=>{
+		$output.textContent = "pageshow"
+	}*/
+	window.onbeforeunload = ev=>{} // prevent b/f caching
 	
+	load_data({
+		requests:[
+			{type:'message',fields:'*',order:'id_desc', query:"createDate > {{2022-05-01Z}} AND createUserId <> {{5410}} AND !notdeleted()", limit:1000}
+		]
+	}).then(x=>{
+		run()
+	})
 </script>
