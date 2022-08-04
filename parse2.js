@@ -134,38 +134,12 @@ class Markup_12y2 { constructor() {
 	}
 	
 	const CLOSE=(cancel)=>{
-		if (cancel && 'table_cell'===current.type) {
-			if (current.content.length) {
-				CLOSE() // table_cell
-				current.args = {}
-			} else {
-				// cancelling an empty table cell means:
-				// it's the end of the row, so discard the cell
-				let o = pop()
-				// if the ROW is empty (i.e. we just have a single | )
-				if (!current.content.length) {
-					let o = pop() // discard the row
-					TEXT(o.args)
-					return
-					// todo: maybe also cancel rows with 1 unclosed cell?
-					// like `| abc` -> text
-				}
-				// transfer args to the row, and parse as table row args:
-				let ret = current.args = {}
-				for (let arg of o.args) {
-					if ("*"===arg || "#"===arg)
-						ret.header = true
-				}
-			}
-			// fallthrough to close the table_row
-		}
-		
 		let o = pop()
 		
 		// "goto results in spaghetti code"
 		// languages without goto:
 		merge: {
-			if (cancel && 'style'===o.type) {
+			if ('style'===o.type && cancel) {
 				current.content.push(o.args)
 			} else if ('null_env'===o.type) {
 			} else
@@ -175,11 +149,58 @@ class Markup_12y2 { constructor() {
 			return
 		}
 		
-		if ('newline'===o.prev)
-			o.content.push("\n")
+		if ('table_cell'===o.type) {
+			let ret
+			if (cancel && !o.content.length) {
+				// cancelling an empty table cell means:
+				// it's the end of the row, so discard the cell
+				
+				// if the ROW is empty (i.e. we just have a single | )
+				if (!current.content.length) {
+					o = pop() // discard the row
+					TEXT(o.args)
+					return
+					// todo: maybe also cancel rows with 1 unclosed cell?
+					// like `| abc` -> text
+				}
+				// transfer args to the row, and parse as table row args:
+				ret = {}
+				for (let arg of o.args) {
+					if ("*"===arg || "#"===arg)
+						ret.header = true
+				}
+			} else {
+				let args = {}
+				let node = {type:o.type, args, content:o.content}
+				for (let arg of o.args) {
+					let m
+					if ("*"===arg || "#"===arg)
+						args.header = true
+					else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
+						args.color = arg
+					else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
+						let [, w, h] = m
+						if (+w > 1) args.colspan = +w
+						if (+h > 1) args.rowspan = +h
+					}
+				}
+				current.prev = o.type in IS_BLOCK ? 'block' : o.prev
+				current.content.push(node)
+				if (!cancel)
+					return
+				ret = {}
+			}
+			current.args = ret
+			// close the row
+			o = pop()
+		}
 		
 		let node = {type: o.type, args: o.args, content: o.content}
 		let dest = current
+		
+		if ('newline'===o.prev) {
+			o.content.push("\n")
+		}
 		
 		switch (o.type) {
 		case 'list_item': {
@@ -205,20 +226,6 @@ class Markup_12y2 { constructor() {
 				dest = {type:'table', args:null, content:[]}
 				current.content.push(dest)
 			}
-		} break; case 'table_cell': {
-			let ret = node.args = {}
-			for (let arg of o.args) {
-				let m
-				if ("*"===arg || "#"===arg)
-					ret.header = true
-				else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
-					ret.color = arg
-				else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
-					let [, w, h] = m
-					if (+w > 1) ret.colspan = +w
-					if (+h > 1) ret.rowspan = +h
-				}
-			}
 		} break; case 'style': {
 			node.type = {
 				__proto__:null,
@@ -228,8 +235,8 @@ class Markup_12y2 { constructor() {
 			node.args = null
 		} }
 		
-		dest.content.push(node)
 		current.prev = o.type in IS_BLOCK ? 'block' : o.prev
+		dest.content.push(node)
 	}
 	
 	// push text
