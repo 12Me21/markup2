@@ -68,7 +68,7 @@ xhr times:
 		return await {then:y=>{
 			let x = new XMLHttpRequest()
 			x.open('POST', "https://"+server+"/"+endpoint)
-			x.setRequestHeader('CACHE-CONTROL', "no-store")
+			this.setRequestHeader('CACHE-CONTROL', "L, ratio, no-store, no-cache, must-revalidate")
 			//x.setRequestHeader('AUTHORIZATION', "Bearer "+Req.auth)
 			x.upload.addEventListener('progress', ev=>{
 				//last_time = ev.timeStamp
