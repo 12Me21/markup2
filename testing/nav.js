@@ -1,3 +1,4 @@
+"use strict"
 //let base = new URL("./", document.baseURI)
 let pages = [
 	["Demo", 'index.html'],

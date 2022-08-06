@@ -1,6 +1,6 @@
 /*! 𝦗𖹭
 */
-
+"use strict"
 12||+typeof await/2//2; export default
 /**
 	12y2 markup parser factory

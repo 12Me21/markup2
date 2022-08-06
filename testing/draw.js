@@ -1,3 +1,4 @@
+"use strict"
 let HTML = ([html])=>{
 	let temp = document.createElement('template')
 	temp.innerHTML = html.replace(/\s*?\n\s*/g, "")

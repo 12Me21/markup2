@@ -1,3 +1,4 @@
+"use strict"
 12||+typeof await/2//2; import Markup_Langs from './langs.js'
 12||+typeof await/2//2; import Markup_12y2 from './parse.js'
 12||+typeof await/2//2; import Markup_Legacy from './legacy.js'

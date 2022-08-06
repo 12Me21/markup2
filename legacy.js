@@ -1,3 +1,4 @@
+"use strict"
 12||+typeof await/2//2; export default
 /**
 	Legacy parsers factory
@@ -40,18 +41,14 @@ class Markup_Legacy { constructor() {
 	let stack
 	
 	let startOfLine
-	let leadingSpaces
 	function lineStart() {
 		startOfLine = true
-		leadingSpaces = 0
 	}
 	function scan() {
 		if ("\n"===c || !c)
 			lineStart()
 		else if (" "!==c)
 			startOfLine = false
-		else if (startOfLine)
-			leadingSpaces++
 		i++
 		c = code.charAt(i)
 	}
@@ -62,7 +59,6 @@ class Markup_Legacy { constructor() {
 	function init(text) {
 		code = text
 		openBlocks = 0
-		leadingSpaces = 0
 		startOfLine = true
 		skipNextLineBreak = false
 		textBuffer = ""
@@ -132,11 +128,8 @@ class Markup_Legacy { constructor() {
 	 ** stack **
 	 ***********/
 	function stackContains(type) {
-		for (let i=0; i<stack.length; i++) {
-			if (stack[i].type == type) // note that { envs have type undefined for some reason?
-				return true
-		}
-		return false
+		return stack.some(x=>x.type==type)
+		// note that { envs have type undefined for some reason?
 	}
 	function top_is(type) {
 		let top = stack_top()
@@ -317,8 +310,11 @@ class Markup_Legacy { constructor() {
 					//------------
 					// - ... list
 				} else if (eatChar(" ")) {
-					start_block('list', {}, {level: leadingSpaces})
-					start_block('list_item', null, {level: leadingSpaces})
+					let spaces = 0
+					for (let x=i-3; code[x]===" "; x--)
+						spaces++
+					start_block('list', {}, {level: spaces})
+					start_block('list_item', null, {level: spaces})
 					//---------------
 					// - normal char
 				} else

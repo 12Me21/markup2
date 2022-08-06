@@ -1,3 +1,4 @@
+"use strict"
 /*
 class which contains the 12y and bbcode parsers
 */

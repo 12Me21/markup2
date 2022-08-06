@@ -1,3 +1,4 @@
+"use strict"
 class RequestError extends Error {
 	constructor(xhr) {
 		let data = xhr.response

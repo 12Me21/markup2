@@ -93,7 +93,7 @@ xhr times:
 		console.log("got "+got+" items ("+nw+" new)")
 	}
 	
-	let lang = "12y2"
+	let lang = "12y"
 	
 	load_data([
 		{
@@ -105,7 +105,7 @@ xhr times:
 			type:'message',
 			fields:'text,values,id,createDate,contentId',
 			query:`!valuelike({{m}},{{"${lang}"}})`,
-			order:'id',
+			order:'id_desc',
 		},
 	]).then(async (lmm)=>{
 		collect(lmm.content, false, lang)
