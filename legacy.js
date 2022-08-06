@@ -13,9 +13,7 @@ class Markup_Legacy { constructor() {
 	*/
 	this.langs = {}
 	
-	const MAP = x=>Object.freeze(Object.setPrototypeOf(x, null))
-	
-	let BLOCKS = MAP({divider: 1, code: 1, audio: 1, video: 1, youtube: 1, heading: 1, quote: 1, list: 1, list_item: 1, table: 1, table_row: 1, image: 1, error: 1, align: 1, spoiler: 1})
+	const BLOCKS = Object.freeze({__proto__:null, divider: 1, code: 1, audio: 1, video: 1, youtube: 1, heading: 1, quote: 1, list: 1, list_item: 1, table: 1, table_row: 1, image: 1, error: 1, align: 1, spoiler: 1})
 	
 	function convert_cell_args(props, h) {
 		let args = {
@@ -80,10 +78,6 @@ class Markup_Legacy { constructor() {
 		}
 	}
 	
-	function matchNext(str) {
-		return code.substr(i, str.length)===str
-	}
-	
 	// read a url
 	// if `allow` is true, url is only ended by end of file or ]] or ][ (TODO)
 	function readUrl(allow) {
@@ -115,9 +109,8 @@ class Markup_Legacy { constructor() {
 				} else
 					break
 			}
-			let last = code[i-1]
-			if (/[,.?!:]/.test(last)) {
-				i-=2
+			if (/[,.?!:]/.test(code.charAt(i-1))) {
+				i -= 2
 				scan()
 			}
 		}
@@ -129,7 +122,6 @@ class Markup_Legacy { constructor() {
 	 ***********/
 	function stackContains(type) {
 		return stack.some(x=>x.type==type)
-		// note that { envs have type undefined for some reason?
 	}
 	function top_is(type) {
 		let top = stack_top()
@@ -148,7 +140,7 @@ class Markup_Legacy { constructor() {
 		if (stack.length) {
 			let i = stack.length-1
 			// this skips {} fake nodes
-			// it will always find at least the root <div> element I hope
+			// it will always find at least the root element I hope
 			while (!stack[i].node)
 				i--
 			curr = stack[i].node
@@ -175,7 +167,6 @@ class Markup_Legacy { constructor() {
 			skipNextLineBreak = false
 		else
 			addText("\n")
-		//add_block(true)
 	}
 	
 	// add text to output (buffered)
@@ -201,33 +192,34 @@ class Markup_Legacy { constructor() {
 	}
 	
 	function start_block(type, args, data) {
-		if (type) {
-			let node = {type, args, content: []}
-			data.type = type
-			openBlocks++
-			if (openBlocks > 10)
-				throw new Error("too deep nestted blocks")
-			data.node = node
-			if (BLOCKS[type]) {
-				data.isBlock = true
-				skipNextLineBreak = true
-			}
-			flushText()
-			curr.content.push(node)
-			curr = node
+		//let type = data.type
+		let node = {type, args, content: []}
+		data.type = type
+		openBlocks++
+		if (openBlocks > 10)
+			throw new Error("too deep nestted blocks")
+		data.node = node
+		if (BLOCKS[type]) {
+			data.isBlock = true
+			skipNextLineBreak = true
 		}
+		flushText()
+		curr.content.push(node)
+		curr = node
+		
 		stack.push(data)
 		return data
 	}
 	
+	const URL_RX = /\b(https?:[/][/]|sbs:)/y
+	
 	// check for /\b(http://|https://|sbs:)/ basically
 	function isUrlStart() {
-		if (/\w/.test(code.charAt(i-1)))
-			return false
-		return matchNext("http://") || matchNext("https://") || matchNext("sbs:")
+		URL_RX.lastIndex = i
+		return URL_RX.test(code)
 	}
 	
-	const fr = /(?:(?!https?:\/\/|sbs:)[^\n\\{}*/_~>\]|`![-])+/y
+	const FR = /(?:(?!https?:\/\/|sbs:)[^\n\\{}*/_~>\]|`![-])+/y
 	
 	this.langs['12y'] = function(codeInput) {
 		init(codeInput)
@@ -236,11 +228,11 @@ class Markup_Legacy { constructor() {
 			return tree
 		
 		while (c) {
-			fr.lastIndex = i
-			let m = fr.exec(code)
+			FR.lastIndex = i
+			let m = FR.exec(code)
 			if (m) {
 				addText(m[0])
-				restore(fr.lastIndex)
+				restore(FR.lastIndex)
 			} else if (eatChar("\n")) {
 				endLine()
 				//==========
@@ -467,6 +459,7 @@ class Markup_Legacy { constructor() {
 			flushText()
 			while (stack.length)
 				endBlock()
+			openBlocks = code = stack = curr = null // memory leak ...
 		}
 		
 		// ###################################
@@ -517,7 +510,7 @@ class Markup_Legacy { constructor() {
 		function readEnv() {
 			if (!eatChar("{"))
 				return false
-			start_block(null, null, {})
+			stack.push({type:null})
 			lineStart()
 			
 			let start = i
@@ -779,7 +772,8 @@ class Markup_Legacy { constructor() {
 	}
 	
 	// start_block
-	const block_translate = MAP({
+	const block_translate = Object.freeze({
+		__proto__: null, 
 		// things without arguments
 		b: 'bold',
 		i: 'italic',
@@ -837,7 +831,8 @@ class Markup_Legacy { constructor() {
 		img: 2,
 	})
 	// add_block
-	const block_translate_2 = MAP({
+	const block_translate_2 = Object.freeze({
+		__proto__:null,
 		code(args, contents) {
 			let inline = 'inline'===args[""]
 			if (inline)

@@ -66,15 +66,15 @@ class Markup_Render_Dom { constructor() {
 		
 		simple_link: function({url, text}) {
 			let e = this()
-			if (text==null)
+			if (text==null) {
 				e.textContent = url
-			else {
+			} else {
 				e.textContent = text
 				e.className += ' M-link-custom'
 			}
 			e.href = filter_url(url, 'link')
 			return e
-		}.bind(𐀶`<a href="" target=_blank>`),
+		}.bind(𐀶`<a href="" class='M-link' target=_blank>`),
 		
 		image: function({url, alt, width, height}) {
 			let e = this.elem()
@@ -310,7 +310,7 @@ aaa
 			let e = this()
 			e.href = filter_url(url, 'link')
 			return e
-		}.bind(𐀶`<a class='M-link-custom' target=_blank href="">`),
+		}.bind(𐀶`<a class='M-link M-link-custom' target=_blank href="">`),
 		
 		list: function({style}) {
 			if (style==null)

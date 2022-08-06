@@ -106,6 +106,7 @@ xhr times:
 			fields:'text,values,id,createDate,contentId',
 			query:`!valuelike({{m}},{{"${lang}"}})`,
 			order:'id_desc',
+			limit:1000,
 		},
 	]).then(async (lmm)=>{
 		collect(lmm.content, false, lang)

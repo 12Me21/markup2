@@ -247,20 +247,22 @@ L + ratio { }
 /***********/
 /** Links **/
 /***********/
-.Markup a[href] {
-	/*color: rgb(0, 80, 150);*/
+.M-link {
 	color: var(--T-link-color);
+	-webkit-text-decoration: var(--T-link-decoration);
 	text-decoration: var(--T-link-decoration);
 }
-.Markup a[href]:hover {
+.M-link:hover {
 	color: var(--T-link-hover-color);
 }
 /* links with custom text */
-.Markup .M-link-custom[href] {
+.M-link-custom {
+	-webkit-text-decoration: var(--T-custom-link-decoration);
 	text-decoration: var(--T-custom-link-decoration);
 }
-.Markup .M-link-custom[href]:hover {
-	text-decoration-style: double; /* s*/
+.M-link-custom:hover {
+	-webkit-text-decoration-style: double;
+	text-decoration-style: double;
 }
 
 /***********/
