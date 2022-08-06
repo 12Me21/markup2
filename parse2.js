@@ -47,7 +47,9 @@ class Markup_12y2 { constructor() {
 	PAT`[\\]{ANY}${'ESCAPED'}`
 	PAT`{BOL}[\`]{3}(?=[^\n\`]*?{EOL})${'CODE_BLOCK'}`
 	PAT`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${'INLINE_CODE'}`
-	PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${'LINK'}`
+	//PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${'LINK'}`
+	PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}([(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)?${'LINK'}`
+	//PAT`([!]${'EMBED'})?\b(https?://|sbs:)({URL_CHARS}{URL_FINAL}([(]{URL_CHARS}[)])?)+${'LINK'}`
 	PAT`{BOL} *[|]${'TABLE_START'}`
 	PAT` *[|]${'TABLE_CELL'}`
 	PAT`{BOL} *[-]${'LIST_ITEM'}`

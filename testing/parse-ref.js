@@ -6,7 +6,7 @@
 	12y2 markup parser factory
 	@implements Parser_Collection
 **/
-class Markup_12y2_Ref { constructor() {
+class Markup_12y2 { constructor() {
 
 	// TokenType 🏷 enum
 	// BlockType 🏷 enum

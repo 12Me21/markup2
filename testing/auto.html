@@ -2,14 +2,20 @@
 <title>Tests 2</title>
 
 <script src=../parse2.js></script>
-<script src=parse-ref.js></script>
+<script src=../legacy.js></script>
+<script src=../langs.js></script>
+
 <script src=test.js></script>
 <script src=draw.js></script>
+<script src=api.js></script>
+
 <link rel=stylesheet href=common.css>
 <link rel=stylesheet href=style.css>
 
 <body>
 <script src=nav.js></script>
+
+<iframe id=$ref srcdoc="<script src=parse-ref.js></script><script src=legacy-ref.js></script><script src=../langs.js></script><script>window.LANGS = new Markup_Langs([new Markup_12y2(), new Markup_Legacy()])</script>" hidden></iframe>
 
 opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 <br>
@@ -26,131 +32,14 @@ xhr times:
 <div id=$output></div>
 
 <script>'use strict'
-	let prev = 0
-	function time_log(msg) {
-		let now = performance.now()
-		let diff = now - prev
-		prev = now
-		console.log(msg, diff/1000+" sec")
+	Test.LANGS = new Markup_Langs([new Markup_12y2(), new Markup_Legacy()])
+	let LANGS_REF
+	$ref.onload = ev=>{
+		LANGS_REF = $ref.contentWindow.LANGS
 	}
 	
 	let start = performance.timing.fetchStart
 	$start_time.textContent = new Date(start).toLocaleString()
-	
-	let ref_parser = new Markup_12y2_Ref().parse
-	
-	class RequestError extends Error {
-		constructor(xhr) {
-			let data = xhr.response
-			if (data.title)
-				data = data.title
-			else if ('string'==typeof data && data.startsWith("Unhandled exception: "))
-				data = data.replace(/^   at [^]* ---$/m, "...")
-			
-			super(xhr.responseURL+" "+xhr.status+" "+xhr.statusText+"\n"+data)
-			
-			this.stack = this.stack.replace(/^RequestError@.*\n/, "")
-		}
-	}
-	RequestError.prototype.name = 'RequestError'
-	
-	let server = "qcs.shsbs.xyz/api"
-	
-	async function request(endpoint, data, cb) {
-		let last = performance.now()
-		function report(str) {
-			let now = performance.now()
-			let diff = now-last
-			//last = now
-			cb(diff, str)
-			//console.log(diff.toFixed(0), str)
-		}
-		return await {then:y=>{
-			let x = new XMLHttpRequest()
-			x.open('POST', "https://"+server+"/"+endpoint)
-			x.setRequestHeader('CACHE-CONTROL', "L, ratio, no-store, no-cache, must-revalidate")
-			//x.setRequestHeader('AUTHORIZATION', "Bearer "+Req.auth)
-			x.upload.addEventListener('progress', ev=>{
-				//last_time = ev.timeStamp
-				report("preflight finished")
-			}, {once:true, passive:true})
-			let last_size = 0
-			let last_time = 0
-			x.onprogress = ev=>{
-				let size_change = ev.loaded-last_size
-				let time_change = ev.timeStamp-last_time
-				let speed = (size_change*8/1000)/(time_change/1000)
-				last_size = ev.loaded
-				last_time = ev.timeStamp
-				report("downloaded "+(ev.loaded/1000).toFixed(1)+"kB ("+speed.toFixed(0)+" kbps)")
-			}
-			x.onreadystatechange = ev=>{
-				switch (x.readyState) {
-					case XMLHttpRequest.HEADERS_RECEIVED:
-						report("got headers")
-						let type = x.getResponseHeader('Content-Type')
-						if (/[\/+]json(;| |$)/i.test(type))
-							x.responseType = 'json'
-						break
-					case XMLHttpRequest.DONE:
-						report("finished")
-						if (x.status==200)
-							y(x.response)
-						else
-							throw new RequestError(x)
-						break
-					default:
-						//report("state change "+x.readyState)
-				}
-			}
-			report("starting request")
-			x.send(new Blob([JSON.stringify(data)], {type: "application/json;charset=UTF-8"}))
-		}}
-	}
-	
-	/*async function request(query) {
-		make(query)
-		return
-		let req = new ApiRequest('request', query)
-		time_log("request 1")
-		let resp = await fetch(req)
-		time_log("request 2")
-		if (!resp.ok)
-			throw new RequestError(resp, await resp.text())
-		let data = await resp.json()
-		time_log("request 3")
-		return data.objects
-	}*/
-	
-	function collect(list, is_message) {
-		if (!list)
-			return
-		let got = 0
-		let before = Test.all.length
-		for (let c of list) {
-			if (c.values[is_message?'m':'markupLang']==="12y2") {
-				let name = is_message ? "message:"+c.id : c.name
-				let tree = ref_parser(c.text)
-				if (tree.content.some(x => 'string'!=typeof x)) {
-					got++
-					new Test({name}, c.text, tree)
-				}
-			}
-		}
-		let nw = Test.all.length - before
-		console.log("got "+got+" items ("+nw+" new)")
-	}
-	
-	async function load_data(query) {
-		$xhr_time.textContent = ""
-		let data = await request('request', query, (t,m)=>{
-			$xhr_time.textContent += "\n"+(t/1000).toFixed(2)+"sec: "+m
-		})
-		console.log('got', data)
-		let lmm = data.objects
-		collect(lmm.content, false)
-		collect(lmm.message, true)
-	}
 	
 	function run() {
 		$output.textContent = ""
@@ -182,22 +71,46 @@ xhr times:
 		$duration.textContent = dur+" ms"
 	}
 	
-	/*window.onpageshow = ev=>{
-		$output.textContent = "pageshow"
-	}*/
 	window.onbeforeunload = ev=>{} // prevent b/f caching
 	
-	time_log("request start")
-	load_data({
-		requests:[
-			{type:'content', fields:'text,values,id,name', order:'id_desc',query:'!valuelike({{markupLang}},{{"12y2"}})'},
-			{type:'message', fields:'text,values,id,createDate,contentId', order:'id_desc', query:`!valuelike({{m}},{{"12y2"}})`},
-		]
-	}).then(x=>{
+	function collect(list, is_message, filter) {
+		if (!list)
+			return
+		let got = 0
+		let before = Test.all.length
+		for (let c of list) {
+			let lang = c.values[is_message?'m':'markupLang']
+			let text = c.text
+			if (filter && lang!==filter)
+				continue
+			let name = is_message ? "message:"+c.id : c.name
+			let tree = LANGS_REF.parse(text, lang)
+			if (tree.content.some(x => 'string'!=typeof x)) {
+				got++
+				new Test({name}, text, lang, tree)
+			}
+		}
+		let nw = Test.all.length - before
+		console.log("got "+got+" items ("+nw+" new)")
+	}
+	
+	load_data([
+		{
+			type:'content',
+			fields:'text,values,id,name',
+			query:'!valuelike({{markupLang}},{{"12y2"}})',
+			order:'id_desc',
+		}, {
+			type:'message',
+			fields:'text,values,id,createDate,contentId',
+			query:`!valuelike({{m}},{{"12y2"}})`,
+			order:'id_desc',
+		},
+	]).then(async (lmm)=>{
+		collect(lmm.content, false)
+		collect(lmm.message, true)
 		window.setTimeout(()=>{
-			time_log("request end")
 			run()
-			time_log("test end")
 		})
 	})
 </script>

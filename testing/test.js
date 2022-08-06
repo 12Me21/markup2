@@ -1,7 +1,5 @@
 "use strict"
 
-let PARSER = new Markup_12y2()
-
 function clean(tree) {
 	if ('string'==typeof tree)
 		return tree
@@ -24,9 +22,10 @@ function INIT(th, defs) {
 }
 
 class Test {
-	constructor({name}, input, correct) {
+	constructor({name}, input, lang, correct) {
 		INIT(this, {
 			name: {value: name},
+			lang: {value: lang},
 			input: {value: input},
 			correct: {value: correct},
 			status: {writable: true},
@@ -50,7 +49,7 @@ class Test {
 		let t, p
 		try {
 			p = performance.now()
-			t = PARSER.parse(this.input)
+			t = Test.LANGS.parse(this.input, this.lang)
 			this.parse_time = performance.now() - p
 		} catch (e) {
 			this.parse_time = performance.now() - p
@@ -184,7 +183,7 @@ class Comparator {
 		return s
 	}
 	is_object(x) {
-		return x && Object.getPrototypeOf(x)==Object.prototype
+		return x //&& Object.getPrototypeOf(x)==Object.prototype
 	}
 	json_type(x) {
 		if (x===null || x===undefined) return 'null'

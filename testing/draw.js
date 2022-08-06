@@ -40,6 +40,9 @@ let pass_template = HTML`
 		<div class='name' $=name></div>
 	</div>
 	<div>
+		<div class='lang' $=lang></div>
+	</div>
+	<div>
 		<div class='time' $=time></div>
 	</div>
 	<details>
@@ -53,6 +56,7 @@ let fail_template = HTML`
 <div class='test failed'>
 	<div>
 		<div class='name' $=name></div>
+		<div class='lang' $=lang></div>
 		<div class='result' $=result></div>
 	</div>
 	<div>
@@ -84,6 +88,7 @@ Test.prototype.draw_result = function() {
 	}
 	
 	e.$name.textContent = this.name
+	e.$lang.textContent = this.lang
 	e.$input.value = this.input
 	
 	return e.$root
