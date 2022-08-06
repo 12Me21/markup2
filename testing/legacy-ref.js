@@ -3,7 +3,7 @@
 	Legacy parsers factory
 	@implements Parser_Collection
 */
-class Markup_Legacy { constructor() {
+class Markup_Legacy_Ref { constructor() {
 	/**
 		@type {Object<string,Parser>}
 		@property {Parser} 12y - 12y parser

@@ -3,6 +3,8 @@
 
 <script src=../parse2.js></script>
 <script src=../legacy.js></script>
+<script src=parse-ref.js></script>
+<script src=legacy-ref.js></script>
 <script src=../langs.js></script>
 
 <script src=test.js></script>
@@ -15,7 +17,7 @@
 <body>
 <script src=nav.js></script>
 
-<iframe id=$ref srcdoc="<script src=parse-ref.js></script><script src=legacy-ref.js></script><script src=../langs.js></script><script>window.LANGS = new Markup_Langs([new Markup_12y2(), new Markup_Legacy()])</script>" hidden></iframe>
+<!--<iframe id=$ref srcdoc="</script><script src=../langs.js></script><script>window.LANGS = new Markup_Langs([new Markup_12y2(), new Markup_Legacy()])</script>" hidden></iframe>-->
 
 opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 <br>
@@ -33,10 +35,7 @@ xhr times:
 
 <script>'use strict'
 	Test.LANGS = new Markup_Langs([new Markup_12y2(), new Markup_Legacy()])
-	let LANGS_REF
-	$ref.onload = ev=>{
-		LANGS_REF = $ref.contentWindow.LANGS
-	}
+	let LANGS_REF = new Markup_Langs([new Markup_12y2_Ref(), new Markup_Legacy_Ref()])
 	
 	let start = performance.timing.fetchStart
 	$start_time.textContent = new Date(start).toLocaleString()
@@ -94,21 +93,23 @@ xhr times:
 		console.log("got "+got+" items ("+nw+" new)")
 	}
 	
+	let lang = "12y"
+	
 	load_data([
 		{
 			type:'content',
 			fields:'text,values,id,name',
-			query:'!valuelike({{markupLang}},{{"12y2"}})',
+			query:`!valuelike({{markupLang}},{{"${lang}"}})`,
 			order:'id_desc',
 		}, {
 			type:'message',
 			fields:'text,values,id,createDate,contentId',
-			query:`!valuelike({{m}},{{"12y2"}})`,
+			query:`!valuelike({{m}},{{"${lang}"}})`,
 			order:'id_desc',
 		},
 	]).then(async (lmm)=>{
-		collect(lmm.content, false)
-		collect(lmm.message, true)
+		collect(lmm.content, false, lang)
+		collect(lmm.message, true, lang)
 		window.setTimeout(()=>{
 			run()
 		})

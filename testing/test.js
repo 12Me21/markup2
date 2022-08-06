@@ -183,7 +183,7 @@ class Comparator {
 		return s
 	}
 	is_object(x) {
-		return x //&& Object.getPrototypeOf(x)==Object.prototype
+		return x && Object.getPrototypeOf(x)==Object.prototype
 	}
 	json_type(x) {
 		if (x===null || x===undefined) return 'null'
