@@ -2,6 +2,7 @@
 <title>Markup2 Tests</title>
 
 <script src=../parse2.js></script>
+<script src=../langs.js></script>
 
 <script src=test.js></script>
 <script src=draw.js></script>
@@ -20,6 +21,8 @@ opened: <time id=$start_time></time> | duration: <time id=$duration></time>
 <div id=$output></div>
 
 <script>'use strict'
+	Test.LANGS = new Markup_Langs([new Markup_12y2()])
+	
 	let start = performance.timing.fetchStart
 	$start_time.textContent = new Date(start).toLocaleString()
 	

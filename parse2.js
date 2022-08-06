@@ -44,7 +44,7 @@ class Markup_12y2 { constructor() {
 	PAT`([*][*]|[_][_]|[~][~]|[/])${'STYLE'}`
 	PAT`[\\]((https?|sbs)${'ESCAPED'}|[a-z]+)(?![a-zA-Z0-9])${'TAG'}`
 	PAT`[\\][{][\n]?${'NULL_ENV'}`
-	PAT`[\\]{ANY}${'ESCAPED'}`
+	PAT`[i]{ANY}${'ESCAPED'}`
 	PAT`{BOL}[\`]{3}(?=[^\n\`]*?{EOL})${'CODE_BLOCK'}`
 	PAT`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${'INLINE_CODE'}`
 	//PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${'LINK'}`

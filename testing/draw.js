@@ -39,16 +39,13 @@ let pass_template = HTML`
 	<div>
 		<div class='name' $=name></div>
 	</div>
-	<div>
-		<div class='lang' $=lang></div>
-	</div>
+	<details>
+		<summary><span class='lang' $=lang></span></summary>
+		<textarea class='input' $=input></textarea>
+	</details>
 	<div>
 		<div class='time' $=time></div>
 	</div>
-	<details>
-		<summary>input</summary>
-		<textarea class='input' $=input></textarea>
-	</details>
 </div>
 `
 
@@ -56,8 +53,13 @@ let fail_template = HTML`
 <div class='test failed'>
 	<div>
 		<div class='name' $=name></div>
-		<div class='lang' $=lang></div>
-		<div class='result' $=result></div>
+		<details>
+			<summary>
+				<span class='lang' $=lang></span>
+				<span class='result' $=result></span>
+			</summary>
+			<textarea class='input' $=input></textarea>
+		</details>
 	</div>
 	<div>
 		<div class='tree' $=tree></div>
@@ -66,10 +68,6 @@ let fail_template = HTML`
 		<span>Expect:</span><code $=correct></code>
 		<span>Got:</span><code $=got></code>
 	</div>
-	<details>
-		<summary>input</summary>
-		<textarea class='input' $=input></textarea>
-	</details>
 </div>
 `
 
@@ -78,10 +76,15 @@ Test.prototype.draw_result = function() {
 	if (this.status < 0) {
 		e = fail_template()
 		let r = this.result
-		e.$correct.textContent = safe_string(r.correct)
-		e.$got.textContent = safe_string(r.got)
-		e.$tree.textContent = r.tree
-		e.$result.textContent = r.thing
+		if (r instanceof Mismatch) {
+			e.$correct.textContent = safe_string(r.correct)
+			e.$got.textContent = safe_string(r.got)
+			e.$tree.textContent = r.tree
+			e.$result.textContent = r.thing
+		} else {
+			e.$result.textContent = r.toString()
+			e.$tree.textContent = r.stack
+		}
 	} else if (this.status > 0) {
 		e = pass_template()
 		e.$time.textContent = (+this.parse_time).toFixed(1)+" ms"

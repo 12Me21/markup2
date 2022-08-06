@@ -8,56 +8,6 @@ body {
 	overflow-y: scroll;
 }
 
-.test {
-	white-space: pre-wrap;
-	border: 2px solid black;
-	background: magenta;
-	margin: 3px;
-	white-space: pre-wrap;
-	font: 0.8em sans-serif;
-}
-.test.passed {
-	background: #7F6;
-	border-color: green;
-}
-.test.failed {
-	background: maroon;
-	color: white;
-	border-color: red;
-	height: unset;
-}
-
-.test.failed .name {
-	width: unset;
-}
-
-.test .name {
-	padding: 0.1rem;
-	padding-left: 0.3rem;
-	padding-right: 0;
-	font-weight: bold;
-	white-space: pre;
-	text-overflow: ellipsis;
-	overflow: hidden;
-}
-.test .result {
-	padding: 0.1rem;
-	padding-inline: 0.3rem;
-	padding-top: 0;
-	overflow-y: auto;
-}
-.test .input {
-	border-inline: 1px solid black;
-	padding: 0.2rem;
-	font: 1em monospace;
-	background-color: rgba(255,255,255,0.5);
-	overflow-y: auto;
-	height: 5rem;
-}
-
-test- col2- {
-}
-
 #\$output {
 	background: white;
 }
@@ -78,67 +28,102 @@ test- col2- {
 	background: #e0c87f70;
 }
 
-/*    box-shadow: 0 0 3px inset red;
-    background: linear-gradient(#0003, #FFF8 4px calc(100% - 4px), #0003);
-        background-attachment: scroll;
-    background-attachment: local;
-}*/
-
-
 .test {
+	white-space: pre-wrap;
+	border: 2px solid black;
+	background: magenta;
+	margin: 3px;
+	font: 0.8em sans-serif;
 	display: flex;
 	flex-flow: row;
+	border-left-width: 4px;
+	border-radius: 2px;
 }
 
-.test > div {
-	display: flex;
-	flex-flow: column;
-	flex: 1;
+.test.passed {
+	background: #7E6;
+	border-color: #186;
+}
+.test.failed {
+	background: #810;
+	color: white;
+	border-color: #D64;
+	height: unset;
 }
 
-.test .tree {
+.test .name {
+	padding: 0.1rem;
+	padding-left: 0.3rem;
+	padding-right: 0;
+	font-weight: bold;
+	white-space: pre;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
-
-/*.test .input {
-	display: none;
+.test.failed .name {
+	width: unset;
 }
-
-.test.open .input {
-	display: block;
-}*/
 
 .test .input {
+	border-inline: 1px solid black;
+	padding: 0.2rem;
+	font: 1em monospace;
+	overflow-y: auto;
+	height: 5rem;
 	resize: none;
 	width: 100%;
 	box-sizing: border-box;
 	line-break: anywhere;
 	background: beige;
+	appearance: none;
+	padding: 2px;
+	border: 1px solid black;
 }
 
-.test > details {
-	flex: 0 1 auto;
-	min-width: 0;
+.test .input:focus {
+	outline-offset: -2px;
 }
 
-.test > details[open] {
-	flex-basis: 50%;
+.test > * {
+	display: flex;
+	flex-flow: column;
+	flex: 1 1 0;
 }
 
-.test > details:not([open]) > summary {
+.test > * > details {
+	flex-grow: 1;
+}
+
+.test > * > details > summary {
 	height: 100%;
+	align-items: flex-end;
+}
+
+details > summary::before {
+	align-self: flex-start;
+	flex: 0 0 3rem;
+	content: "show";
+	font-family: monospace;
+}
+
+details[open] > summary::before {
+	content: "hide";
 }
 
 summary {
 	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
 }
 
 code {
 	white-space: pre-wrap;
-	font-size: 10px;
-	background: white;
+	font-size: 9px;
+	background: beige;
 	color: black;
 	line-break: anywhere;
 	border: 1px solid black;
+	padding: 1px;
 }
 
 .test .compare {
@@ -149,6 +134,7 @@ code {
 		/ max-content auto;
 	align-self: flex-start;
 	align-items: center;
+	margin-left: auto;
 }
 
 .test .compare > span {
@@ -156,24 +142,9 @@ code {
 }
 
 .test > :first-child {
-	flex: none;
 	padding-right: 0.5rem;
 }
 
 .test > :nth-child(2) {
-	flex: 0 0 max-content;
 	padding-right: 0.5rem;
-}
-
-.test .compare {
-	flex: 1 1 50%;
-}
-
-.test > details {
-	margin-left: auto;
-	flex: 0 0 auto;
-}
-
-.test > details[open] {
-	flex: 0 1 50%;
 }

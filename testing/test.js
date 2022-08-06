@@ -52,6 +52,7 @@ class Test {
 			t = Test.LANGS.parse(this.input, this.lang)
 			this.parse_time = performance.now() - p
 		} catch (e) {
+			console.warn('parse error?')
 			this.parse_time = performance.now() - p
 			this.status = -2
 			this.result = "Error during parsing!\n"+e+"\n"+e.stack
@@ -107,7 +108,7 @@ class Test {
 				let line = text.substr(0, m.index).match(/\n/g).length+1
 				console.warn("error parsing tests file:", line)
 			} else {
-				let test = new this({name: name}, input, clean(JSON.parse(output)))
+				let test = new Test({name: name}, input, "12y2", clean(JSON.parse(output)))
 			}
 		}
 	}
@@ -123,7 +124,6 @@ class InvalidTree extends Error {
 
 class Mismatch extends Error {
 	constructor(tree, thing, correct, got) {
-		console.log('mismatch', arguments)
 		super(thing)
 		this.correct = correct
 		this.got = got
@@ -174,10 +174,10 @@ class Comparator {
 		for (let {node, index} of this.stack) {
 			if (!node)
 				break
-			index = index==null ? "" : ".content["+(index+1)+"/"+node.content.length+"]"
+			index = index==null ? "" : ""+(index+1)+" of "+node.content.length+" in "
 			node = 'string'==typeof node ? JSON.stringify(node) : node.type
 			let prefix = i==0 ? "" : "    ".repeat(i-1)+"└ "
-			s += prefix+node+index+"\n"
+			s += prefix+index+node+"\n"
 			i++
 		}
 		return s
@@ -240,7 +240,7 @@ class Comparator {
 		// string node
 		if ('string'==typeof correct) {
 			if (got !== correct)
-				this.mismatch("node", correct, got)
+				this.mismatch("textnode", correct, got)
 		} else {
 			// object node
 			if (!this.is_object(correct)) {
