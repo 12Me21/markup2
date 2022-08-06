@@ -1,7 +1,7 @@
 <!doctype html><html lang=en-QS><meta charset=utf-8><meta name=viewport content="width=device-width, height=device-height, initial-scale=1" id=$meta_viewport>
 <title>Tests 2</title>
 
-<script src=../parse2.js></script>
+<script src=../parse.js></script>
 <script src=../legacy.js></script>
 <script src=parse-ref.js></script>
 <script src=legacy-ref.js></script>
@@ -93,7 +93,7 @@ xhr times:
 		console.log("got "+got+" items ("+nw+" new)")
 	}
 	
-	let lang = "12y"
+	let lang = "12y2"
 	
 	load_data([
 		{
@@ -105,7 +105,7 @@ xhr times:
 			type:'message',
 			fields:'text,values,id,createDate,contentId',
 			query:`!valuelike({{m}},{{"${lang}"}})`,
-			order:'id_desc',
+			order:'id',
 		},
 	]).then(async (lmm)=>{
 		collect(lmm.content, false, lang)
