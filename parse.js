@@ -8,15 +8,6 @@
 **/
 class Markup_12y2 { constructor() {
 
-	// all state is stored in these vars (and REGEX.lastIndex)
-	let current, brackets
-	
-	// About __proto__ in object literals:
-	// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation
-	
-	// elements which can survive an eol (without a body)
-	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1, anchor:1}
-	
 	const MACROS = {
 		'{EOL}': "(?![^\\n])",
 		'{BOL}': "^",
@@ -26,40 +17,66 @@ class Markup_12y2 { constructor() {
 	}
 	const GROUPS = []
 	let regi = []
-	const PAT=({raw}, ...groups)=>{
+	const REGEX = function self(tem, ...groups) {
+		if (!tem)
+			return new RegExp(regi.join("|"), 'g')
 		regi.push(
-			raw.join("()")
+			tem.raw.join("()")
 				.replace(/\\`/g, "`")
 				.replace(/[(](?![?)])/g, "(?:")
 				.replace(/[{][A-Z_]+[}]/g, match=>MACROS[match])
 		)
 		GROUPS.push(...groups)
+		return self
 	}
-	
-	PAT`[\n]?[}]${'BLOCK_END'}`
-	PAT`[\n]${'NEWLINE'}`
-	PAT`{BOL}[#]{1,4}(?=[\[{ ])${'HEADING'}`
-	PAT`{BOL}[>](?=[\[{ ])${'QUOTE'}`
-	PAT`{BOL}[-]{3,}{EOL}${'DIVIDER'}`
-	PAT`([*][*]|[_][_]|[~][~]|[/])${'STYLE'}`
-	PAT`[\\]((https?|sbs)${'ESCAPED'}|[a-z]+)(?![a-zA-Z0-9])${'TAG'}`
-	PAT`[\\][{][\n]?${'NULL_ENV'}`
-	PAT`[\\]{ANY}${'ESCAPED'}`
-	PAT`{BOL}[\`]{3}(?=[^\n\`]*?{EOL})${'CODE_BLOCK'}`
-	PAT`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${'INLINE_CODE'}`
-	//PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}({URL_FINAL}|[(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)${'LINK'}`
-	PAT`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}([(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)?${'LINK'}`
-	//PAT`([!]${'EMBED'})?\b(https?://|sbs:)({URL_CHARS}{URL_FINAL}([(]{URL_CHARS}[)])?)+${'LINK'}`
-	PAT`{BOL} *[|]${'TABLE_START'}`
-	PAT` *[|]${'TABLE_CELL'}`
-	PAT`{BOL} *[-]${'LIST_ITEM'}`
-	
-	const REGEX = new RegExp(regi.join("|"), 'g')
-	regi = null
+	`[\n]?[}]${'BLOCK_END'}`
+	`[\n]${'NEWLINE'}`
+	`{BOL}[#]{1,4}(?=[\[{ ])${'HEADING'}`
+	`{BOL}[>](?=[\[{ ])${'QUOTE'}`
+	`{BOL}[-]{3,}{EOL}${'DIVIDER'}`
+	`([*][*]|[_][_]|[~][~]|[/])${'STYLE'}`
+	`[\\]((https?|sbs)${'ESCAPED'}|[a-z]+)(?![a-zA-Z0-9])${'TAG'}`
+	`[\\][{][\n]?${'NULL_ENV'}`
+	`[\\]{ANY}${'ESCAPED'}`
+	`{BOL}[\`]{3}(?!.*?[\`])${'CODE_BLOCK'}`
+	`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${'INLINE_CODE'}`
+	`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}([(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)?${'LINK'}`
+	`{BOL} *[|]${'TABLE_START'}`
+	` *[|]${'TABLE_CELL'}`
+	`{BOL} *[-]${'LIST_ITEM'}`
+	()
 	
 	//todo: org tables separators?
 	
 
+	// all state is stored in these vars (and REGEX.lastIndex)
+	let current, brackets
+	
+	// About __proto__ in object literals:
+	// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation
+	const IS_BLOCK = {__proto__:null, code:1, divider:1, ROOT:1, heading:1, quote:1, table:1, table_cell:1, image:1, video:1, audio:1, spoiler:1, align:1, list:1, list_item:1, youtube:1, anchor:1}
+	
+
+	// argument processing //
+	
+	const NO_ARGS = []
+	NO_ARGS.named = Object.freeze({})
+	Object.freeze(NO_ARGS)
+	// todo: do we even need named args?
+	const parse_args=(arglist)=>{
+		let list = [], named = {}
+		list.named = named
+		for (let arg of arglist.split(";")) {
+			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+			// value OR =value
+			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
+			if (!name)
+				list.push(value)
+			else // name=value
+				named[name] = value
+		}
+		return list
+	}
 	
 	// process an embed url: !https://example.com/image.png[alt=balls]
 	// returns [type: String, args: Object]
@@ -121,8 +138,9 @@ class Markup_12y2 { constructor() {
 		}
 		return args
 	}
+
+	// tree operations //
 	
-	// move up
 	const pop=()=>{
 		if (current.body)
 			brackets--
@@ -135,88 +153,80 @@ class Markup_12y2 { constructor() {
 		return block.content[block.content.length-1]
 	}
 	
+	const push=(dest, type, args, content)=>{
+		let node = {type, args, content}
+		dest.content.push(node)
+		return node
+	}
+	
 	const CLOSE=(cancel)=>{
 		let o = pop()
 		let type = o.type
 		
-		if ('style'===type && cancel) {
-			current.content.push(o.args, ...o.content)
-			current.prev = o.prev
-			return
-		}
-		if ('null_env'===type) {
-			current.content.push(...o.content)
-			current.prev = o.prev
-			return
-		}
-		
-		// cancelling an empty table cell means:
-		// it's the end of the row, so discard the cell
-		if ('table_cell'===type && cancel && !o.content.length) {
-			// if the ROW is empty (i.e. we just have a single | )
-			if (!current.content.length) {
-				let o = pop() // discard the row
-				TEXT(o.args)
-				return
-				// todo: maybe also cancel rows with 1 unclosed cell?
-				// like `| abc` -> text
-			}
-			// transfer args to the row, and parse as table row args:
-			current.args = process_row_args(o.args)
-			// FALLTHROUGH (to close the row)
-			o = pop()
-			type = o.type
-		}
-		
 		if ('newline'===o.prev)
 			o.content.push("\n")
 		
-		let node = {type: type, args: o.args, content: o.content}
-		let dest = current
-		
-		if ('list_item'===type) {
+		switch (type) { default: {
+			push(current, type, o.args, o.content)
+		} break; case 'style': {
+			if (cancel) {
+				TEXT(o.args)
+				current.content.push(...o.content)
+			} else {
+				type = {
+					__proto__:null,
+					'**': 'bold', '__': 'underline',
+					'~~': 'strikethrough', '/': 'italic',
+				}[o.args]
+				push(current, type, null, o.content)
+			}
+		} break; case 'null_env': {
+			current.content.push(...o.content)
+		} break; case 'table_cell': {
+			// push cell if not empty
+			if (!cancel || o.content.length) {
+				push(current, type, process_cell_args(o.args), o.content)
+			}
+			// cancelled = next row
+			if (cancel) {
+				// empty cell -> parse arguments as row arguments
+				if (!o.content.length) {
+					// exception: empty row -> cancel table
+					if (!current.content.length) {
+						let o = pop()
+						TEXT(o.args)
+						return
+						// todo: maybe also cancel rows with 1 unclosed cell?
+						// like `| abc` -> text
+					}
+					current.args = process_row_args(o.args)
+				} else
+					current.args = {}
+				CLOSE(true)
+				return
+			}
+		} break; case 'list_item': {
 			// merge list_item with preceeding list
-			node.args = null
+			let dest = current
 			let indent = o.args.indent
-			while (1) {
+			do {
 				let curr = dest
 				dest = get_last(curr)
-				if (!dest || dest.type!=='list' || dest.args.indent>indent) {
+				if (!dest || 'list'!==dest.type || dest.args.indent>indent) {
 					// create a new level in the list
-					dest = {type:'list', args:{indent}, content:[]}
-					// safe because there's no newline
-					curr.content.push(dest)
+					dest = push(curr, 'list', {indent}, [])
 					break
 				}
-				if (dest.args.indent == indent)
-					break
-			}
-		} else if ('table_row'===type) {
-			dest = get_last(current)
-			if (!dest || 'table'!==dest.type) {
-				dest = {type:'table', args:null, content:[]}
-				current.content.push(dest)
-			}
-		} else if ('style'===type) {
-			node.type = {
-				__proto__:null,
-				'**': 'bold', '__': 'underline',
-				'~~': 'strikethrough', '/': 'italic',
-			}[o.args]
-			node.args = null
-		}
+			} while (dest.args.indent != indent)
+			push(dest, type, null, o.content)
+		} break; case 'table_row': {
+			let dest = get_last(current)
+			if (!dest || 'table'!==dest.type)
+				dest = push(current, 'table', null, [])
+			push(dest, type, o.args, o.content)
+		} }
 		
 		current.prev = type in IS_BLOCK ? 'block' : o.prev
-		dest.content.push(node)
-		
-		if ('table_cell'===type) {
-			node.args = process_cell_args(o.args) // hack?
-			if (cancel) {
-				// close the row
-				current.args = {}
-				CLOSE()
-			}
-		}
 	}
 	
 	// push text
@@ -242,41 +252,18 @@ class Markup_12y2 { constructor() {
 			current.prev = 'newline'
 	}
 	
-	const null_args = []
-	null_args.named = Object.freeze({})
-	Object.freeze(null_args)
-	const NO_ARGS = []
-	NO_ARGS.named = Object.freeze({})
-	Object.freeze(NO_ARGS)
-	// todo: do we even need named args?
-	const parse_args=(arglist)=>{
-		// note: checks undefined AND "" (\tag AND \tag[])
-		if (!arglist)
-			return null_args
-		let list = [], named = {}
-		list.named = named
-		for (let arg of arglist.split(";")) {
-			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
-			// value OR =value
-			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
-			if (!name)
-				list.push(value)
-			else // name=value
-				named[name] = value
-		}
-		return list
-	}
+
+	// parsing //
 	
 	const STYLE_START
 		= /^[ \s.'"}{(> ][^ \s,'" ]/
-	const STYLE_CLOSE
-		=              /^[^ \s,'" ][-\s.,:;!?'"}{)<\\ ]/
+	const STYLE_END = /^[^ \s,'" ][-\s.,:;!?'"}{)<\\ ]/
 	
 	const check_style=(token_text, before, after)=>{
 		// END
 		for (let c=current; 'style'===c.type; c=c.parent)
 			if (c.args===token_text) {
-				if (STYLE_CLOSE.test(before+after))
+				if (STYLE_END.test(before+after))
 					return c
 				break
 			}
@@ -284,10 +271,9 @@ class Markup_12y2 { constructor() {
 		if (STYLE_START.test(before+after))
 			return true
 	}
-
-	let ARG_REGEX = /.*?(?=])/y
-	let WORD_REGEX = /[^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*/y
-	let CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:```|$)/y // ack
+	const ARG_REGEX = /.*?(?=])/y
+	const WORD_REGEX = /[^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*/y
+	const CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:```|$)/y // ack
 	
 	const parse=(text)=>{
 		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
@@ -609,25 +595,25 @@ class Markup_12y2 { constructor() {
 		
 		while ('ROOT'!==current.type)
 			CLOSE(true)
-		if ('newline'===current.prev) //todo: this is repeated
+		if ('newline'===current.prev)
 			current.content.push("\n")
 		
 		current = null // my the memory leak!
 		
-		return tree // technically we could return `current` here and get rid of `tree` entirely
-	}
+		return tree
+	} /* parse() */
 	
 	this.parse = parse
 	this.langs = {'12y2': parse}
-	
-	// what if you want to write like, "{...}". well that's fine
-	// BUT if you are inside a tag, the } will close it.
-	// maybe closing tags should need some kind of special syntax?
-	// \tag{ ... \}  >{...\} idk..
-	// or match paired {}s :
-	// \tag{ ...  {heck} ... } <- closes here
-	
-	// todo: after parsing a block element: eat the next newline directly
 } }
 
 if ('object'==typeof module && module) module.exports = Markup_12y2
+
+// what if you want to write like, "{...}". well that's fine
+// BUT if you are inside a tag, the } will close it.
+// maybe closing tags should need some kind of special syntax?
+// \tag{ ... \}  >{...\} idk..
+// or match paired {}s :
+// \tag{ ...  {heck} ... } <- closes here
+
+// todo: after parsing a block element: eat the next newline directly
