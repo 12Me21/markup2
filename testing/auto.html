@@ -191,7 +191,7 @@ xhr times:
 	load_data({
 		requests:[
 			{type:'content', fields:'text,values,id,name', order:'id_desc',query:'!valuelike({{markupLang}},{{"12y2"}})'},
-			{type:'message', fields:'text,values,id,createDate,contentId', order:'id', query:`!valuelike({{m}},{{"12y2"}})`},
+			{type:'message', fields:'text,values,id,createDate,contentId', order:'id_desc', query:`!valuelike({{m}},{{"12y2"}})`},
 		]
 	}).then(x=>{
 		window.setTimeout(()=>{

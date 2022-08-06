@@ -42,7 +42,7 @@ class Markup_12y2 { constructor() {
 	PAT`{BOL}[>](?=[\[{ ])${'QUOTE'}`
 	PAT`{BOL}[-]{3,}{EOL}${'DIVIDER'}`
 	PAT`([*][*]|[_][_]|[~][~]|[/])${'STYLE'}`
-	PAT`[\\][a-z]+(?![a-zA-Z0-9])${'TAG'}`
+	PAT`[\\]((https?|sbs)${'ESCAPED'}|[a-z]+)(?![a-zA-Z0-9])${'TAG'}`
 	PAT`[\\][{][\n]?${'NULL_ENV'}`
 	PAT`[\\]{ANY}${'ESCAPED'}`
 	PAT`{BOL}[\`]{3}(?=[^\n\`]*?{EOL})${'CODE_BLOCK'}`
@@ -392,10 +392,14 @@ class Markup_12y2 { constructor() {
 			switch (type) {
 			case 'TAG': {
 				read_args()
-				read_body(true)
-				if (NO_ARGS===rargs && false===body) {
-					NEVERMIND()
-					continue main
+				if (token==='\\link') {
+					read_body(false)
+				} else {
+					read_body(true)
+					if (NO_ARGS===rargs && false===body) {
+						NEVERMIND()
+						continue main
+					}
 				}
 				ACCEPT()
 				switch (token) { default: {
@@ -450,7 +454,6 @@ class Markup_12y2 { constructor() {
 					if (body) {
 						OPEN('link', args)
 					} else {
-						args.text = args.url
 						BLOCK('simple_link', args)
 					}
 				}}
