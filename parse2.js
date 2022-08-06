@@ -265,16 +265,21 @@ class Markup_12y2 { constructor() {
 		return list
 	}
 	
+	const STYLE_START
+		= /^[ \s.'"}{(> ][^ \s,'" ]/
+	const STYLE_CLOSE
+		=              /^[^ \s,'" ][-\s.,:;!?'"}{)<\\ ]/
+	
 	const check_style=(token_text, before, after)=>{
+		// END
 		for (let c=current; 'style'===c.type; c=c.parent)
 			if (c.args===token_text) {
-				if (!after || /[^\s,'"][-\s.,:;!?'")}{]/y.test(before+after))
+				if (STYLE_CLOSE.test(before+after))
 					return c
-				else
-					break
+				break
 			}
-		
-		if (!before || /[\s.({}'"][^\s,'"]/y.test(before+after))
+		// START
+		if (STYLE_START.test(before+after))
 			return true
 	}
 
@@ -450,7 +455,7 @@ class Markup_12y2 { constructor() {
 					}
 				}}
 			} break; case 'STYLE': {
-				let c = check_style(token, text.charAt(match.index-1), text.charAt(REGEX.lastIndex))
+				let c = check_style(token, text.charAt(match.index-1)||"\n", text.charAt(REGEX.lastIndex)||"\n")
 				if (!c) { // no
 					NEVERMIND()
 					continue main
