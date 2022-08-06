@@ -249,20 +249,20 @@ L + ratio { }
 /***********/
 .M-link {
 	color: var(--T-link-color);
-	-webkit-text-decoration: var(--T-link-decoration);
 	text-decoration: var(--T-link-decoration);
+	-webkit-text-decoration: var(--T-link-decoration);
 }
 .M-link:hover {
 	color: var(--T-link-hover-color);
 }
 /* links with custom text */
 .M-link-custom {
-	-webkit-text-decoration: var(--T-custom-link-decoration);
 	text-decoration: var(--T-custom-link-decoration);
+	-webkit-text-decoration: var(--T-custom-link-decoration);
 }
 .M-link-custom:hover {
-	-webkit-text-decoration-style: double;
 	text-decoration-style: double;
+	-webkit-text-decoration-style: double;
 }
 
 /***********/
