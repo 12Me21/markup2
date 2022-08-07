@@ -47,6 +47,15 @@ class Markup_12y2 { constructor() {
 	()
 	
 	//todo: org tables separators?
+	// what if we make them enable an ascii art table parsing mode
+	// like
+	// | heck | 123 |
+	// |------+------|
+	// | line1 | aaa |
+	// | line2 | bbb |
+	// creates 2 cells, with 2 lines each, rather than 2 rows.
+	// i.e: each added row will just append its contents to the cells
+	// of the previous row.
 	
 
 	// all state is stored in these vars (and REGEX.lastIndex)
@@ -256,8 +265,8 @@ class Markup_12y2 { constructor() {
 	// parsing //
 	
 	const STYLE_START
-		= /^[ \s.'"}{(> ][^ \s,'" ]/
-	const STYLE_END = /^[^ \s,'" ][-\s.,:;!?'"}{)<\\ ]/
+		= /^[ \s.'"}{(> ][^ \s,'" ]|^\s["']/ // START
+	const STYLE_END = /^[^ \s, ][-\s.,:;!?'"}{)<\\ ]/
 	
 	const check_style=(token_text, before, after)=>{
 		// END

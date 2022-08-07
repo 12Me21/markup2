@@ -70,7 +70,7 @@ async function request(endpoint, data, cb) {
 
 async function load_data(requests) {
 	$xhr_time.textContent = ""
-	let data = await request('request', {requests}, (t,m)=>{
+	let data = await request('request', {values:{true:true},requests}, (t,m)=>{
 		$xhr_time.textContent += "\n"+(t/1000).toFixed(2)+"sec: "+m
 	})
 	console.log('got', data)

@@ -103,9 +103,9 @@ xhr times:
 			order:'id_desc',
 		}, {
 			type:'message',
-			fields:'text,values,id,createDate,contentId',
-			query:`!valuelike({{m}},{{"${lang}"}})`,
-			order:'id_desc',
+			fields:'text,values,id,createDate,contentId,edited',
+			query:`!valuelike({{m}},{{"${lang}"}}) AND edited = @true`,
+			order:'id',
 			limit:1000,
 		},
 	]).then(async (lmm)=>{
