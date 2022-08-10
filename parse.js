@@ -172,8 +172,8 @@ class Markup_12y2 { constructor() {
 		let o = pop()
 		let type = o.type
 		
-		if ('newline'===o.prev)
-			o.content.push("\n")
+		//if ('newline'===o.prev)
+		//	o.content.push("\n")
 		
 		switch (type) { default: {
 			push(current, type, o.args, o.content)
@@ -195,6 +195,7 @@ class Markup_12y2 { constructor() {
 			// push cell if not empty
 			if (!cancel || o.content.length) {
 				push(current, type, process_cell_args(o.args), o.content)
+				current.prev = 'block'
 			}
 			// cancelled = next row
 			if (cancel) {
@@ -551,7 +552,7 @@ class Markup_12y2 { constructor() {
 				else if ("\\."===token) { // \. is a no-op
 					// todo: close lists too
 					//current.content.push("")
-					current.prev = 'block'
+					//current.prev = 'block'
 				} else
 					TEXT(token.substring(1))
 			} break; case 'QUOTE': {
