@@ -265,19 +265,26 @@ class Markup_12y2 { constructor() {
 	// parsing //
 	
 	const STYLE_START
-		= /^[ \s.'"}{(> ][^ \s,'" ]|^\s["']/ // START
-	const STYLE_END = /^[^ \s, ][-\s.,:;!?'"}{)<\\ ]/
+		= /^[\s][^\s,]|^['"}{(>][^\s,'"]/
+	const STYLE_END
+		= /^[^\s,][-\s.,:;!?'"}{)<\\]/
+	const ITALIC_START
+		= /^[\s][^\s,/]|^['"}{(>][^\s,'"/]/
+	const ITALIC_END
+		= /^[^\s,/][-\s.,:;!?'"}{)<\\]/
 	
-	const check_style=(token_text, before, after)=>{
-		// END
+	const find_style=(token)=>{
 		for (let c=current; 'style'===c.type; c=c.parent)
-			if (c.args===token_text) {
-				if (STYLE_END.test(before+after))
-					return c
-				break
-			}
-		// START
-		if (STYLE_START.test(before+after))
+			if (c.args===token)
+				return c
+	}
+	
+	const check_style=(token, before, after)=>{
+		let ital = "/"===token
+		let c = find_style(token)
+		if (c && (ital ? ITALIC_END : STYLE_END).test(before+after))
+			return c
+		if ((ital ? ITALIC_START : STYLE_START).test(before+after))
 			return true
 	}
 	const ARG_REGEX = /.*?(?=])/y
@@ -626,3 +633,10 @@ if ('object'==typeof module && module) module.exports = Markup_12y2
 // \tag{ ...  {heck} ... } <- closes here
 
 // todo: after parsing a block element: eat the next newline directly
+
+// idea:
+// compare ast formats:
+// memory, speed, etc.
+// {type, args, content}
+// [type, args, content]
+// [type, args, ...content]
