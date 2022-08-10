@@ -348,7 +348,8 @@ we should create our own fake bullet elements instead.*/
 		
 		spoiler: function({label}) {
 			let e = this()
-			e.firstChild.textContent = label
+			e.firstChild.textContent = label//.replace(/_/g, " ")
+			//todo: [12y1] maybe replace all underscores in args with spaces, during parsing?
 			return e.lastChild
 		}.bind(𐀶`
 <details class='M-spoiler'>
