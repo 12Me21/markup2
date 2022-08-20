@@ -193,7 +193,7 @@ class Markup_Render_Dom { constructor() {
 			}
 			return e
 		}.bind(𐀶`
-<media-player>
+<media-player class='M-audio-player'>
 <div class='M-media-controls'>
 <button>▶️</button>
 <input type=range max=100 step=0.1 value=0>
@@ -245,7 +245,7 @@ class Markup_Render_Dom { constructor() {
 			}
 			return e
 		}.bind(𐀶`
-<media-player>
+<media-player class='M-video-player'>
 <div class='M-image-wrapper'></div>
 <div class='M-media-controls'>
 <button>Play</button>

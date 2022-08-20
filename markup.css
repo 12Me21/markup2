@@ -303,7 +303,7 @@ L + ratio { }
 	position: relative;
 	width: auto !important;
 	max-width: calc(100% - 2px);
-	align-self: center;
+	align-self: flex-start;
 	height: var(--T-embed-height);
 }
 
@@ -319,10 +319,6 @@ L + ratio { }
 	display: flex;
 	flex-flow: column;
 	max-width: 100%;
-	background: slategray;
-	border-radius: 3px;
-	color: white;
-	border: 2px solid var(--T-border-color);
 }
 
 .M-media-controls {
@@ -332,8 +328,12 @@ L + ratio { }
 	padding-right: 3px;
 }
 
-.M-media-controls > a[href] {
+.M-audio-player, .M-video-player > .M-media-controls {
+	border: 2px solid var(--T-border-color);
+	background: slategray;
+	border-radius: 0 3px 3px 3px;
 	color: white;
+	width: max-content;
 }
 
 .Markup media-player > * {
@@ -343,7 +343,6 @@ L + ratio { }
 .M-media-controls > button {
 	padding: 2px;
 	line-height: 1em;
-	border: none;
 }
 
 .M-media-time {
