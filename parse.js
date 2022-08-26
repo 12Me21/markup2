@@ -123,13 +123,16 @@ class Markup_12y2 { constructor() {
 			type = 'image'
 		return [type, args]
 	}
+	const is_color=(arg)=>{
+		return ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg)
+	}
 	const process_cell_args=(rargs)=>{
 		let args = {}
 		for (let arg of rargs) {
 			let m
 			if ("*"===arg || "#"===arg)
 				args.header = true
-			else if (['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].includes(arg))
+			else if (is_color(arg))
 				args.color = arg
 			else if (m = /^(\d*)x(\d*)$/.exec(arg)) {
 				let [, w, h] = m
@@ -461,6 +464,11 @@ class Markup_12y2 { constructor() {
 					} else {
 						BLOCK('simple_link', args)
 					}
+				} break; case '\\bg': {
+					let color = rargs[0]
+					if (!is_color(color))
+						color = null
+					OPEN('background_color', {color})
 				}}
 			} break; case 'STYLE': {
 				let c = check_style(token, text.charAt(match.index-1)||"\n", text.charAt(REGEX.lastIndex)||"\n")
