@@ -77,7 +77,7 @@ the `sand` can /be/ eaten
 ```
 code block
 ```
-🟩 {"type":"ROOT","content":[{"type":"heading","content":["heading"],"args":{"level":3,"id":null}},"the ",{"type":"icode","args":{"text":"sand"}}," can ",{"type":"italic","content":["be"]}," eaten","\n",{"type":"code","args":{"text":"code block\n"}}]}
+🟩 {"type":"ROOT","content":[{"type":"heading","content":["heading"],"args":{"level":3,"id":null}},"the ",{"type":"icode","args":{"text":"sand"}}," can ",{"type":"italic","content":["be"]}," eaten","\n",{"type":"code","args":{"text":"code block"}}]}
 
 🟩 table.
 |table|
@@ -242,7 +242,7 @@ heck```abc
 ```
 unclosed
 
-🟩 {"type":"ROOT","content":[{"type":"code","args":{"text":"normal\ncodeblock\nabc\n"}},"missing start linebreak:","\n",{"type":"code","args":{"text":"x=1\nx=x+1\n"}},{"type":"code","args":{"text":"lang\naaa\n","lang":"c++ 11"}},{"type":"icode","args":{"text":"`inline`"}},"\n",{"type":"code","args":{"text":"missing end linebreak (todo: idk about this)","lang":"js"}},{"type":"code","args":{"text":"\nblank lines\n\n"}},"not at start ",{"type":"icode","args":{"text":"`abc`"}},"\n",{"type":"code","args":{"text":"end not at start\nheck"}},"abc","\n",{"type":"code","args":{"text":"unclosed\n"}}],"prev":"block"}
+🟩 {"type":"ROOT","content":[{"type":"code","args":{"text":"normal\ncodeblock\nabc"}},"missing start linebreak:","\n",{"type":"code","args":{"text":"x=1\nx=x+1"}},{"type":"code","args":{"text":"lang\naaa","lang":"c++ 11"}},{"type":"icode","args":{"text":"`inline`"}},"\n",{"type":"code","args":{"text":"missing end linebreak (todo: idk about this)","lang":"js"}},{"type":"code","args":{"text":"\nblank lines\n"}},"not at start ",{"type":"icode","args":{"text":"`abc`"}},"\n",{"type":"code","args":{"text":"end not at start\nheck"}},"abc","\n",{"type":"code","args":{"text":"unclosed\n"}}],"prev":"block"}
 
 🟩 paragraphs
 paragraph1

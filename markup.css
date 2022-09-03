@@ -117,6 +117,9 @@ L + ratio { }
 /*** invalid tag ***/
 .M-invalid {
 	background: #F888;
+	text-decoration: red solid line-through;
+	padding: 0 2px;
+	margin: 0 1px;
 }
 
 /*** keyboard key ***/
@@ -235,6 +238,11 @@ L + ratio { }
 /**********************/
 /** Background Color **/
 /**********************/
+.Markup .M-background {
+	padding: 0 1px;
+	background: hotpink;
+}
+.Markup table { background: var(--T-bg) } /* reset */
 .Markup [data-bgcolor="red"]    { background: var(--T-red-bg) }
 .Markup [data-bgcolor="orange"] { background: var(--T-orange-bg) }
 .Markup [data-bgcolor="yellow"] { background: var(--T-yellow-bg) }
@@ -242,7 +250,6 @@ L + ratio { }
 .Markup [data-bgcolor="blue"]   { background: var(--T-blue-bg) }
 .Markup [data-bgcolor="purple"] { background: var(--T-purple-bg) }
 .Markup [data-bgcolor="gray"]   { background: var(--T-gray-bg) }
-.Markup table { background: var(--T-bg); } /* reset */
 
 /***********/
 /** Links **/

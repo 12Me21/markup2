@@ -13,7 +13,7 @@ class Markup_Legacy { constructor() {
 	*/
 	this.langs = {}
 	
-	const BLOCKS = Object.freeze({__proto__:null, divider: 1, code: 1, audio: 1, video: 1, youtube: 1, heading: 1, quote: 1, list: 1, list_item: 1, table: 1, table_row: 1, image: 1, error: 1, align: 1, spoiler: 1})
+	const BLOCKS = Object.freeze({__proto__:null, divider: 1, code: 1, audio: 1, video: 1, youtube: 1, heading: 1, quote: 1, list: 1, list_item: 1, table: 1, table_row: 1, image: 1, align: 1, spoiler: 1})
 	
 	function convert_cell_args(props, h) {
 		let args = {
@@ -521,6 +521,7 @@ class Markup_Legacy { constructor() {
 				let arg = props[""]
 				if ('spoiler'===name && !stackContains("spoiler")) {
 					let label = arg==true ? "spoiler" : arg
+					label = label.replace(/_/g, " ")
 					start_block('spoiler', {label}, {})
 				} else if ('ruby'===name) {
 					start_block('ruby', {text: String(arg)}, {})
