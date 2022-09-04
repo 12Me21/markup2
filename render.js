@@ -192,7 +192,7 @@ we should create our own fake bullet elements instead.*/
 			if (alt!=null) e.alt = e.title = alt
 			if (width) {
 				e.width = width
-				e.style.setProperty('--width', height)
+				e.style.setProperty('--width', width)
 			}
 			if (height) {
 				e.height = height

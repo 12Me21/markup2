@@ -96,8 +96,6 @@ L + ratio { }
 	max-width: -webkit-fill-available;
 	max-width: -moz-available;
 	max-width: stretch;
-	
-	width: auto;
 }
 
 /* before loading, assume image will be larger than --image-max-height */
@@ -105,7 +103,7 @@ L + ratio { }
 	height: var(--T-embed-height);
 	min-width: 2em;
 }
-.Markup img[data-state="loaded"] {
+.Markup img[data-state="loaded"], .Markup img[data-state="size"] {
 	height: auto;
 }
 
