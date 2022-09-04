@@ -213,9 +213,9 @@ we should create our own fake bullet elements instead.*/
 		}.bind({
 			elem: H`<img data-state=loading data-shrink tabindex=0>`,
 			set_size: (e, state)=>{
-				e.dataset.state = state
-				e.width = e.naturalWidth
 				e.height = e.naturalHeight
+				e.width = e.naturalWidth
+				e.dataset.state = state
 				e.style.setProperty('--width', e.naturalWidth)
 				e.style.setProperty('--height', e.naturalHeight)
 			},
