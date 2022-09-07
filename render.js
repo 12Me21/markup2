@@ -9,8 +9,8 @@ class Markup_Render_Dom { constructor() {
 	//  which creates a copy of that HTML DOM tree when called.
 	// ex: let create = 𐀶`<div></div>`
 	//  - create() acts like document.createElement('div')
-	const H=([html])=>{
-		let temp = document.createElement('template')
+	let temp = document.createElement('template')
+	function 𐀶([html]) {
 		temp.innerHTML = html.replace(/\s*?\n\s*/g, "")
 		return document.importNode.bind(document, temp.content.firstChild, true)
 	}
@@ -46,121 +46,23 @@ class Markup_Render_Dom { constructor() {
 	let CREATE = {
 		__proto__: null,
 		
-		newline: H`<br>`,
-		divider: H`<hr>`,
+		newline: 𐀶`<br>`,
 		
-		bold: H`<b>`,
-		italic: H`<i>`,
-		underline: H`<u>`,
-		strikethrough: H`<s>`,
-		
-		subscript: H`<sub>`,
-		superscript: H`<sup>`,
-		
-		align: function({align}) {
-			let e = this()
-			e.style.textAlign = align
-			return e
-		}.bind(H`<div class='M-align'>`),
-		// .bind(value) makes that value accessible as `this` inside the function, when it's called. (note that the value is only evaluated once)
-		// I'm just using this as a simple trick to store the html templates with their init functions, but there's no special reason to do it this way
-		
-		background_color: function({color}) {
-			let e = this()
-			if (color)
-				e.dataset.bgcolor = color
-			return e
-		}.bind(H`<span class='M-background'>`),
-		
-		key: H`<kbd>`,
-		
-		ruby: function({text}) {
-			let e = this()
-			e.lastChild.textContent = text
-			return e.firstChild
-		}.bind(H`<ruby><span></span><rt>`),
-		
-		icode: function({text}) {
-			let e = this()
-			e.textContent = text.replace(/ /g, " ") // non breaking space..
-			return e
-		}.bind(H`<code>`),
+		divider: 𐀶`<hr>`,
 		
 		code: function({text, lang}) { // <tt>?
 			let e = this()
 			e.textContent = text
 			return e
-		}.bind(H`<pre>`),
+		}.bind(𐀶`<pre>`),
+		// .bind(value) makes that value accessible as `this` inside the function, when it's called. (note that the value is only evaluated once)
+		// I'm just using this as a simple trick to store the html templates with their init functions, but there's no special reason to do it this way
 		
-		heading: function({level, id}) {
-			let e = document.createElement("h"+(level- -1))
-			if (id) {
-				let e2 = this()
-				e2.name = id
-				e2.appendChild(e)
-			}
-			return e
-		}.bind(H`<a name="" class='M-anchor'>`),
-		
-		// what if instead of the \a tag, we just supported
-		// an [id=...] attribute on every tag? just need to set id, so...
-		// well except <a name=...> is safer than id...
-		anchor: function({id}) {
+		icode: function({text}) {
 			let e = this()
-			if (id)
-				e.name = id
+			e.textContent = text.replace(/ /g, " ") // non breaking space..
 			return e
-		}.bind(H`<a name="" class='M-anchor'>`),
-		
-		spoiler: function({label}) {
-			let e = this()
-			e.firstChild.textContent = label
-			return e.lastChild
-		}.bind(H`
-<details class='M-spoiler'>
-	<summary class='M-spoiler-label'></summary>
-	<div class='M-spoiler-inner'>
-`),
-		
-		quote: function({cite}) {
-			if (cite==null)
-				return this[0]()
-			let e = this[1]()
-			e.firstChild.textContent = cite
-			return e.lastChild
-		}.bind([
-			H`<blockquote class='M-quote'>`,
-			H`<blockquote class='M-quote'><cite class='M-quote-label'></cite>:<div class='M-quote-inner'>`, // should we have -outer class?
-		]),
-		
-		list: function({style}) {
-			if (style==null)
-				return this[0]()
-			let e = this[1]()
-			//e.style.listStyleType = style // this was only supported by old bbcode so i can probably secretly remove it.
-			return e
-		}.bind([H`<ul>`, H`<ol>`]),
-		
-		/* todo: list bullets suck, because you can't select/copy them
-we should create our own fake bullet elements instead.*/
-		list_item: H`<li>`,
-		
-		table: function() {
-			let e = this()
-			return e.firstChild.firstChild
-		}.bind(H`<div class='M-table-outer'><table><tbody>`),
-		
-		table_row: H`<tr>`,
-		
-		table_cell: function({header, color, truecolor, colspan, rowspan, align}, row_args) {
-			let e = this[header||row_args.header ? 1 : 0]()
-			if (color) e.dataset.bgcolor = color
-			if (truecolor) e.style.backgroundColor = truecolor
-			if (colspan) e.colSpan = colspan
-			if (rowspan) e.rowSpan = rowspan
-			if (align) e.style.textAlign = align
-			return e
-		}.bind([H`<td>`, H`<th>`]),
+		}.bind(𐀶`<code>`),
 		
 		simple_link: function({url, text}) {
 			let e = this()
@@ -168,17 +70,11 @@ we should create our own fake bullet elements instead.*/
 				e.textContent = url
 			} else {
 				e.textContent = text
-				e.classList.add('M-link-custom')
+				e.className += ' M-link-custom'
 			}
 			e.href = filter_url(url, 'link')
 			return e
-		}.bind(H`<a class='M-link' target=_blank href="">`),
-		
-		link: function({url}) {
-			let e = this()
-			e.href = filter_url(url, 'link')
-			return e
-		}.bind(H`<a class='M-link M-link-custom' target=_blank href="">`),
+		}.bind(𐀶`<a href="" class='M-link' target=_blank>`),
 		
 		image: function({url, alt, width, height}) {
 			let e = this.elem()
@@ -201,17 +97,18 @@ we should create our own fake bullet elements instead.*/
 			}
 			// check whether the image is "available" (i.e. size is known)
 			// https://html.spec.whatwg.org/multipage/images.html#img-available
-			if (e.naturalHeight)
+			if (e.naturalHeight) {
 				this.set_size(e, 'size')
-			e.onerror = ev=>{
-				ev.target.dataset.state = 'error'
 			}
-			e.onload = ev=>{
-				this.set_size(ev.target, 'loaded')
+			e.onerror = (event)=>{
+				event.target.dataset.state = 'error'
+			}
+			e.onload = (event)=>{
+				this.set_size(event.target, 'loaded')
 			}
 			return e
 		}.bind({
-			elem: H`<img data-state=loading data-shrink tabindex=0>`,
+			elem: 𐀶`<img data-state=loading data-shrink tabindex=0>`,
 			set_size: (e, state)=>{
 				e.height = e.naturalHeight
 				e.width = e.naturalWidth
@@ -220,6 +117,8 @@ we should create our own fake bullet elements instead.*/
 				e.style.setProperty('--height', e.naturalHeight)
 			},
 		}),
+		
+		error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
 		
 		audio: function({url}) {
 			url = filter_url(url, 'audio')
@@ -240,13 +139,10 @@ we should create our own fake bullet elements instead.*/
 			link.title = url
 			link.lastChild.textContent = url.replace(/.*[/]/, "…/")
 			return e
-		}.bind(H`<y12-audio><a>🎵️<span>`),
+		}.bind(𐀶`<y12-audio><a>🎵️<span></span></a></y12-audio>`),
 		
 		video: function({url}) {
 			let e = this()
-			let cl = e.lastChild
-			let [play, progress, time] = cl.childNodes
-			
 			let media = document.createElement('video')
 			media.setAttribute('tabindex', 0)
 			media.preload = 'none'
@@ -254,32 +150,31 @@ we should create our own fake bullet elements instead.*/
 			media.src = filter_url(url, 'video')
 			e.firstChild.append(media)
 			
-			play.onclick = ev=>{
+			let cl = e.lastChild
+			let [play, progress, time] = cl.childNodes
+			play.onclick = e=>{
 				if (media.paused)
 					media.play()
 				else
 					media.pause()
-				ev.stopPropagation()
+				e.stopPropagation()
 			}
-			progress.onchange = ev=>{
-				media.currentTime = progress.value
-			}
-			
-			media.onpause = ev=>{
+			media.onpause = e=>{
 				play.textContent = "▶️"
 			}
-			media.onplay = ev=>{
+			media.onplay = e=>{
 				play.textContent = "⏸️"
 			}
-			media.addEventListener('resize', ev=>{
+			media.onresize = ev=>{
+				media.onresize = null
 				media.parentNode.style.aspectRatio = media.videoWidth+"/"+media.videoHeight
 				media.parentNode.style.height = media.videoHeight+"px"
 				media.parentNode.style.width = media.videoWidth+"px"
-			}, {once: true})
+			}
 			media.onerror = ev=>{
 				time.textContent = 'Error'
 			}
-			media.ondurationchange = ev=>{
+			media.ondurationchange = e=>{
 				let s = media.duration
 				progress.disabled = false
 				progress.max = s
@@ -287,18 +182,79 @@ we should create our own fake bullet elements instead.*/
 				s = s % 60
 				time.textContent = m+":"+(s+100).toFixed(2).substring(1)
 			}
-			media.ontimeupdate = ev=>{
+			media.ontimeupdate = e=>{
 				progress.value = media.currentTime
 			}
+			progress.onchange = e=>{
+				media.currentTime = progress.value
+			}
 			return e
-		}.bind(H`
+		}.bind(𐀶`
 <y12-video>
 	<figure class='M-image-wrapper'></figure>
 	<div class='M-media-controls'>
 		<button>▶️</button>
 		<input type=range min=0 max=1 step=any value=0 disabled>
 		<span>not loaded</span>
+	</div>
+</y12-video>
 `),
+		
+		italic: 𐀶`<i>`,
+		
+		bold: 𐀶`<b>`,
+		
+		strikethrough: 𐀶`<s>`,
+		
+		underline: 𐀶`<u>`,
+		
+		heading: function({level, id}) {
+			let e = document.createElement("h"+(level- -1))
+			if (id) {
+				let e2 = this()
+				e2.name = id
+				e2.appendChild(e)
+			}
+			return e
+		}.bind(𐀶`<a name="" class=M-anchor></a>`),
+		
+		// what if instead of the \a tag, we just supported
+		// an [id=...] attribute on every tag? just need to set id, so...
+		// well except <a name=...> is safer than id...
+		anchor: function({id}) {
+			let e = this()
+			if (id)
+				e.name = id
+			return e
+		}.bind(𐀶`<a name="" class=M-anchor></a>`),
+		
+		quote: function({cite}) {
+			if (cite==null)
+				return this[0]()
+			let e = this[1]()
+			e.firstChild.textContent = cite
+			return e.lastChild
+		}.bind([
+			𐀶`<blockquote class='M-quote'>`,
+			𐀶`<blockquote class='M-quote'><cite class='M-quote-label'></cite>:<div class='M-quote-inner'></div></blockquote>`, // should we have -outer class?
+		]),
+		
+		table: function() {
+			let e = this()
+			return e.firstChild.firstChild
+		}.bind(𐀶`<div class='M-table-outer'><table><tbody>`),
+		
+		table_row: 𐀶`<tr>`,
+		
+		table_cell: function({header, color, truecolor, colspan, rowspan, align}, row_args) {
+			let e = this[header||row_args.header ? 1 : 0]()
+			if (color) e.dataset.bgcolor = color
+			if (truecolor) e.style.backgroundColor = truecolor
+			if (colspan) e.colSpan = colspan
+			if (rowspan) e.rowSpan = rowspan
+			if (align) e.style.textAlign = align
+			return e
+		}.bind([𐀶`<td>`, 𐀶`<th>`]),
 		
 		youtube: function({url}) {
 			let e = this()
@@ -306,20 +262,80 @@ we should create our own fake bullet elements instead.*/
 			e.firstChild.href = url
 			e.dataset.href = url
 			return e
-		}.bind(H`<youtube-embed><a target=_blank>`),
+		}.bind(𐀶`<youtube-embed><a target=_blank></a></youtube-embed>`),
 		
-		preview: function(node) {
+		link: function({url}) {
 			let e = this()
-			e.textContent = node.type
+			e.href = filter_url(url, 'link')
 			return e
-		}.bind(H`<div class='M-preview'>`),
+		}.bind(𐀶`<a class='M-link M-link-custom' target=_blank href="">`),
+		
+		list: function({style}) {
+			if (style==null)
+				return this[0]()
+			let e = this[1]()
+			//e.style.listStyleType = style // this was only supported by old bbcode so i can probably secretly remove it.
+			return e
+		}.bind([𐀶`<ul>`, 𐀶`<ol>`]),
+		
+		/* todo: list bullets suck, because you can't select/copy them
+we should create our own fake bullet elements instead.*/
+		list_item: 𐀶`<li>`,
+		
+		align: function({align}) {
+			let e = this()
+			e.style.textAlign = align
+			return e
+		}.bind(𐀶`<div>`),
+		
+		subscript: 𐀶`<sub>`,
+		
+		superscript: 𐀶`<sup>`,
+		
+		/*anchor: function({name}) {
+			let e = this()
+			e.id = "Markup-anchor-"+name
+			return e
+		}.bind(𐀶`<span id="" class='M-anchor'>`),*/
+		
+		ruby: function({text}) {
+			let e = this()
+			e.lastChild.textContent = text
+			return e.firstChild
+		}.bind(𐀶`<ruby><span></span><rt>`), // I don't think we need <rp> since we're rendering for modern browsers...
+		
+		spoiler: function({label}) {
+			let e = this()
+			e.firstChild.textContent = label//.replace(/_/g, " ")
+			//todo: [12y1] maybe replace all underscores in args with spaces, during parsing?
+			return e.lastChild
+		}.bind(𐀶`
+<details class='M-spoiler'>
+	<summary class='M-spoiler-label'></summary>
+	<div class='M-spoiler-inner'></div>
+</details>`),
+		
+		background_color: function({color}) {
+			let e = this()
+			if (color)
+				e.dataset.bgcolor = color
+			return e
+		}.bind(𐀶`<span class='M-background'>`),
 		
 		invalid: function({text, reason}) {
 			let e = this()
 			e.title = reason
 			e.textContent = text
 			return e
-		}.bind(H`<span class='M-invalid'>`),
+		}.bind(𐀶`<span class='M-invalid'>`),
+		
+		key: 𐀶`<kbd>`,
+		
+		preview: function(node) {
+			let e = this()
+			e.textContent = node.type
+			return e
+		}.bind(𐀶`<div class='M-preview'>`),
 	}
 	
 	function fill_branch(branch, leaves) {

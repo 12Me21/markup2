@@ -75,8 +75,6 @@ class Markup_12y2 { constructor() {
 	const parse_args=(arglist)=>{
 		let list = [], named = {}
 		list.named = named
-		if (""===arglist)
-			return list
 		for (let arg of arglist.split(";")) {
 			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
 			// value OR =value
