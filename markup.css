@@ -105,7 +105,10 @@ L + ratio { }
 	height: var(--T-embed-height);
 	min-width: 2em;
 }
-.Markup img[data-state="loaded"], .Markup img[data-state="size"] {
+.Markup img[data-state="loaded"] {
+	height: auto;
+}	
+.Markup img[data-state="size"] {
 }
 
 /* ruby text doesn't work if set to white-space: pre */
