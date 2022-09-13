@@ -72,9 +72,13 @@ class Markup_Render_Dom { constructor() {
 				e.textContent = text
 				e.className += ' M-link-custom'
 			}
-			e.href = filter_url(url, 'link')
+			if (!url.startsWith("#")) {
+				url = filter_url(url, 'link')
+				e.target = '_blank'
+			}
+			e.href = url
 			return e
-		}.bind(𐀶`<a href="" class='M-link' target=_blank>`),
+		}.bind(𐀶`<a href="" class='M-link'>`),
 		
 		image: function({url, alt, width, height}) {
 			let e = this.elem()
@@ -266,9 +270,13 @@ class Markup_Render_Dom { constructor() {
 		
 		link: function({url}) {
 			let e = this()
-			e.href = filter_url(url, 'link')
+			if (!url.startsWith("#")) {
+				url = filter_url(url, 'link')
+				e.target = '_blank'
+			}
+			e.href = url
 			return e
-		}.bind(𐀶`<a class='M-link M-link-custom' target=_blank href="">`),
+		}.bind(𐀶`<a class='M-link M-link-custom' href="">`),
 		
 		list: function({style}) {
 			if (style==null)
