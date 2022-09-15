@@ -75,7 +75,8 @@ class Markup_Render_Dom { constructor() {
 			if (!url.startsWith("#")) {
 				url = filter_url(url, 'link')
 				e.target = '_blank'
-			}
+			} else
+				e.target = '_self'
 			e.href = url
 			return e
 		}.bind(𐀶`<a href="" class='M-link'>`),
@@ -273,7 +274,8 @@ class Markup_Render_Dom { constructor() {
 			if (!url.startsWith("#")) {
 				url = filter_url(url, 'link')
 				e.target = '_blank'
-			}
+			} else
+				e.target = '_self'
 			e.href = url
 			return e
 		}.bind(𐀶`<a class='M-link M-link-custom' href="">`),

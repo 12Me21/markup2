@@ -42,7 +42,7 @@ class Markup_YoutubeElement extends HTMLElement {
 			return
 		if (state) {
 			this.$iframe = document.createElement('iframe')
-			let src = `https://www.youtube-nocookie.com/embed/${this._id}?autoplay=1&rel=0&modestbranding=1`
+			let src = `https://www.youtube-nocookie.com/embed/${this._id}?autoplay=1&rel=0`
 			if (this._query)
 				src += `&${this._query}`
 			this.$iframe.src = src
