@@ -43,6 +43,17 @@
 		width: -moz-available;
 		width: stretch;
 	}
+	
+	textarea-container.textarea-nowrap {
+		padding-bottom: calc(15px + 2px);
+	}
+	
+	textarea-container.textarea-nowrap > textarea {
+		white-space: pre;
+		overflow-y: auto;
+		overflow-x: scroll;
+		height: calc(100% + 15px);
+	}
 </style>
 
 <body class='Col'>
@@ -58,6 +69,7 @@
 				<option> plaintext
 				<option> json
 			</select>
+			<label>Wrap:<input type=checkbox id=$wrap checked></label>
 			<span class='fill'></span>
 			<select id=$display value=render>
 				<option> render
@@ -141,9 +153,14 @@
 		show_time($time4, t3-t0)
 	}
 	
-	setup_textarea($input, update)
-	
 	$lang.onchange = update
 	$display.onchange = update
+	$wrap.onchange = ev=>{
+		$input.parentNode.classList.toggle('textarea-nowrap', !$wrap.checked)
+		textarea_resize($input)
+	}
+	$wrap.onchange()
+	
+	setup_textarea($input, update)
 	update()
 </script>

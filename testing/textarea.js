@@ -1,3 +1,9 @@
+let textarea_resize = (t)=>{
+	t.style.height = "0"
+	t.parentNode.style.height = `${t.scrollHeight+1}px`
+	t.style.height = ""
+}
+
 let setup_textarea
 {
 	let style = document.createElement('style')
@@ -23,6 +29,7 @@ textarea-container > textarea {
 	border: none;
 	padding: 0;
 	width: 100%;
+	height: 100%;
 	
 	appearance: none;
 	outline-offset: 2px;
@@ -30,18 +37,12 @@ textarea-container > textarea {
 `
 	document.head.append(style)
 	
-	let resize = (t)=>{
-		t.style.height = "0"
-		t.parentNode.style.height = `${t.scrollHeight+1}px`
-		t.style.height = "100%"
-	}
-	
 	setup_textarea = (textarea, callback)=>{
-		resize(textarea)
+		textarea_resize(textarea)
 		
 		let lock = false
 		textarea.addEventListener('input', e=>{
-			resize(textarea)
+			textarea_resize(textarea)
 			if (lock)
 				return
 			lock = true
