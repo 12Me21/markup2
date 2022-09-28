@@ -251,13 +251,18 @@ class Markup_Render_Dom { constructor() {
 		
 		table_row: 𐀶`<tr>`,
 		
-		table_cell: function({header, color, truecolor, colspan, rowspan, align}, row_args) {
+		table_cell: function({header, color, truecolor, colspan, rowspan, align, div}, row_args) {
 			let e = this[header||row_args.header ? 1 : 0]()
 			if (color) e.dataset.bgcolor = color
 			if (truecolor) e.style.backgroundColor = truecolor
 			if (colspan) e.colSpan = colspan
 			if (rowspan) e.rowSpan = rowspan
 			if (align) e.style.textAlign = align
+			// todo: better way of representing this?
+			if (div)
+				e.classList.add('M-wall-right')
+			if (row_args.divider)
+				e.classList.add('M-wall-top')
 			return e
 		}.bind([𐀶`<td>`, 𐀶`<th>`]),
 		
