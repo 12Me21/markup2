@@ -104,6 +104,8 @@ class Markup_Render_Dom { constructor() {
 			// https://html.spec.whatwg.org/multipage/images.html#img-available
 			if (e.naturalHeight) {
 				this.set_size(e, 'size')
+			} else if (e.complete) {
+				event.target.dataset.state = 'loaded'
 			}
 			e.onerror = (event)=>{
 				event.target.dataset.state = 'error'

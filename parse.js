@@ -175,6 +175,16 @@ class Markup_12y2 { constructor() {
 		return node
 	}
 	
+	// push text
+	const TEXT=(text)=>{
+		if ('block'===current.prev)
+			text = text.replace(/^ +/, "")
+		if (text!=="") {
+			current.content.push(text) // todo: merge with surrounding textnodes?
+			current.prev = 'text'
+		}
+	}
+	
 	const CLOSE=(cancel)=>{
 		let o = pop()
 		let type = o.type
@@ -257,13 +267,6 @@ class Markup_12y2 { constructor() {
 		current.prev = type in IS_BLOCK ? 'block' : o.prev
 	}
 	
-	// push text
-	const TEXT=(text)=>{
-		if (text!=="") {
-			current.content.push(text) // todo: merge with surrounding textnodes?
-			current.prev = 'text'
-		}
-	}
 	// push empty tag
 	const BLOCK=(type, args)=>{
 		current.content.push({type, args})
@@ -595,8 +598,10 @@ class Markup_12y2 { constructor() {
 					// todo: close lists too
 					//current.content.push("")
 					//current.prev = 'block'
-				} else
-					TEXT(token.substring(1))
+				} else {
+					current.content.push(token.slice(1))
+					current.prev = 'text'
+				}
 			} break; case 'QUOTE': {
 				read_args()
 				read_body(true)
