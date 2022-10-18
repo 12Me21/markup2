@@ -84,12 +84,6 @@ class Markup_Render_Dom { constructor() {
 		image: function({url, alt, width, height}) {
 			let e = this.elem()
 			let src = filter_url(url, 'image')
-			if (intersection_observer) {
-				e.dataset.src = src
-				intersection_observer.observe(e)
-			} else {
-				e.src = src
-			}
 			if (alt!=null) e.alt = e.title = alt
 			if (width) {
 				e.width = width
@@ -100,19 +94,23 @@ class Markup_Render_Dom { constructor() {
 				e.style.setProperty('--height', height)
 				e.dataset.state = 'size'
 			}
-			// check whether the image is "available" (i.e. size is known)
-			// https://html.spec.whatwg.org/multipage/images.html#img-available
-			if (e.naturalHeight) {
-				this.set_size(e, 'size')
-			} else if (e.complete) {
-				e.dataset.state = 'loaded'
-			}
+			// loading maybe
 			e.onerror = (event)=>{
 				event.target.dataset.state = 'error'
 			}
 			e.onload = (event)=>{
 				this.set_size(event.target, 'loaded')
 			}
+			if (intersection_observer) {
+				e.dataset.src = src
+				intersection_observer.observe(e)
+			} else {
+				e.src = src
+			}
+			// check whether the image is "available" (i.e. size is known)
+			// https://html.spec.whatwg.org/multipage/images.html#img-available
+			if (e.naturalHeight)
+				this.set_size(e, 'size')
 			return e
 		}.bind({
 			elem: 𐀶`<img data-state=loading data-shrink tabindex=0>`,
