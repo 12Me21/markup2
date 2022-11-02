@@ -119,7 +119,7 @@ class Markup_Render_Dom { constructor() {
 			if (height) {
 				e.height = height
 				e.style.setProperty('--height', height)
-				e.dataset.state = 'loaded'
+				e.dataset.state = 'size'
 			}
 			
 			// loading maybe
