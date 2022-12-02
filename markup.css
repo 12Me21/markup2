@@ -18,6 +18,7 @@ L + ratio { }
 	--T-bg: white;
 	
 	--T-link-color: #056;
+	--T-link-visited-color: #606;
 	--T-link-hover-color: #089;
 	--T-link-decoration: underline #AAAA; /* idk..*/
 	--T-custom-link-decoration: underline blue;
@@ -273,6 +274,9 @@ L + ratio { }
 	text-decoration: underline;
 	text-decoration: var(--T-link-decoration, underline #AAAA);
 	-webkit-text-decoration: var(--T-link-decoration, underline #AAAA);
+}
+.M-link:visited {
+	color: var(--T-link-visited-color, #606);
 }
 .M-link:hover {
 	color: var(--T-link-hover-color);
