@@ -147,6 +147,7 @@ L + ratio { }
 	border-radius: 4px;
 	margin: 0 0.1em;
 	vertical-align: 1px;
+	/*-webkit-box-decoration-break: clone; box-decoration-break: clone; - actually we want this disabled since that makes it easier to tell if a code block has been split*/
 }
 .Markup th code {
 	white-space: pre-wrap;
