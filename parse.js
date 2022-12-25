@@ -246,7 +246,7 @@ class Markup_12y2 { constructor() {
 				dest = get_last(curr)
 				if (!dest || 'list'!==dest.type || dest.args.indent>indent) {
 					// create a new level in the list
-					dest = push(curr, 'list', {indent}, [])
+					dest = push(curr, 'list', {indent, style:o.args.kind}, [])
 					break
 				}
 			} while (dest.args.indent != indent)
@@ -645,7 +645,7 @@ class Markup_12y2 { constructor() {
 				}
 				ACCEPT()
 				let indent = token.indexOf("-")
-				OPEN('list_item', {indent})
+				OPEN('list_item', {indent, kind:rargs[0]==="1"?"1":undefined})
 			} }
 
 			if (body) {
