@@ -112,9 +112,9 @@ class Markup_12y2 { constructor() {
 			args.alt = rargs.named.alt
 		// todo: improve this
 		if (!type) {
-			if (/[.](mp3|ogg|wav|m4a|flac)\b/i.test(url))
+			if (/[.](mp3|ogg|wav|m4a|flac|aac|oga|opus|wma)\b/i.test(url))
 				type = 'audio'
-			else if (/[.](mp4|mkv|mov|webm)\b/i.test(url))
+			else if (/[.](mp4|mkv|mov|webm|avi|flv|m4v|mpeg|mpg|ogv|ogm|ogx|wmv|xvid)\b/i.test(url))
 				type = 'video'
 			else if (/^https?:[/][/](?:www[.])?(?:youtube.com[/]watch[?]v=|youtu[.]be[/]|youtube.com[/]shorts[/])[\w-]{11}/.test(url)) {
 				// todo: accept [start-end] args maybe?
@@ -311,7 +311,7 @@ class Markup_12y2 { constructor() {
 	}
 	const ARG_REGEX = /.*?(?=])/y
 	const WORD_REGEX = /[^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*/y
-	const CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n?```|$)/y // ack
+	const CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n```|$)/y // ack
 	
 	const parse=(text)=>{
 		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}

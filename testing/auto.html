@@ -104,8 +104,8 @@ xhr times:
 		}, {
 			type:'message',
 			fields:'text,values,id,createDate,contentId,edited',
-			query:`!valuelike({{m}},{{"${lang}"}}) AND edited = @true`,
-			order:'id',
+			query:`!valuelike({{m}},{{"${lang}"}}) AND text LIKE {{%\`\`\`%}}`,
+			order:'id_desc',
 			limit:1000,
 		},
 	]).then(async (lmm)=>{
