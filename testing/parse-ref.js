@@ -72,7 +72,7 @@ class Markup_12y2_Ref { constructor() {
 	/(?:\[([^\]\n]*)\])? */y
 	
 	const ARGS_CODE = // ... ```
-	/(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n```|$)/y // @@@ backported \n```
+	/(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n?```|$)/y // @@@ backported \n```
 	
 	PAT`[\n]?[}]${{ BLOCK_END: 0}}`
 	PAT`[\n]${{ NEWLINE: 0}}`

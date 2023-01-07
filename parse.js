@@ -311,7 +311,7 @@ class Markup_12y2 { constructor() {
 	}
 	const ARG_REGEX = /.*?(?=])/y
 	const WORD_REGEX = /[^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*/y
-	const CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n```|$)/y // ack
+	const CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n?```|$)/y // ack
 	
 	const parse=(text)=>{
 		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
