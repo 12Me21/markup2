@@ -287,11 +287,11 @@ class Markup_12y2 { constructor() {
 	// parsing //
 	
 	const STYLE_START
-		= /^[\s][^\s,]|^['"}{(>|][^\s,'"]/
+		= /^[\s,][^\s,]|^['"}{(>|][^\s,'"]/
 	const STYLE_END
 		= /^[^\s,][-\s.,:;!?'"}{)<\\|]/
 	const ITALIC_START
-		= /^[\s][^\s,/]|^['"}{(>|][^\s,'"/<]/
+		= /^[\s,][^\s,/]|^['"}{(>|][^\s,'"/<]/
 	const ITALIC_END
 		= /^[^\s,/>][-\s.,:;!?'"}{)<\\|]/
 	
