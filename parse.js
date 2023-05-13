@@ -291,9 +291,10 @@ class Markup_12y2 { constructor() {
 	const STYLE_END
 		= /^[^\s,][-\s.,:;!?'"}{)<\\|]/
 	const ITALIC_START
-		= /^[\s,][^\s,/]|^['"}{(>|][^\s,'"/<]/
+		= /^[\s,][^\s,/]|^['"}{(|][^\s,'"/<]/
 	const ITALIC_END
-		= /^[^\s,/>][-\s.,:;!?'"}{)<\\|]/
+		= /^[^\s,/>][-\s.,:;!?'"}{)\\|]/
+	// wait, shouldn't \./heck/\. be allowed though? but that wouldn't work since `.` isn't allowed before..
 	
 	const find_style=(token)=>{
 		for (let c=current; 'style'===c.type; c=c.parent)
