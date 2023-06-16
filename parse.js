@@ -78,7 +78,7 @@ class Markup_12y2 { constructor() {
 		let list = [], named = {}
 		list.named = named
 		for (let arg of arglist.split(";")) {
-			let [, name, value] = /^(?:([^=]*)=)?(.*)$/.exec(arg)
+			let [, name, value] = /^(?:([-\w]*)=)?(.*)$/.exec(arg)
 			// value OR =value
 			// (this is to allow values to contain =. ex: [=1=2] is "1=2")
 			if (!name)
@@ -477,7 +477,8 @@ class Markup_12y2 { constructor() {
 					body = true // ghhhh?
 					//BLOCK('anchor', {id})
 				} break; case '\\link': {
-					let args = {url: rargs[0]}
+					let [url=""] = rargs
+					let args = {url}
 					if (body) {
 						OPEN('link', args)
 					} else {
@@ -648,7 +649,7 @@ class Markup_12y2 { constructor() {
 				let indent = token.indexOf("-")
 				OPEN('list_item', {indent, kind:rargs[0]==="1"?"1":undefined})
 			} }
-
+			
 			if (body) {
 				text = text.substring(last)
 				last = REGEX.lastIndex = 0
