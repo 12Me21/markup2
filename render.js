@@ -348,6 +348,94 @@ we should create our own fake bullet elements instead.*/
 		
 		key: 𐀶`<kbd>`,
 		
+		time: function({timestamp, style}) {
+			let e = this()
+			/*
+https://discord.com/developers/docs/reference#message-formatting-timestamp-styles
+https://gist.github.com/LeviSnoot/d9147767abeef2f770e9ddcd91eb85aa
+stealing syntax / formatting ideas from this
+
+two types of timestamps are accepted:
+- unix timestamps (entirely numeric)
+- `Date.parse()` date+time strings
+
+## Big overview
+|default|`1719878490`|\time[1719878490]|
+|time|\time[1719878490;t]|\time[1719878490;T]|
+|date|\time[1719878490;d]|\time[1719878490;D]|
+|full|\time[1719878490;f]|\time[1719878490;F]|
+|rel.|\{}|\time[1719878490;R]|
+
+## Short vs. Long forms
+\time[2024-06-12 01:00 EST;f] / \time[2024-06-12 01:00 EST;F]
+\time[2024-06-12 01:00 EST;t] / \time[2024-06-12 01:00 EST;T]
+\time[2024-06-12 01:00 EST;d] / \time[2024-06-12 01:00 EST;D]
+
+## Relative-to-render times
+They have hover text!
+\time[2024-06-12 01:00 EST;R]
+Asdf \time[2024-06-12 19:46 EDT;R] asdf?
+out \time[2024-06-12 18:46 EDT;R]?
+
+## `Date.parse()` acts differently depending on whitespace
+\time[2001-06-12;R]
+\time[2001-06-12 ;R]
+implies timezone was acknowledged? why..?
+
+## Strange behavior with trailing `{` and whitespace in general
+\time[2024-06-12 01:00 EST;f] a b c
+\time[2024-06-12 01:00 EST;f]{ a b c
+\time[2024-06-12 01:00 EST;f]{} a b c
+\time[1719878400.01;f]{
+\time[1719878400.99;f]{ fractions work!! (if you want that specificity)
+
+## Expected End of Birthday
+\time[1719878400;R]
+\time[1718496000;R]
+			 */
+			if (timestamp instanceof Date) {
+				const locale = Intl.DateTimeFormat().resolvedOptions().locale
+				e.title = timestamp.toLocaleString()
+				switch (style) { default: { // TODO: this is embarrassing
+					e.textContent = timestamp.toUTCString()
+				} break; case 't': {
+					e.textContent = timestamp.toLocaleTimeString(locale, { 'timeStyle': 'short' })
+				} break; case 'T': {
+					e.textContent = timestamp.toLocaleTimeString(locale, { 'timeStyle': 'medium' })
+				} break; case 'd': {
+					e.textContent = timestamp.toLocaleDateString(locale, { 'dateStyle': 'short' })
+				} break; case 'D': {
+					e.textContent = timestamp.toLocaleDateString(locale, { 'dateStyle': 'medium' })
+				} break; case 'f': {
+					e.textContent = timestamp.toLocaleString() // ?
+				} break; case 'F': {
+					e.textContent = timestamp.toLocaleString()
+				} break; case 'R': {
+					const timez = [[1000, 'ms'], [60, 'seconds'], [60, 'minutes'], [24, 'hours'], [Infinity, 'days']]
+					let render = new Date() // makes static rendering bad...
+					let after_render = timestamp - render
+					e.title += `\nRendered at ${render.toLocaleTimeString()}`
+					// also i'm recreating code that already exists in the frontend..
+					for (let [level_up, metric] of timez) { // bad naming on purpose
+						if (Math.abs(after_render) > level_up) {
+							after_render /= level_up
+						} else {
+							after_render = Math.round(after_render * 10) / 10
+							if (after_render > 0)
+								e.textContent = `in ${after_render} ${metric}`
+							else
+								e.textContent = `${-after_render} ${metric} ago`
+							break
+						}
+					}
+					// oh hey i could just set a signal handler here to update this!!
+				}}
+			} else {
+				e.textContent = timestamp
+			}
+			return e
+		}.bind(𐀶`<time>`),
+		
 		preview: function(node) {
 			let e = this()
 			e.textContent = node.type

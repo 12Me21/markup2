@@ -65,7 +65,7 @@ class Markup_12y2 { constructor() {
 	
 	// About __proto__ in object literals:
 	// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation
-	const IS_BLOCK = {__proto__:null, code:'block', divider:'block', ROOT:'block', heading:'block', quote:'block', table:'block', table_cell:'block', image:'block', video:'block', audio:'block', spoiler:'block', align:'block', list:'block', list_item:'block', youtube:'block', anchor:'block', table_divider:'block', ruby:'text', key:'text'}
+	const IS_BLOCK = {__proto__:null, code:'block', divider:'block', ROOT:'block', heading:'block', quote:'block', table:'block', table_cell:'block', image:'block', video:'block', audio:'block', spoiler:'block', align:'block', list:'block', list_item:'block', youtube:'block', anchor:'block', table_divider:'block', ruby:'text', key:'text', time:'text'}
 	// 'text' is for inline-block elements
 	
 
@@ -477,6 +477,19 @@ class Markup_12y2 { constructor() {
 					let [txt="true"] = rargs
 					OPEN('ruby', {text: txt})
 					word_maybe()
+				} break; case '\\time': {
+					let [timestamp, style] = rargs
+					if (!/^[tTdDfFR]$/.test(style))
+						style = 'f'
+					if (/^\d+(.\d+)?$/.test(timestamp)) {
+						timestamp = Number.parseFloat(timestamp) * 1000
+					} else {
+						timestamp = Date.parse(timestamp)
+					}
+					if (Number.isNaN(timestamp))
+						timestamp = 0
+					timestamp = new Date(timestamp)
+					BLOCK('time', {timestamp, style})
 				} break; case '\\key': {
 					OPEN('key')
 					word_maybe()
