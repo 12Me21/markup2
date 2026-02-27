@@ -422,7 +422,7 @@ class Markup_12y2 { constructor() {
 				read_args()
 				if (token==='\\link') {
 					read_body(false)
-				} else {
+				} else if (token!=='\\e') { // Emote should not have body
 					read_body(true)
 					if (NO_ARGS===rargs && false===body) {
 						NEVERMIND()
@@ -504,6 +504,10 @@ class Markup_12y2 { constructor() {
 					let [lang=""] = rargs
 					OPEN('language', {lang})
 					word_maybe()
+				} break; case '\\e': {
+					let [id="",name="",role="emote",source=""] = rargs.reverse()
+					OPEN('emote', {source, name, id, role})
+					CLOSE()
 				}}
 			} break; case 'STYLE': {
 				let c = check_style(token, text.charAt(match.index-1)||"\n", text.charAt(REGEX.lastIndex)||"\n")

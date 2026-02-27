@@ -119,6 +119,43 @@ L + ratio { }
 	height: auto;
 }	
 
+.Markup .M-emote, .M-emote {
+	display: inline-block;
+	object-fit: contain;
+	width: calc(var(--size)*var(--emote-size, 1.125em));
+	height: calc(var(--size)*var(--emote-size, 1.125em));
+	vertical-align: middle;
+	max-height: unset;
+	border: none;
+	margin-bottom: 0.125em;
+}
+
+.M-filter-h {
+	transform: scaleX(-1);
+}
+.M-filter-v {
+	transform: scaleY(-1);
+}
+.M-filter-h.M-filter-v {
+	transform: scaleX(-1) scaleY(-1);
+}
+.M-filter-r {
+	transform: rotate(90deg);
+}
+.M-filter-h.M-filter-r {
+	transform: rotate(90deg) scaleX(-1);
+}
+.M-filter-v.M-filter-r {
+	transform: rotate(90deg) scaleY(-1);
+}
+.M-filter-h.M-filter-v.M-filter-r {
+	transform: rotate(270deg);
+}
+.M-filter-p {
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}
+
 /* ruby text doesn't work if set to white-space: pre */
 .Markup rt {
 	white-space: pre-line;

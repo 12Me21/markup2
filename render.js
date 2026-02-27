@@ -29,6 +29,15 @@ class Markup_Render_Dom { constructor() {
 		ERROR: (href, thing)=> "about:blank#"+href,
 	}
 	
+	let EMOTE_SOURCES = {
+		__proto__: null,
+		"": (id, options) => options.pixel ? `sbs:image/${id}` : `sbs:image/${id}?size=200`,
+		"url": (id, options) => id,
+		"discordemote": (id, options) => `https://cdn.discordapp.com/emojis/${id}`,
+		"discordsticker": (id, options) => `https://media.discordapp.net/stickers/${id}`,
+		UNKNOWN: (id, options) => null
+	}
+	
 	function filter_url(url, thing) {
 		try {
 			let u = new URL(url, "no-scheme:/")
@@ -107,6 +116,68 @@ class Markup_Render_Dom { constructor() {
 			else // otherwise wait for load
 				e.decode().then(ok=>{
 					set_size('loaded')
+				}, no=>{
+					e.dataset.state = 'error'
+				})
+			return e
+		},
+
+		emote: function({source, name, id, role, filter}, filter2) {
+			if (id == "") id = name
+			if (role == "") role = "emote"
+			let options
+			[id, options=""] = id.split("#")
+			options+=(filter || "") + (filter2 || "")
+			let opt = {}
+			// Duplicate filters cancel out
+			options.split('').forEach(c=>opt[c] = !opt[c])
+			let url, unknown = false
+			if (id) 
+				url = (EMOTE_SOURCES[source] || EMOTE_SOURCES.UNKNOWN)(id, {pixel: opt["p"]})
+			let src = filter_url(url || "data:image/gif;base64,R0lGODlhAQABAIAAANDL5NDL5CH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==", 'image')
+			let e = document.createElement('img')
+			e.classList.add('M-emote')
+			e.dataset.emotesource = source
+			if (url == null) e.dataset.emoteunknown = true
+			if (name!=null)
+				e.alt = e.title = name
+			e.tabIndex = 0
+			const set_size = (state, width=e.naturalWidth, height=e.naturalHeight)=>{
+				if (state=="size") {
+					e.width = width
+					e.height = height
+				}
+				e.style.setProperty('--width', width)
+				e.style.setProperty('--height', height)
+				e.dataset.state = state
+			}
+			let size = 2
+			switch (role) {
+				case "icon":
+					size = 1
+					break
+				case "emote":
+					size = 2
+					break
+				case "medium":
+					size = 4
+					break
+				case "sticker":
+					size = 8
+					break
+			}
+			e.style.setProperty('--size', size)
+			set_size('size', size * 16, size * 16)
+			e.src = src
+			Object.keys(opt).forEach(x => x ? e.classList.add(`M-filter-${x}`) : undefined)
+			// check whether the image is "available" (i.e. size is known) by looking at naturalHeight
+			// https://html.spec.whatwg.org/multipage/images.html#img-available
+			// this will happen here if the image is VERY cached, i guess
+			if (e.naturalHeight)
+				set_size('loaded-emote')
+			else // otherwise wait for load
+				e.decode().then(ok=>{
+					set_size('loaded-emote')
 				}, no=>{
 					e.dataset.state = 'error'
 				})
@@ -416,6 +487,7 @@ we should create our own fake bullet elements instead.*/
 		@member {Object<string,function>}
 	**/
 	this.url_scheme = URL_SCHEME
+	this.emote_sources = EMOTE_SOURCES
 	this.filter_url = filter_url
 }}
 
