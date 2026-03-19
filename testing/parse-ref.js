@@ -222,7 +222,7 @@ class Markup_12y2_Ref { constructor() {
 			OPEN('align', {align: a}, body)
 		} break; case '\\spoiler': case '\\h': {
 			let label = arg0(rargs, "spoiler")
-			OPEN('spoiler', {label}, body)
+			OPEN('spoiler', {label, cw:false}, body)
 		} break; case '\\ruby': {
 			let text = arg0(rargs, "true")
 			OPEN('ruby', {text}, body)
