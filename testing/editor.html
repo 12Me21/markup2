@@ -7,6 +7,7 @@
 
 <script src=../parse.js></script>
 <script src=../render.js></script>
+<script src=../langs.js></script>
 <link rel=stylesheet href=../markup.css>
 
 <link rel=stylesheet href=style.css>
@@ -57,18 +58,20 @@
 </div>
 
 <script>
-	let parser = new Markup_12y2()
+	Test.LANGS = new Markup_Langs([new Markup_12y2()])
 	let renderer = new Markup_Render_Dom()
 	
 	$show_entries.value = localStorage.tests || `🟩 text
 abc
 🟩 {"type":"ROOT","tag":"","content":["abc"]}`
 	
+	let lang = '12y2'
+	
 	load()
 	run()
 	
 	$input.oninput = function() {
-		let tree = parser.parse(this.value)
+		let tree = Test.LANGS.parse(this.value, lang)
 		let e = renderer.render(tree)
 		$preview.replaceChildren(e)
 	}
@@ -91,10 +94,10 @@ abc
 		// todo: insert the output results element right away
 		
 		input = input.replace(/🟩/g, "?")
-		let tree = parser.parse(input)
+		let tree = Test.LANGS.parse(input, lang)
 		JSON.stringify(tree) // just to test
 		
-		let t = new Test({name: title}, input, clean(tree))
+		let t = new Test({name: title}, input, lang, clean(tree))
 		
 		$show_entries.value += "\n\n"+t.to_entry()
 		
