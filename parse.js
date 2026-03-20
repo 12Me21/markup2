@@ -12,6 +12,7 @@ class Markup_12y2 { constructor() {
 		'{EOL}': "(?![^\\n])",
 		'{BOL}': "^",
 		'{ANY}': "[^]",
+		'{HORIZ_WS}': "[ \t]",
 		'{URL_CHARS}': "[-\\w/%&=#+~@$*'!?,.;:]*",
 		'{URL_FINAL}': "[-\\w/%&=#+~@$*']",
 	}
@@ -42,9 +43,9 @@ class Markup_12y2 { constructor() {
 	`[\`][^\`\n]*([\`]{2}[^\`\n]*)*[\`]?${'INLINE_CODE'}`
 	`([!]${'EMBED'})?\b(https?://|sbs:){URL_CHARS}{URL_FINAL}([(]{URL_CHARS}[)]({URL_CHARS}{URL_FINAL})?)?${'LINK'}`
 	`{BOL}[|][-][-+]*[-][|]{EOL}${'TABLE_DIVIDER'}` // `{BOL}[|][|][|]{EOL}${'TABLE_DIVIDER'}`
-	`{BOL} *[|]${'TABLE_START'}`
-	` *[|][|]?${'TABLE_CELL'}`
-	`{BOL} *[-]${'LIST_ITEM'}`
+	`{BOL}{HORIZ_WS}*[|]${'TABLE_START'}`
+	`{HORIZ_WS}*[|][|]?${'TABLE_CELL'}`
+	`{BOL}{HORIZ_WS}*[-]${'LIST_ITEM'}`
 	()
 	
 	//todo: org tables separators?
@@ -314,6 +315,7 @@ class Markup_12y2 { constructor() {
 	const ARG_REGEX = /.*?(?=])/y
 	const WORD_REGEX = /[^\s`^()+=\[\]{}\\|"';:,.<>/?!*]*/y
 	const CODE_REGEX = /(?: *([-\w.+#$ ]+?) *(?![^\n]))?\n?([^]*?)(?:\n?```|$)/y // ack
+	const SPACE_REGEX = new RegExp(`${MACROS['{HORIZ_WS}']}*`, 'y')
 	
 	const parse=(text)=>{
 		let tree = {type: 'ROOT', content: [], prev: 'all_newline'}
@@ -322,10 +324,9 @@ class Markup_12y2 { constructor() {
 		
 		// these use REGEX, text
 		const skip_spaces=()=>{
-			let pos = REGEX.lastIndex
-			while (" "===text.charAt(pos))
-				pos++
-			REGEX.lastIndex = pos
+			SPACE_REGEX.lastIndex = REGEX.lastIndex
+			SPACE_REGEX.exec(text)
+			REGEX.lastIndex = SPACE_REGEX.lastIndex
 		}
 		const read_code=()=>{
 			let pos = REGEX.lastIndex
